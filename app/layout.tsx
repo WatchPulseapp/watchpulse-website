@@ -69,6 +69,7 @@ export const metadata: Metadata = {
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Analytics } from '@vercel/analytics/react';
 import Schema from './schema';
+import GoogleAnalytics from './GoogleAnalytics';
 
 export default function RootLayout({
   children,
@@ -81,6 +82,7 @@ export default function RootLayout({
         <Schema />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <GoogleAnalytics />
         <LanguageProvider>
           {children}
         </LanguageProvider>
