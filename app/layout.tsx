@@ -67,6 +67,8 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { Analytics } from '@vercel/analytics/react';
+import Schema from './schema';
 
 export default function RootLayout({
   children,
@@ -75,10 +77,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" className="scroll-smooth">
+      <head>
+        <Schema />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <LanguageProvider>
           {children}
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
