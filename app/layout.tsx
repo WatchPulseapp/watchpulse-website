@@ -8,24 +8,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "WatchPulse",
-  description: "AI-powered movie and TV show recommendations based on your mood. Explore trending content, collections, and personalized suggestions.",
-  keywords: "movie app, tv shows, AI recommendations, mood-based, watchlist, TMDB, streaming",
+  title: "WatchPulse - AI-Powered Movie & TV Show Recommendations Based on Your Mood",
+  description: "Discover personalized movie and TV show recommendations with AI-powered mood detection. Smart watchlist, TMDB integration, social features. Download free!",
+  keywords: "movie recommendations, tv show suggestions, AI movies, mood-based recommendations, netflix alternative, watchlist app, TMDB, personalized streaming, movie app, AI film recommendation, what to watch, streaming guide, watchpulse",
   authors: [{ name: "WatchPulse Team" }],
+  creator: "WatchPulse",
+  publisher: "WatchPulse",
   icons: {
     icon: '/logo.png',
     apple: '/logo.png',
+    shortcut: '/logo.png',
   },
+  manifest: '/manifest.json',
   openGraph: {
-    title: "WatchPulse",
-    description: "Discover personalized movie and TV show recommendations with AI-powered mood detection",
+    title: "WatchPulse - AI Movie Recommendations Based on Your Mood",
+    description: "Get personalized movie and TV show recommendations powered by AI. Discover what to watch next based on your current mood and preferences.",
     type: "website",
     locale: "en_US",
+    url: "https://watchpulseapp.com",
+    siteName: "WatchPulse",
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'WatchPulse - AI-Powered Movie Recommendations',
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WatchPulse",
-    description: "AI-powered movie recommendations based on your mood",
+    title: "WatchPulse - AI Movie Recommendations",
+    description: "AI-powered movie and TV show recommendations based on your mood. Discover what to watch next!",
+    creator: "@watchpulseapp",
+    images: ['/logo.png'],
   },
   viewport: {
     width: "device-width",
@@ -33,6 +49,21 @@ export const metadata: Metadata = {
     maximumScale: 1,
   },
   themeColor: "#7C8DB0",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: "https://watchpulseapp.com",
+  },
+  category: 'entertainment',
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
