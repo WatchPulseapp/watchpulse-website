@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import Container from './Container';
 import { cn } from '@/lib/utils';
-import { Smartphone, Globe } from 'lucide-react';
+import { Smartphone, Globe, BookOpen } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Header() {
@@ -36,19 +37,38 @@ export default function Header() {
       <Container>
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <motion.div
-            className="flex items-center"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="text-2xl font-bold">
-              <span className="text-white">Watch</span>
-              <span className="bg-gradient-hero bg-clip-text text-transparent">Pulse</span>
-            </span>
-          </motion.div>
+          <Link href="/">
+            <motion.div
+              className="flex items-center cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-2xl font-bold">
+                <span className="text-white">Watch</span>
+                <span className="bg-gradient-hero bg-clip-text text-transparent">Pulse</span>
+              </span>
+            </motion.div>
+          </Link>
 
-          {/* Language & Download Button */}
-          <div className="flex items-center gap-4">
+          {/* Navigation & Actions */}
+          <div className="flex items-center gap-6">
+            {/* Blog Link */}
+            <Link href="/blog">
+              <motion.div
+                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary/10 transition-all duration-300 group"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <BookOpen className="w-5 h-5 text-brand-primary group-hover:text-brand-gold transition-colors" />
+                <span className="font-semibold text-text-primary group-hover:text-brand-gold transition-colors">
+                  Blog
+                </span>
+              </motion.div>
+            </Link>
+
+            <div className="h-6 w-px bg-brand-primary/20" /> {/* Divider */}
+
+            <div className="flex items-center gap-4">
             {/* Language Switcher */}
             <motion.button
               onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
@@ -77,6 +97,7 @@ export default function Header() {
                 {t('nav.comingSoon')}
               </span>
             </motion.button>
+            </div>
           </div>
         </div>
       </Container>

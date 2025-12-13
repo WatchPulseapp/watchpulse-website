@@ -3,7 +3,15 @@ import { MetadataRoute } from 'next'
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogPosts = [
     'best-ai-movie-apps-2024',
+    'movies-to-watch-when-sad',
+    'best-feel-good-movies',
+    'netflix-hidden-gems-2024',
+    'date-night-movie-ideas',
+    'best-binge-worthy-shows-2024',
     'how-ai-recommends-movies',
+    'ai-vs-human-recommendations',
+    'psychology-of-movie-recommendations',
+    'best-scifi-movies-all-time',
     'netflix-alternatives-2024',
     'movie-recommendation-algorithms',
   ];
