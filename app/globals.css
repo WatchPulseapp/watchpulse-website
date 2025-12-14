@@ -6,6 +6,19 @@
   body {
     @apply bg-background-dark text-text-primary;
   }
+
+  /* Performance optimizations */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* GPU acceleration for animations */
+  [class*="motion-"] {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
 }
 
 /* Reduce motion for accessibility */
@@ -35,4 +48,20 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #B8977E;
+}
+
+/* Image loading optimization */
+img {
+  content-visibility: auto;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

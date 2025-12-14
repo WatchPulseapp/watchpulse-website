@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://watchpulse.com'
+  const baseUrl = 'https://watchpulseapp.com'
 
   // All blog post slugs - updated with 2025 content
   const blogPosts = [

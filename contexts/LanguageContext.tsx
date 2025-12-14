@@ -146,7 +146,13 @@ const translations = {
       instagram: 'Instagram'
     },
     footer: {
-      copyright: '© 2025 WatchPulse. Tüm hakları saklıdır.'
+      copyright: '© 2025 WatchPulse. Tüm hakları saklıdır.',
+      shareText: 'Daha fazla film severe ulaşmamıza yardım et! 🎥'
+    },
+    viral: {
+      featuresTitle: '🎬 Beğendin mi?',
+      featuresSubtitle: 'Ne izleyeceğine saatler harcayan arkadaşlarınla WatchPulse\'u paylaş!',
+      downloadNote: '💡 Büyümemize yardım et! Film ve dizi seven arkadaşlarınla paylaş'
     }
   },
   en: {
@@ -237,7 +243,13 @@ const translations = {
       instagram: 'Instagram'
     },
     footer: {
-      copyright: '© 2025 WatchPulse. All rights reserved.'
+      copyright: '© 2025 WatchPulse. All rights reserved.',
+      shareText: 'Help us reach more movie lovers! 🎥'
+    },
+    viral: {
+      featuresTitle: '🎬 Love what you see?',
+      featuresSubtitle: 'Share WatchPulse with friends who spend hours deciding what to watch!',
+      downloadNote: '💡 Help us grow! Share with friends who love movies & TV shows'
     }
   }
 };

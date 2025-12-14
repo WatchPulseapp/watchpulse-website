@@ -29,10 +29,11 @@ export const metadata: Metadata = {
     siteName: "WatchPulse",
     images: [
       {
-        url: '/logo.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'WatchPulse - AI-Powered Movie Recommendations',
+        alt: 'WatchPulse - AI-Powered Movie Recommendations Based on Your Mood',
+        type: 'image/jpeg',
       },
     ],
   },
@@ -41,7 +42,11 @@ export const metadata: Metadata = {
     title: "WatchPulse - AI Movie Recommendations",
     description: "AI-powered movie and TV show recommendations based on your mood. Discover what to watch next!",
     creator: "@watchpulseapp",
-    images: ['/logo.png'],
+    site: "@watchpulseapp",
+    images: {
+      url: '/og-image.jpg',
+      alt: 'WatchPulse - AI Movie Recommendations',
+    },
   },
   viewport: {
     width: "device-width",
