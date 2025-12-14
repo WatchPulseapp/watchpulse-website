@@ -18,7 +18,6 @@ const nextConfig = {
   // Optimize for faster builds and runtime
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'react', 'react-dom'],
-    optimizeCss: true,
   },
   // Production optimizations
   compress: true,
