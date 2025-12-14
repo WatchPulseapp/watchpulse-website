@@ -2,6 +2,7 @@ import { TrendingUp, Search, Palette, Film, Star, Globe, Moon, Bell } from 'luci
 
 export const SOCIAL_LINKS = {
   email: 'watchpulseapp@gmail.com',
+  twitter: 'https://x.com/watchpulseapp',
   tiktok: 'https://www.tiktok.com/@watchpulseapp?lang=tr-TR',
   instagram: 'https://www.instagram.com/watchpulseapp/',
 };

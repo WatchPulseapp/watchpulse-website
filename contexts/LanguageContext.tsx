@@ -14,17 +14,21 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const savedLang = localStorage.getItem('language') as Language;
-    if (savedLang) {
+    if (savedLang && (savedLang === 'tr' || savedLang === 'en')) {
       setLanguageState(savedLang);
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
   };
 
   const t = (key: string) => {
@@ -56,6 +60,7 @@ export function useLanguage() {
 const translations = {
   tr: {
     nav: {
+      blog: 'Blog',
       comingSoon: 'Çok Yakında'
     },
     hero: {
@@ -136,15 +141,17 @@ const translations = {
       title: 'İletişime Geç',
       subtitle: '',
       email: 'E-posta',
+      twitter: 'Twitter',
       tiktok: 'TikTok',
       instagram: 'Instagram'
     },
     footer: {
-      copyright: '© 2024 WatchPulse. Tüm hakları saklıdır.'
+      copyright: '© 2025 WatchPulse. Tüm hakları saklıdır.'
     }
   },
   en: {
     nav: {
+      blog: 'Blog',
       comingSoon: 'Coming Soon'
     },
     hero: {
@@ -225,11 +232,12 @@ const translations = {
       title: 'Get in Touch',
       subtitle: '',
       email: 'Email',
+      twitter: 'Twitter',
       tiktok: 'TikTok',
       instagram: 'Instagram'
     },
     footer: {
-      copyright: '© 2024 WatchPulse. All rights reserved.'
+      copyright: '© 2025 WatchPulse. All rights reserved.'
     }
   }
 };

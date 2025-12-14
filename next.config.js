@@ -7,7 +7,25 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    minimumCacheTTL: 60,
   },
+  // Performance optimizations
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+    reactRemoveProperties: process.env.NODE_ENV === 'production',
+  },
+  // Optimize for faster builds and runtime
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'react', 'react-dom'],
+    optimizeCss: true,
+  },
+  // Production optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: true,
+  // Faster development
+  reactStrictMode: true,
 }
 
 module.exports = nextConfig
