@@ -31,3 +31,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# environment variables (CRITICAL - Contains admin keys!)
+.env
+.env.local
+.env.production
+.env.development
+
+# waitlist data (SENSITIVE - Never commit!)
+/data
+data/waitlist.json
+data/ip-blacklist.json
+data/rate-limits.json

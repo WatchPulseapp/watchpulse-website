@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
+import WaitlistCTA from '@/components/ui/WaitlistCTA';
 import { Mail, Instagram, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SOCIAL_LINKS } from '@/lib/constants';
 
@@ -641,6 +642,9 @@ export default function BlogPage() {
   return (
     <main className="min-h-screen bg-background-dark">
       <Header hideLanguageSwitcher forceEnglish />
+
+      {/* Sticky Waitlist Button */}
+      <WaitlistCTA variant="sticky" language="en" />
 
       <Container className="py-12 md:py-20">
         {/* Header */}

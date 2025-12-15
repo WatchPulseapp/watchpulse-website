@@ -153,6 +153,18 @@ const translations = {
       featuresTitle: '🎬 Beğendin mi?',
       featuresSubtitle: 'Ne izleyeceğine saatler harcayan arkadaşlarınla WatchPulse\'u paylaş!',
       downloadNote: '💡 Büyümemize yardım et! Film ve dizi seven arkadaşlarınla paylaş'
+    },
+    waitlist: {
+      title: 'İlk Kullananlar Arasında Olun! 🚀',
+      subtitle: 'WatchPulse\'un çıkışından haberdar olmak için mail adresinizi bırakın. Uygulama yayına girdiğinde ilk siz öğrenin ve erken erişim avantajlarından yararlanın!',
+      placeholder: 'email@ornek.com',
+      cta: 'Listeye Katıl',
+      submitting: 'Ekleniyor...',
+      joined: 'Katıldın! ✓',
+      success: '🎉 Harika! Uygulama çıktığında sizi haberdar edeceğiz.',
+      error: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+      invalidEmail: 'Geçerli bir email adresi girin.',
+      privacy: '✨ Email adresiniz güvende. Uygulama çıktığında ilk haberdar olan siz olacaksınız!'
     }
   },
   en: {
@@ -250,6 +262,18 @@ const translations = {
       featuresTitle: '🎬 Love what you see?',
       featuresSubtitle: 'Share WatchPulse with friends who spend hours deciding what to watch!',
       downloadNote: '💡 Help us grow! Share with friends who love movies & TV shows'
+    },
+    waitlist: {
+      title: 'Be Among the First to Know! 🚀',
+      subtitle: 'Join our waitlist to get notified when WatchPulse launches. Be the first to know and enjoy early access benefits!',
+      placeholder: 'your.email@example.com',
+      cta: 'Join Waitlist',
+      submitting: 'Joining...',
+      joined: 'Joined! ✓',
+      success: '🎉 Awesome! We\'ll notify you when the app launches.',
+      error: 'Something went wrong. Please try again.',
+      invalidEmail: 'Please enter a valid email address.',
+      privacy: '✨ Your email is safe. You\'ll be the first to know when we launch!'
     }
   }
 };

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
+import WaitlistCTA from '@/components/ui/WaitlistCTA';
 import { ArrowLeft, Clock, Calendar, User, Tag } from 'lucide-react';
 
 // Enhanced blog post structure with rich content
@@ -1464,6 +1465,9 @@ export default async function BlogPost({ params }: PageProps) {
     <main className="min-h-screen bg-background-dark">
       <Header hideLanguageSwitcher forceEnglish />
 
+      {/* Sticky Waitlist Button */}
+      <WaitlistCTA variant="sticky" language="en" />
+
       <Container className="py-20">
         {/* Back Button */}
         <Link
@@ -1572,21 +1576,8 @@ export default async function BlogPost({ params }: PageProps) {
             })}
           </div>
 
-          {/* CTA */}
-          <div className="mt-16 p-10 bg-gradient-primary rounded-2xl text-center border border-brand-primary/20">
-            <h3 className="text-3xl font-bold mb-4 bg-gradient-hero bg-clip-text text-transparent">
-              Ready to try AI-powered movie recommendations?
-            </h3>
-            <p className="text-lg text-text-secondary mb-6 max-w-2xl mx-auto">
-              Download WatchPulse and discover your next favorite movie based on your mood. No more endless scrolling!
-            </p>
-            <Link
-              href="/"
-              className="inline-block px-8 py-4 bg-brand-accent rounded-lg font-bold hover:bg-brand-gold transition-all hover:scale-105"
-            >
-              Get Started Free
-            </Link>
-          </div>
+          {/* Waitlist CTA */}
+          <WaitlistCTA variant="inline" language="en" className="mt-16" />
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (

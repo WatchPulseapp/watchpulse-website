@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/sections/HeroSection";
+import WaitlistSection from "@/components/sections/WaitlistSection";
 import FeaturesSection from "@/components/sections/FeaturesSection";
 import MoodSection from "@/components/sections/MoodSection";
 import ScreenshotsSection from "@/components/sections/ScreenshotsSection";
@@ -11,6 +12,7 @@ export default function Home() {
     <main className="min-h-screen bg-background-dark">
       <Header />
       <HeroSection />
+      <WaitlistSection />
       <FeaturesSection />
       <MoodSection />
       <ScreenshotsSection />
