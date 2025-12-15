@@ -110,7 +110,7 @@ export default function AdminPage() {
               Admin Girişi
             </h1>
             <p className="text-text-secondary text-center mb-8">
-              Waitlist'e erişmek için admin anahtarınızı girin
+              Waitlist&apos;e erişmek için admin anahtarınızı girin
             </p>
 
             <form onSubmit={handleLogin} className="space-y-4">
