@@ -1,42 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const WAITLIST_FILE = path.join(process.cwd(), 'data', 'waitlist.json');
-const BLACKLIST_FILE = path.join(process.cwd(), 'data', 'ip-blacklist.json');
-const RATE_LIMIT_FILE = path.join(process.cwd(), 'data', 'rate-limits.json');
-
-interface WaitlistEntry {
-  email: string;
-  timestamp: string;
-  ip?: string;
-  userAgent?: string;
-}
-
-interface RateLimitEntry {
-  ip: string;
-  count: number;
-  lastRequest: string;
-  dailyCount: number;
-  lastDailyReset: string;
-}
+import connectDB from '@/lib/mongodb';
+import Waitlist from '@/lib/models/Waitlist';
 
 // Admin secret key from environment
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'change_this_secret_key';
 const MAX_HOURLY_REQUESTS = parseInt(process.env.MAX_REQUESTS_PER_HOUR || '5', 10);
 const MAX_DAILY_REQUESTS = parseInt(process.env.MAX_REQUESTS_PER_IP_PER_DAY || '10', 10);
 
+// Rate limiting storage (in-memory for simplicity)
+const rateLimits = new Map<string, { count: number; lastRequest: Date; dailyCount: number; lastDailyReset: string }>();
+
 // Enhanced email validation
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-  // Additional checks
   if (!emailRegex.test(email)) return false;
-  if (email.length > 254) return false; // RFC 5321
-  if (email.includes('..')) return false; // No consecutive dots
+  if (email.length > 254) return false;
+  if (email.includes('..')) return false;
 
   const [local, domain] = email.split('@');
-  if (local.length > 64) return false; // RFC 5321
+  if (local.length > 64) return false;
   if (domain.length > 255) return false;
 
   // Block common temporary/disposable email domains
@@ -52,120 +35,65 @@ function isValidEmail(email: string): boolean {
   return true;
 }
 
-// Sanitize input to prevent injection attacks
+// Sanitize input
 function sanitizeEmail(email: string): string {
   return email
     .toLowerCase()
     .trim()
-    .replace(/[<>\"\']/g, ''); // Remove potentially dangerous characters
-}
-
-// Ensure all data files exist
-async function ensureDataFiles() {
-  try {
-    const dataDir = path.join(process.cwd(), 'data');
-
-    // Create data directory
-    try {
-      await fs.access(dataDir);
-    } catch {
-      await fs.mkdir(dataDir, { recursive: true });
-    }
-
-    // Create files if they don't exist
-    const files = [
-      { path: WAITLIST_FILE, content: [] },
-      { path: BLACKLIST_FILE, content: [] },
-      { path: RATE_LIMIT_FILE, content: [] },
-    ];
-
-    for (const file of files) {
-      try {
-        await fs.access(file.path);
-      } catch {
-        await fs.writeFile(file.path, JSON.stringify(file.content, null, 2));
-      }
-    }
-  } catch (error) {
-    console.error('Error ensuring data files:', error);
-  }
-}
-
-// Check if IP is blacklisted
-async function isBlacklisted(ip: string): Promise<boolean> {
-  try {
-    const data = await fs.readFile(BLACKLIST_FILE, 'utf-8');
-    const blacklist: string[] = JSON.parse(data);
-    return blacklist.includes(ip);
-  } catch {
-    return false;
-  }
+    .replace(/[<>"']/g, '');
 }
 
 // Rate limiting check
-async function checkRateLimit(ip: string): Promise<{ allowed: boolean; reason?: string }> {
-  try {
-    const data = await fs.readFile(RATE_LIMIT_FILE, 'utf-8');
-    const rateLimits: RateLimitEntry[] = JSON.parse(data);
+function checkRateLimit(ip: string): { allowed: boolean; reason?: string } {
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const today = now.toISOString().split('T')[0];
 
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const today = now.toISOString().split('T')[0];
+  let entry = rateLimits.get(ip);
 
-    let entry = rateLimits.find(e => e.ip === ip);
-
-    if (!entry) {
-      entry = {
-        ip,
-        count: 1,
-        lastRequest: now.toISOString(),
-        dailyCount: 1,
-        lastDailyReset: today,
-      };
-      rateLimits.push(entry);
+  if (!entry) {
+    entry = {
+      count: 1,
+      lastRequest: now,
+      dailyCount: 1,
+      lastDailyReset: today,
+    };
+    rateLimits.set(ip, entry);
+  } else {
+    // Reset daily count if it's a new day
+    if (entry.lastDailyReset !== today) {
+      entry.dailyCount = 1;
+      entry.lastDailyReset = today;
+      entry.count = 1;
     } else {
-      // Reset daily count if it's a new day
-      if (entry.lastDailyReset !== today) {
-        entry.dailyCount = 1;
-        entry.lastDailyReset = today;
-        entry.count = 1;
-      } else {
-        entry.dailyCount++;
-      }
-
-      // Check hourly limit
-      const lastRequest = new Date(entry.lastRequest);
-      if (lastRequest > oneHourAgo) {
-        entry.count++;
-        if (entry.count > MAX_HOURLY_REQUESTS) {
-          return {
-            allowed: false,
-            reason: `Too many requests. Maximum ${MAX_HOURLY_REQUESTS} per hour.`
-          };
-        }
-      } else {
-        entry.count = 1;
-      }
-
-      // Check daily limit
-      if (entry.dailyCount > MAX_DAILY_REQUESTS) {
-        return {
-          allowed: false,
-          reason: `Daily limit exceeded. Maximum ${MAX_DAILY_REQUESTS} per day.`
-        };
-      }
-
-      entry.lastRequest = now.toISOString();
+      entry.dailyCount++;
     }
 
-    // Save updated rate limits
-    await fs.writeFile(RATE_LIMIT_FILE, JSON.stringify(rateLimits, null, 2));
+    // Check hourly limit
+    if (entry.lastRequest > oneHourAgo) {
+      entry.count++;
+      if (entry.count > MAX_HOURLY_REQUESTS) {
+        return {
+          allowed: false,
+          reason: `Too many requests. Maximum ${MAX_HOURLY_REQUESTS} per hour.`
+        };
+      }
+    } else {
+      entry.count = 1;
+    }
 
-    return { allowed: true };
-  } catch (error) {
-    console.error('Rate limit check error:', error);
-    return { allowed: true }; // Fail open
+    // Check daily limit
+    if (entry.dailyCount > MAX_DAILY_REQUESTS) {
+      return {
+        allowed: false,
+        reason: `Daily limit exceeded. Maximum ${MAX_DAILY_REQUESTS} per day.`
+      };
+    }
+
+    entry.lastRequest = now;
   }
+
+  return { allowed: true };
 }
 
 // Verify admin authentication
@@ -202,19 +130,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await ensureDataFiles();
-    const data = await fs.readFile(WAITLIST_FILE, 'utf-8');
-    const waitlist: WaitlistEntry[] = JSON.parse(data);
+    await connectDB();
 
-    // Sort by timestamp (newest first)
-    waitlist.sort((a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    // Get all waitlist entries, sorted by newest first
+    const waitlist = await Waitlist.find({})
+      .sort({ timestamp: -1 })
+      .lean();
+
+    // Format the response
+    const formattedWaitlist = waitlist.map(entry => ({
+      email: entry.email,
+      timestamp: entry.timestamp.toISOString(),
+      ip: entry.ip || 'unknown',
+      userAgent: entry.userAgent || 'unknown',
+    }));
 
     return NextResponse.json({
       success: true,
       count: waitlist.length,
-      emails: waitlist,
+      emails: formattedWaitlist,
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {
@@ -236,16 +170,8 @@ export async function POST(request: NextRequest) {
       'unknown'
     ).split(',')[0].trim();
 
-    // Check if IP is blacklisted
-    if (await isBlacklisted(ip)) {
-      return NextResponse.json(
-        { success: false, message: 'Access denied' },
-        { status: 403 }
-      );
-    }
-
     // Check rate limit
-    const rateLimit = await checkRateLimit(ip);
+    const rateLimit = checkRateLimit(ip);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { success: false, message: rateLimit.reason },
@@ -274,46 +200,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await ensureDataFiles();
-
-    // Read current waitlist
-    const data = await fs.readFile(WAITLIST_FILE, 'utf-8');
-    const waitlist: WaitlistEntry[] = JSON.parse(data);
+    await connectDB();
 
     // Check if email already exists
-    const emailExists = waitlist.some(
-      (entry) => entry.email === sanitizedEmail
-    );
+    const existingEntry = await Waitlist.findOne({ email: sanitizedEmail });
 
-    if (emailExists) {
+    if (existingEntry) {
       return NextResponse.json(
         { success: false, message: 'Email already registered' },
         { status: 409 }
       );
     }
 
-    // Get user agent for analytics
+    // Get user agent
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    // Add new entry
-    const newEntry: WaitlistEntry = {
+    // Create new entry
+    await Waitlist.create({
       email: sanitizedEmail,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(),
       ip,
-      userAgent: userAgent.substring(0, 200), // Limit length
-    };
+      userAgent: userAgent.substring(0, 200),
+    });
 
-    waitlist.push(newEntry);
-
-    // Save updated waitlist
-    await fs.writeFile(WAITLIST_FILE, JSON.stringify(waitlist, null, 2));
+    const totalCount = await Waitlist.countDocuments();
 
     console.log(`✅ New waitlist signup: ${sanitizedEmail} from ${ip}`);
 
     return NextResponse.json({
       success: true,
       message: 'Successfully joined the waitlist!',
-      count: waitlist.length,
+      count: totalCount,
     });
   } catch (error) {
     console.error('Error adding to waitlist:', error);
@@ -345,26 +262,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await ensureDataFiles();
-    const data = await fs.readFile(WAITLIST_FILE, 'utf-8');
-    let waitlist: WaitlistEntry[] = JSON.parse(data);
+    await connectDB();
 
-    const originalLength = waitlist.length;
-    waitlist = waitlist.filter(entry => entry.email !== email.toLowerCase().trim());
+    const result = await Waitlist.deleteOne({ email: email.toLowerCase().trim() });
 
-    if (waitlist.length === originalLength) {
+    if (result.deletedCount === 0) {
       return NextResponse.json(
         { success: false, message: 'Email not found' },
         { status: 404 }
       );
     }
 
-    await fs.writeFile(WAITLIST_FILE, JSON.stringify(waitlist, null, 2));
+    const totalCount = await Waitlist.countDocuments();
 
     return NextResponse.json({
       success: true,
       message: 'Email removed from waitlist',
-      count: waitlist.length,
+      count: totalCount,
     });
   } catch (error) {
     console.error('Error deleting from waitlist:', error);
