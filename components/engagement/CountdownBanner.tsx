@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Sparkles, Rocket } from 'lucide-react';
+import { Sparkles, Rocket } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CountdownBanner() {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mounted, setMounted] = useState(false);
 
@@ -77,7 +79,7 @@ export default function CountdownBanner() {
           <div className="flex items-center gap-2">
             <Rocket className="w-5 h-5 animate-pulse" />
             <span className="text-sm sm:text-base font-semibold">
-              App Launch Countdown
+              {t('countdown.title')}
             </span>
           </div>
 
@@ -85,22 +87,22 @@ export default function CountdownBanner() {
           <div className="flex items-center gap-2 text-sm sm:text-base font-mono">
             <div className="flex items-center gap-1 bg-white/20 rounded-lg px-3 py-1.5">
               <span className="font-bold text-lg">{timeLeft.days}</span>
-              <span className="text-xs opacity-80">days</span>
+              <span className="text-xs opacity-80">{t('countdown.days')}</span>
             </div>
             <span className="text-xl font-light">:</span>
             <div className="flex items-center gap-1 bg-white/20 rounded-lg px-3 py-1.5">
               <span className="font-bold text-lg">{String(timeLeft.hours).padStart(2, '0')}</span>
-              <span className="text-xs opacity-80">hrs</span>
+              <span className="text-xs opacity-80">{t('countdown.hours')}</span>
             </div>
             <span className="text-xl font-light">:</span>
             <div className="flex items-center gap-1 bg-white/20 rounded-lg px-3 py-1.5">
               <span className="font-bold text-lg">{String(timeLeft.minutes).padStart(2, '0')}</span>
-              <span className="text-xs opacity-80">min</span>
+              <span className="text-xs opacity-80">{t('countdown.minutes')}</span>
             </div>
             <span className="text-xl font-light hidden sm:inline">:</span>
             <div className="hidden sm:flex items-center gap-1 bg-white/20 rounded-lg px-3 py-1.5">
               <span className="font-bold text-lg">{String(timeLeft.seconds).padStart(2, '0')}</span>
-              <span className="text-xs opacity-80">sec</span>
+              <span className="text-xs opacity-80">{t('countdown.seconds')}</span>
             </div>
           </div>
 
@@ -112,7 +114,7 @@ export default function CountdownBanner() {
             className="flex items-center gap-2 px-4 py-2 bg-white text-purple-600 rounded-full text-sm font-bold hover:bg-white/90 transition-all shadow-md"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Get Early Access</span>
+            <span>{t('countdown.cta')}</span>
           </motion.button>
         </div>
       </div>

@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ChevronUp } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function FloatingCTA() {
+  const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -64,7 +66,7 @@ export default function FloatingCTA() {
             className="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-brand-primary to-brand-accent text-white font-semibold shadow-lg shadow-brand-primary/30 hover:shadow-xl hover:shadow-brand-primary/40 transition-all"
           >
             <Sparkles className="w-5 h-5" />
-            <span>Join Waitlist</span>
+            <span>{t('floatingCta.cta')}</span>
           </motion.button>
         </motion.div>
       )}

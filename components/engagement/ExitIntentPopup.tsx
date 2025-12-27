@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Gift, ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ExitIntentPopup() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -110,18 +112,18 @@ export default function ExitIntentPopup() {
                 </div>
 
                 <h2 className="text-2xl font-bold text-white mb-2">
-                  Wait! Don&apos;t Miss Out!
+                  {t('exitPopup.title')}
                 </h2>
 
                 <p className="text-text-secondary mb-6">
-                  Join <span className="text-brand-primary font-semibold">10,000+</span> movie lovers
-                  and get early access to WatchPulse + exclusive recommendations!
+                  <span className="text-brand-primary font-semibold">{t('exitPopup.joiners')}</span>{' '}
+                  {t('exitPopup.subtitle')}
                 </p>
 
                 {status === 'success' ? (
                   <div className="flex items-center justify-center gap-2 text-green-400 py-4">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-semibold">You&apos;re in! Check your email.</span>
+                    <span className="font-semibold">{t('exitPopup.success')}</span>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-3">
@@ -129,7 +131,7 @@ export default function ExitIntentPopup() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
+                      placeholder={t('exitPopup.placeholder')}
                       className="w-full px-4 py-3 rounded-xl bg-background-dark border-2 border-brand-primary/20 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-primary transition-colors"
                       required
                     />
@@ -139,10 +141,10 @@ export default function ExitIntentPopup() {
                       className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-primary to-brand-accent text-white font-semibold hover:shadow-lg hover:shadow-brand-primary/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {status === 'loading' ? (
-                        'Joining...'
+                        t('exitPopup.joining')
                       ) : (
                         <>
-                          Get Early Access
+                          {t('exitPopup.cta')}
                           <ArrowRight className="w-5 h-5" />
                         </>
                       )}
@@ -151,7 +153,7 @@ export default function ExitIntentPopup() {
                 )}
 
                 <p className="text-xs text-text-muted mt-4">
-                  No spam, ever. Unsubscribe anytime.
+                  {t('exitPopup.privacy')}
                 </p>
               </div>
             </div>

@@ -165,6 +165,53 @@ const translations = {
       error: 'Bir hata oluştu. Lütfen tekrar deneyin.',
       invalidEmail: 'Geçerli bir email adresi girin.',
       privacy: '✨ Email adresiniz güvende. Uygulama çıktığında ilk haberdar olan siz olacaksınız!'
+    },
+    // Engagement components translations
+    countdown: {
+      title: 'Uygulama Lansmanı',
+      days: 'gün',
+      hours: 'saat',
+      minutes: 'dk',
+      seconds: 'sn',
+      cta: 'Erken Erişim Al'
+    },
+    fomo: {
+      joined: 'Katıldı',
+      spotsLeft: 'Kalan Yer',
+      today: 'Bugün',
+      progressTitle: 'Erken Erişim Durumu',
+      full: 'Dolu',
+      almostFull: 'Neredeyse Doldu!',
+      urgency: 'Erken erişim yerleri sınırlı - şimdi yerinizi ayırtın!',
+      noSpam: 'Spam yok',
+      unsubscribe: 'İstediğiniz zaman çıkın',
+      free: '%100 Ücretsiz'
+    },
+    exitPopup: {
+      title: 'Dur! Kaçırma!',
+      subtitle: 'film sever topluluğumuza katıl ve WatchPulse\'a erken erişim + özel öneriler kazan!',
+      joiners: '10.000+',
+      placeholder: 'Email adresiniz',
+      cta: 'Erken Erişim Al',
+      joining: 'Katılıyor...',
+      success: 'Katıldın! Emailini kontrol et.',
+      privacy: 'Spam yok. İstediğin zaman çıkabilirsin.'
+    },
+    socialProof: {
+      justJoined: 'az önce katıldı',
+      names: ['Ahmet', 'Mehmet', 'Ayşe', 'Fatma', 'Ali', 'Zeynep', 'Mustafa', 'Elif', 'Hasan', 'Esra', 'Emre', 'Selin', 'Burak', 'Deniz', 'Can', 'Ece'],
+      cities: ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep', 'Mersin', 'Diyarbakır', 'Kayseri', 'Eskişehir', 'Samsun', 'Trabzon']
+    },
+    floatingCta: {
+      cta: 'Listeye Katıl'
+    },
+    pushNotification: {
+      title: 'Lansmanı Kaçırma! 🚀',
+      subtitle: 'WatchPulse hazır olduğunda bildirim al. Ruh haline göre film keşfeden ilk sen ol.',
+      later: 'Sonra',
+      notify: 'Bildir',
+      success: 'Hazırsın!',
+      successSubtitle: 'WatchPulse yayına girdiğinde seni bilgilendireceğiz'
     }
   },
   en: {
@@ -274,6 +321,53 @@ const translations = {
       error: 'Something went wrong. Please try again.',
       invalidEmail: 'Please enter a valid email address.',
       privacy: '✨ Your email is safe. You\'ll be the first to know when we launch!'
+    },
+    // Engagement components translations
+    countdown: {
+      title: 'App Launch Countdown',
+      days: 'days',
+      hours: 'hrs',
+      minutes: 'min',
+      seconds: 'sec',
+      cta: 'Get Early Access'
+    },
+    fomo: {
+      joined: 'Joined',
+      spotsLeft: 'Spots Left',
+      today: 'Today',
+      progressTitle: 'Early Access Progress',
+      full: 'Full',
+      almostFull: 'Almost Full!',
+      urgency: 'Early access spots are limited - secure yours now!',
+      noSpam: 'No spam, ever',
+      unsubscribe: 'Unsubscribe anytime',
+      free: '100% Free'
+    },
+    exitPopup: {
+      title: 'Wait! Don\'t Miss Out!',
+      subtitle: 'movie lovers and get early access to WatchPulse + exclusive recommendations!',
+      joiners: '10,000+',
+      placeholder: 'Enter your email',
+      cta: 'Get Early Access',
+      joining: 'Joining...',
+      success: 'You\'re in! Check your email.',
+      privacy: 'No spam, ever. Unsubscribe anytime.'
+    },
+    socialProof: {
+      justJoined: 'just joined',
+      names: ['Alex', 'Sarah', 'Mike', 'Emma', 'James', 'Olivia', 'Daniel', 'Sophie', 'Chris', 'Isabella', 'David', 'Mia', 'John', 'Ava', 'Ryan', 'Grace'],
+      cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'San Diego', 'Dallas', 'Austin', 'Miami', 'Seattle', 'Denver', 'Boston', 'Atlanta', 'Portland']
+    },
+    floatingCta: {
+      cta: 'Join Waitlist'
+    },
+    pushNotification: {
+      title: 'Don\'t miss the launch! 🚀',
+      subtitle: 'Get notified when WatchPulse is ready. Be the first to discover movies based on your mood.',
+      later: 'Maybe later',
+      notify: 'Notify me',
+      success: 'You\'re all set!',
+      successSubtitle: 'We\'ll notify you when WatchPulse launches'
     }
   }
 };

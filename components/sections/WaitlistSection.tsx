@@ -156,7 +156,7 @@ export default function WaitlistSection() {
                   <div className="text-xl sm:text-2xl font-bold text-white">
                     <AnimatedCounter target={currentSignups} />
                   </div>
-                  <div className="text-xs sm:text-sm text-text-muted">Joined</div>
+                  <div className="text-xs sm:text-sm text-text-muted">{t('fomo.joined')}</div>
                 </div>
                 <div className="text-center border-x border-brand-primary/20">
                   <div className="flex items-center justify-center gap-1 text-yellow-400 mb-1">
@@ -165,7 +165,7 @@ export default function WaitlistSection() {
                   <div className="text-xl sm:text-2xl font-bold text-yellow-400">
                     {spotsLeft.toLocaleString()}
                   </div>
-                  <div className="text-xs sm:text-sm text-text-muted">Spots Left</div>
+                  <div className="text-xs sm:text-sm text-text-muted">{t('fomo.spotsLeft')}</div>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
@@ -174,15 +174,15 @@ export default function WaitlistSection() {
                   <div className="text-xl sm:text-2xl font-bold text-green-400">
                     +127
                   </div>
-                  <div className="text-xs sm:text-sm text-text-muted">Today</div>
+                  <div className="text-xs sm:text-sm text-text-muted">{t('fomo.today')}</div>
                 </div>
               </div>
 
               {/* Progress Bar */}
               <div className="relative">
                 <div className="flex justify-between text-xs text-text-muted mb-2">
-                  <span>Early Access Progress</span>
-                  <span>{progressPercent.toFixed(0)}% Full</span>
+                  <span>{t('fomo.progressTitle')}</span>
+                  <span>{progressPercent.toFixed(0)}% {t('fomo.full')}</span>
                 </div>
                 <div className="h-3 bg-background-dark rounded-full overflow-hidden">
                   <motion.div
@@ -194,7 +194,7 @@ export default function WaitlistSection() {
                 </div>
                 <div className="flex justify-between text-xs text-text-muted mt-1">
                   <span>0</span>
-                  <span className="text-brand-primary font-medium">Almost Full!</span>
+                  <span className="text-brand-primary font-medium">{t('fomo.almostFull')}</span>
                   <span>{totalSpots.toLocaleString()}</span>
                 </div>
               </div>
@@ -210,7 +210,7 @@ export default function WaitlistSection() {
           >
             <Clock className="w-4 h-4 animate-pulse" />
             <span className="text-sm font-medium">
-              Early access spots are limited - secure yours now!
+              {t('fomo.urgency')}
             </span>
           </motion.div>
 
@@ -283,19 +283,19 @@ export default function WaitlistSection() {
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              No spam, ever
+              {t('fomo.noSpam')}
             </div>
             <div className="flex items-center gap-2 text-text-muted text-sm">
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              Unsubscribe anytime
+              {t('fomo.unsubscribe')}
             </div>
             <div className="flex items-center gap-2 text-text-muted text-sm">
               <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              100% Free
+              {t('fomo.free')}
             </div>
           </motion.div>
 

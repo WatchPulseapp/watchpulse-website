@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, Check, Sparkles } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function PushNotificationOptIn() {
+  const { t, language } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -39,8 +41,12 @@ export default function PushNotificationOptIn() {
         localStorage.setItem('pushNotificationSubscribed', 'true');
 
         // Teşekkür mesajı göster
+        const notificationBody = language === 'tr'
+          ? 'Uygulama yayına girdiğinde ilk sen öğreneceksin!'
+          : 'You\'ll be the first to know when we launch!';
+
         new Notification('WatchPulse 🎬', {
-          body: 'You\'ll be the first to know when we launch!',
+          body: notificationBody,
           icon: '/icon-192.png',
           badge: '/icon-192.png'
         });
@@ -84,9 +90,9 @@ export default function PushNotificationOptIn() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20 mb-3">
                 <Check className="w-6 h-6 text-green-400" />
               </div>
-              <h4 className="text-white font-semibold">You&apos;re all set!</h4>
+              <h4 className="text-white font-semibold">{t('pushNotification.success')}</h4>
               <p className="text-text-secondary text-sm mt-1">
-                We&apos;ll notify you when WatchPulse launches
+                {t('pushNotification.successSubtitle')}
               </p>
             </div>
           ) : (
@@ -100,10 +106,10 @@ export default function PushNotificationOptIn() {
                 </div>
                 <div className="flex-1 pr-6">
                   <h4 className="text-white font-semibold mb-1">
-                    Don&apos;t miss the launch! 🚀
+                    {t('pushNotification.title')}
                   </h4>
                   <p className="text-text-secondary text-sm">
-                    Get notified when WatchPulse is ready. Be the first to discover movies based on your mood.
+                    {t('pushNotification.subtitle')}
                   </p>
                 </div>
               </div>
@@ -113,14 +119,14 @@ export default function PushNotificationOptIn() {
                   onClick={handleDismiss}
                   className="flex-1 px-4 py-2 rounded-lg border border-brand-primary/30 text-text-secondary text-sm font-medium hover:bg-brand-primary/10 transition-colors"
                 >
-                  Maybe later
+                  {t('pushNotification.later')}
                 </button>
                 <button
                   onClick={handleSubscribe}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-brand-primary to-brand-accent text-white text-sm font-semibold hover:opacity-90 transition-opacity"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Notify me
+                  {t('pushNotification.notify')}
                 </button>
               </div>
             </>
