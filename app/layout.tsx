@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { Analytics } from '@vercel/analytics/react';
+import VercelAnalytics from "@/components/analytics/VercelAnalytics";
 import Schema from './schema';
 import GoogleAnalytics from './GoogleAnalytics';
 
@@ -93,7 +93,7 @@ export default function RootLayout({
         <LanguageProvider>
           {children}
         </LanguageProvider>
-        <Analytics />
+        <VercelAnalytics />
       </body>
     </html>
   );
