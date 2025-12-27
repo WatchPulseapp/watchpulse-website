@@ -5,6 +5,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import WaitlistCTA from '@/components/ui/WaitlistCTA';
+import ReadingProgress from '@/components/blog/ReadingProgress';
+import NewsletterCTA from '@/components/blog/NewsletterCTA';
 import { ArrowLeft, Clock, Calendar, User, Tag, Sparkles, Share2, Link2, Twitter } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
@@ -1563,6 +1565,7 @@ export default async function BlogPost({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      <ReadingProgress />
       <main className="min-h-screen bg-background-dark">
         <Header hideLanguageSwitcher forceEnglish />
 
@@ -1754,6 +1757,9 @@ export default async function BlogPost({ params }: PageProps) {
               }
             })}
           </div>
+
+          {/* Newsletter CTA */}
+          <NewsletterCTA />
 
           {/* Waitlist CTA */}
           <WaitlistCTA variant="inline" language="en" className="mt-16" />
