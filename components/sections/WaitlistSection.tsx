@@ -1,18 +1,54 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Container from '../layout/Container';
 import GradientText from '../ui/GradientText';
-import { Mail, Sparkles, Check } from 'lucide-react';
+import { Mail, Sparkles, Check, Users, TrendingUp, Clock, Zap } from 'lucide-react';
 import { fadeInUp } from '@/lib/animations';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+// Animated counter component
+function AnimatedCounter({ target, duration = 2000 }: { target: number; duration?: number }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      setCount(Math.floor(progress * target));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [target, duration]);
+
+  return <span>{count.toLocaleString()}</span>;
+}
 
 export default function WaitlistSection() {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Simulated waitlist stats
+  const totalSpots = 10000;
+  const currentSignups = 7847; // Simulated number
+  const spotsLeft = totalSpots - currentSignups;
+  const progressPercent = (currentSignups / totalSpots) * 100;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +132,87 @@ export default function WaitlistSection() {
 
           {/* Subtitle */}
           <motion.p
-            className="text-base sm:text-lg md:text-xl text-text-secondary mb-8 sm:mb-10 leading-relaxed"
+            className="text-base sm:text-lg md:text-xl text-text-secondary mb-6 sm:mb-8 leading-relaxed"
             {...fadeInUp}
             transition={{ delay: 0.2 }}
           >
             {t('waitlist.subtitle')}
           </motion.p>
+
+          {/* FOMO Stats Bar */}
+          {mounted && (
+            <motion.div
+              className="bg-background-card/50 backdrop-blur-sm rounded-2xl border border-brand-primary/20 p-4 sm:p-6 mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-brand-primary mb-1">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div className="text-xl sm:text-2xl font-bold text-white">
+                    <AnimatedCounter target={currentSignups} />
+                  </div>
+                  <div className="text-xs sm:text-sm text-text-muted">Joined</div>
+                </div>
+                <div className="text-center border-x border-brand-primary/20">
+                  <div className="flex items-center justify-center gap-1 text-yellow-400 mb-1">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-400">
+                    {spotsLeft.toLocaleString()}
+                  </div>
+                  <div className="text-xs sm:text-sm text-text-muted">Spots Left</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-400">
+                    +127
+                  </div>
+                  <div className="text-xs sm:text-sm text-text-muted">Today</div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="relative">
+                <div className="flex justify-between text-xs text-text-muted mb-2">
+                  <span>Early Access Progress</span>
+                  <span>{progressPercent.toFixed(0)}% Full</span>
+                </div>
+                <div className="h-3 bg-background-dark rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-brand-primary via-purple-500 to-brand-accent rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-text-muted mt-1">
+                  <span>0</span>
+                  <span className="text-brand-primary font-medium">Almost Full!</span>
+                  <span>{totalSpots.toLocaleString()}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Urgency Message */}
+          <motion.div
+            className="flex items-center justify-center gap-2 text-yellow-400 mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Clock className="w-4 h-4 animate-pulse" />
+            <span className="text-sm font-medium">
+              Early access spots are limited - secure yours now!
+            </span>
+          </motion.div>
 
           {/* Email Form */}
           <motion.form
@@ -161,6 +272,32 @@ export default function WaitlistSection() {
               </motion.p>
             )}
           </motion.form>
+
+          {/* Trust Badges */}
+          <motion.div
+            className="flex flex-wrap items-center justify-center gap-4 mt-8"
+            {...fadeInUp}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="flex items-center gap-2 text-text-muted text-sm">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              No spam, ever
+            </div>
+            <div className="flex items-center gap-2 text-text-muted text-sm">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Unsubscribe anytime
+            </div>
+            <div className="flex items-center gap-2 text-text-muted text-sm">
+              <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              100% Free
+            </div>
+          </motion.div>
 
           {/* Additional Info */}
           <motion.p

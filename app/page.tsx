@@ -7,14 +7,20 @@ import MoodSection from "@/components/sections/MoodSection";
 import ScreenshotsSection from "@/components/sections/ScreenshotsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import EngagementWrapper from "@/components/engagement/EngagementWrapper";
+import CountdownBanner from "@/components/engagement/CountdownBanner";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background-dark pt-10">
-      {/* Engagement components: countdown, exit popup, social proof, floating CTA */}
-      <EngagementWrapper />
-
+    <main className="min-h-screen bg-background-dark">
+      {/* Fixed Header */}
       <Header />
+
+      {/* Countdown Banner - Right below header */}
+      <div className="pt-16 md:pt-20">
+        <CountdownBanner />
+      </div>
+
+      {/* Main Content */}
       <HeroSection />
       <WaitlistSection />
       <FeaturesSection />
@@ -22,6 +28,9 @@ export default function Home() {
       <ScreenshotsSection />
       <ContactSection />
       <Footer />
+
+      {/* Engagement components: exit popup, social proof, floating CTA, push notification */}
+      <EngagementWrapper />
     </main>
   );
 }

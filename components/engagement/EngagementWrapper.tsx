@@ -3,15 +3,11 @@
 import ExitIntentPopup from './ExitIntentPopup';
 import SocialProofNotification from './SocialProofNotification';
 import FloatingCTA from './FloatingCTA';
-import CountdownBanner from './CountdownBanner';
 import PushNotificationOptIn from './PushNotificationOptIn';
 
 export default function EngagementWrapper() {
   return (
     <>
-      {/* Countdown banner at top */}
-      <CountdownBanner />
-
       {/* Exit intent popup */}
       <ExitIntentPopup />
 
