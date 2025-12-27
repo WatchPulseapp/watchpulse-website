@@ -69,8 +69,25 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://watchpulseapp.com",
+    languages: {
+      'en': 'https://watchpulseapp.com',
+      'tr': 'https://watchpulseapp.com',
+      'x-default': 'https://watchpulseapp.com',
+    },
   },
   category: 'entertainment',
+  verification: {
+    // Google Search Console - kullanıcı kendi kodunu ekleyecek
+    // google: 'YOUR_GOOGLE_VERIFICATION_CODE',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'WatchPulse',
+    'mobile-web-app-capable': 'yes',
+    'msapplication-TileColor': '#7C8DB0',
+    'format-detection': 'telephone=no',
+  },
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";

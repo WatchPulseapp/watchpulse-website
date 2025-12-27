@@ -1,0 +1,38 @@
+{
+  "name": "WatchPulse - AI Movie Recommendations",
+  "short_name": "WatchPulse",
+  "description": "AI-powered movie and TV show recommendations based on your mood. Discover what to watch next!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#7C8DB0",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "WatchPulse Homepage"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
