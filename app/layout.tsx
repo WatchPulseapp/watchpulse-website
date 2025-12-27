@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -7,7 +7,15 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#7C8DB0",
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://watchpulseapp.com'),
   title: "WatchPulse - AI-Powered Movie & TV Show Recommendations Based on Your Mood",
   description: "Discover personalized movie and TV show recommendations with AI-powered mood detection. Smart watchlist, TMDB integration, social features. Download free!",
   keywords: "movie recommendations, tv show suggestions, AI movies, mood-based recommendations, netflix alternative, watchlist app, TMDB, personalized streaming, movie app, AI film recommendation, what to watch, streaming guide, watchpulse",
@@ -48,12 +56,6 @@ export const metadata: Metadata = {
       alt: 'WatchPulse - AI Movie Recommendations',
     },
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  themeColor: "#7C8DB0",
   robots: {
     index: true,
     follow: true,

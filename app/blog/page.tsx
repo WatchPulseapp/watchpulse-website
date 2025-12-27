@@ -1,15 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import WaitlistCTA from '@/components/ui/WaitlistCTA';
-import { Mail, Instagram, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, Instagram, ChevronLeft, ChevronRight, Sparkles, Search, X, Rss } from 'lucide-react';
 import { SOCIAL_LINKS } from '@/lib/constants';
 
-const blogPosts = [
+interface BlogPostType {
+  slug: string;
+  title: { en: string; tr: string };
+  excerpt: { en: string; tr: string };
+  date: string;
+  readTime: string;
+  category: string;
+  isFromAI?: boolean;
+}
+
+// Hardcoded blog posts (existing content)
+const staticBlogPosts: BlogPostType[] = [
   {
     slug: 'best-ai-movie-apps-2025',
     title: {
@@ -549,21 +560,63 @@ const POSTS_PER_PAGE = 12;
 export default function BlogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dbBlogs, setDbBlogs] = useState<BlogPostType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch blogs from database on mount
+  useEffect(() => {
+    const fetchDbBlogs = async () => {
+      try {
+        const response = await fetch('/api/blogs');
+        const data = await response.json();
+        if (data.success && data.blogs) {
+          const formattedBlogs = data.blogs.map((blog: BlogPostType) => ({
+            ...blog,
+            isFromAI: true
+          }));
+          setDbBlogs(formattedBlogs);
+        }
+      } catch (error) {
+        console.error('Failed to fetch blogs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDbBlogs();
+  }, []);
+
+  // Combine database blogs (first) with static blogs
+  const blogPosts = [...dbBlogs, ...staticBlogPosts];
 
   // Get unique categories
   const categories = ['All', ...Array.from(new Set(blogPosts.map(post => post.category)))];
 
   // Featured post (most recent) - ALWAYS English for global audience
-  const featuredPost = {
+  const featuredPost = blogPosts.length > 0 && !searchQuery ? {
     ...blogPosts[0],
     title: typeof blogPosts[0].title === 'string' ? blogPosts[0].title : blogPosts[0].title.en,
-    excerpt: typeof blogPosts[0].excerpt === 'string' ? blogPosts[0].excerpt : blogPosts[0].excerpt.en
-  };
+    excerpt: typeof blogPosts[0].excerpt === 'string' ? blogPosts[0].excerpt : blogPosts[0].excerpt.en,
+    isFromAI: blogPosts[0].isFromAI
+  } : null;
 
-  // Filter posts by category
-  const filteredPosts = blogPosts.slice(1).filter(post =>
-    selectedCategory === 'All' || post.category === selectedCategory
-  );
+  // Filter posts by category and search query
+  const filteredPosts = blogPosts.slice(searchQuery ? 0 : 1).filter(post => {
+    const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
+    const title = typeof post.title === 'string' ? post.title : post.title.en;
+    const excerpt = typeof post.excerpt === 'string' ? post.excerpt : post.excerpt.en;
+    const matchesSearch = !searchQuery ||
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
@@ -660,6 +713,33 @@ export default function BlogPage() {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto mb-8 px-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search articles..."
+              className="w-full pl-12 pr-12 py-4 bg-background-card border border-brand-primary/20 rounded-2xl text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-primary/50 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-brand-primary/20 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-text-muted" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-text-muted mt-2 text-center">
+              Found {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;
+            </p>
+          )}
+        </div>
+
         {/* Social Media Section */}
         <div className="flex flex-wrap justify-center items-center gap-2 md:gap-4 mb-8 md:mb-16 pb-8 md:pb-12 border-b border-brand-primary/10 px-4">
           <span className="text-sm md:text-base text-text-secondary font-medium">{trans?.followUs || 'Follow:'}</span>
@@ -715,46 +795,66 @@ export default function BlogPage() {
             >
               <Instagram className="w-4 h-4 md:w-5 md:h-5 text-brand-primary group-hover:text-brand-accent transition-colors" />
             </a>
+
+            <a
+              href="/feed.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 md:p-3 bg-background-card rounded-full border border-brand-accent/20 hover:border-brand-accent/50 hover:bg-brand-accent/10 transition-all group hover:scale-110"
+              title="RSS Feed"
+            >
+              <Rss className="w-4 h-4 md:w-5 md:h-5 text-brand-accent group-hover:text-brand-gold transition-colors" />
+            </a>
           </div>
         </div>
 
         {/* Featured Post */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-primary/30 to-transparent" />
-            <span className="text-brand-accent font-semibold text-sm">{trans?.featured || 'Featured'}</span>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-primary/30 to-transparent" />
-          </div>
-
-          <Link
-            href={`/blog/${featuredPost.slug}`}
-            className="group block bg-gradient-primary rounded-3xl overflow-hidden border border-brand-primary/20 hover:border-brand-primary/50 transition-all duration-300"
-          >
-            <div className="grid md:grid-cols-2 gap-8 p-8 md:p-12">
-              <div className="flex flex-col justify-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-accent/20 rounded-full text-brand-accent text-sm font-semibold mb-4 w-fit border border-brand-accent/30">
-                  {featuredPost.category}
-                </div>
-                <h2 className="text-4xl font-bold mb-4 text-text-primary group-hover:text-brand-accent transition-colors leading-tight">
-                  {featuredPost.title}
-                </h2>
-                <p className="text-text-secondary text-lg mb-6 leading-relaxed">
-                  {featuredPost.excerpt}
-                </p>
-                <div className="flex items-center gap-4 text-sm text-text-muted">
-                  <span>{featuredPost.date}</span>
-                  <span>•</span>
-                  <span>{featuredPost.readTime}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="text-8xl opacity-20 group-hover:opacity-30 transition-opacity">
-                  📖
-                </div>
-              </div>
+        {featuredPost && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-primary/30 to-transparent" />
+              <span className="text-brand-accent font-semibold text-sm">{trans?.featured || 'Featured'}</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-brand-primary/30 to-transparent" />
             </div>
-          </Link>
-        </div>
+
+            <Link
+              href={`/blog/${featuredPost.slug}`}
+              className="group block bg-gradient-primary rounded-3xl overflow-hidden border border-brand-primary/20 hover:border-brand-primary/50 transition-all duration-300"
+            >
+              <div className="grid md:grid-cols-2 gap-8 p-8 md:p-12">
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-accent/20 rounded-full text-brand-accent text-sm font-semibold border border-brand-accent/30">
+                      {featuredPost.category}
+                    </div>
+                    {featuredPost.isFromAI && (
+                      <div className="inline-flex items-center gap-1 px-3 py-2 bg-purple-500/20 rounded-full text-purple-400 text-xs font-semibold border border-purple-500/30">
+                        <Sparkles className="w-3 h-3" />
+                        AI
+                      </div>
+                    )}
+                  </div>
+                  <h2 className="text-4xl font-bold mb-4 text-text-primary group-hover:text-brand-accent transition-colors leading-tight">
+                    {featuredPost.title}
+                  </h2>
+                  <p className="text-text-secondary text-lg mb-6 leading-relaxed">
+                    {featuredPost.excerpt}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm text-text-muted">
+                    <span>{featuredPost.date}</span>
+                    <span>•</span>
+                    <span>{featuredPost.readTime}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center">
+                  <div className="text-8xl opacity-20 group-hover:opacity-30 transition-opacity">
+                    📖
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 mb-12 max-w-4xl mx-auto">

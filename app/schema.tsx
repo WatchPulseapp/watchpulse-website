@@ -81,6 +81,54 @@ export default function Schema() {
     ]
   };
 
+  // FAQ Schema for Google Rich Snippets
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is WatchPulse?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WatchPulse is an AI-powered movie and TV show recommendation app that suggests content based on your current mood. It uses advanced algorithms to understand how you're feeling and recommends the perfect entertainment to match."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does mood-based movie recommendation work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WatchPulse analyzes your current emotional state through our intuitive mood selection interface. Whether you're feeling happy, sad, adventurous, or relaxed, the AI recommends movies and shows that perfectly match your mood, eliminating decision fatigue."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is WatchPulse free to use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, WatchPulse is completely free to download and use. We offer AI-powered recommendations, smart watchlists, and TMDB integration at no cost."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Which platforms is WatchPulse available on?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "WatchPulse is available on iOS and Android devices. You can download it from the App Store or Google Play Store."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is WatchPulse different from Netflix recommendations?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unlike Netflix which recommends based on viewing history, WatchPulse focuses on your current mood. This means you get recommendations that match how you're feeling right now, not just what you've watched before."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <script
@@ -98,6 +146,10 @@ export default function Schema() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
     </>
   );

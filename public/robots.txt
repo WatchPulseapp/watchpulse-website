@@ -3,6 +3,9 @@
 
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
 
 # Sitemap location
 Sitemap: https://watchpulseapp.com/sitemap.xml

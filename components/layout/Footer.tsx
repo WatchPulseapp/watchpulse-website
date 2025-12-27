@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import Container from './Container';
 import ShareButtons from '../ui/ShareButtons';
 import { SOCIAL_LINKS } from '@/lib/constants';
@@ -139,11 +140,32 @@ export default function Footer({ forceEnglish = false }: FooterProps = {}) {
             </div>
           </motion.div>
 
-          {/* Copyright */}
+          {/* Legal Links */}
           <motion.div
-            className="text-center text-xs sm:text-sm text-text-muted mt-6 sm:mt-8"
+            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm"
             {...fadeInUp}
             transition={{ delay: 0.3 }}
+          >
+            <Link
+              href="/privacy"
+              className="text-text-muted hover:text-brand-primary transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-text-muted/50">•</span>
+            <Link
+              href="/delete-account"
+              className="text-text-muted hover:text-brand-primary transition-colors"
+            >
+              Delete Account
+            </Link>
+          </motion.div>
+
+          {/* Copyright */}
+          <motion.div
+            className="text-center text-xs sm:text-sm text-text-muted mt-4 sm:mt-6"
+            {...fadeInUp}
+            transition={{ delay: 0.35 }}
           >
             <p>{getText('footer.copyright')}</p>
           </motion.div>
