@@ -5,13 +5,14 @@ import Blog from '@/lib/models/Blog';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY;
 
-// Kategoriler
+// Kategoriler - Genişletilmiş
 const CATEGORIES = [
   'Technology', 'Streaming', 'AI & Technology', 'Mood Guide',
-  'Genre Guide', 'Psychology', 'Entertainment', 'TV Shows', 'Trends'
+  'Genre Guide', 'Psychology', 'Entertainment', 'TV Shows', 'Trends',
+  'Hidden Gems', 'Binge Worthy', 'Weekend Watch', 'Date Night', 'Family Time'
 ];
 
-// Farklı blog açıları - her biri benzersiz içerik üretir
+// Farklı blog açıları - her biri benzersiz içerik üretir (GENİŞLETİLMİŞ)
 const BLOG_ANGLES = [
   { id: 'personal-story', tone: 'samimi ve arkadaşça', style: 'kişisel hikaye anlatımı' },
   { id: 'data-analysis', tone: 'profesyonel ve analitik', style: 'veri odaklı araştırma' },
@@ -24,7 +25,20 @@ const BLOG_ANGLES = [
   { id: 'future-trends', tone: 'vizyon sahibi', style: 'gelecek tahminleri' },
   { id: 'nostalgia', tone: 'sıcak ve hatırlayıcı', style: 'geçmişe bakış' },
   { id: 'hidden-gems', tone: 'keşifçi', style: 'gizli hazineler' },
-  { id: 'marathon-guide', tone: 'pratik', style: 'maraton izleme rehberi' }
+  { id: 'marathon-guide', tone: 'pratik', style: 'maraton izleme rehberi' },
+  // YENİ AÇILAR
+  { id: 'myth-busting', tone: 'gerçekçi ve açıklayıcı', style: 'yaygın yanlışları çürütme' },
+  { id: 'deep-dive', tone: 'araştırmacı ve detaylı', style: 'derinlemesine inceleme' },
+  { id: 'beginners-guide', tone: 'sabırlı ve destekleyici', style: 'yeni başlayanlar için rehber' },
+  { id: 'expert-picks', tone: 'otoriter ve güvenilir', style: 'uzman tavsiyeleri' },
+  { id: 'seasonal', tone: 'zamanında ve güncel', style: 'sezonluk/dönemsel içerik' },
+  { id: 'quick-tips', tone: 'hızlı ve pratik', style: 'kısa ve öz ipuçları' },
+  { id: 'emotional-journey', tone: 'empatik ve bağlayıcı', style: 'duygusal yolculuk' },
+  { id: 'cultural-analysis', tone: 'kültürel ve sosyolojik', style: 'kültürel analiz' },
+  { id: 'underdog-champion', tone: 'savunucu ve tutkulu', style: 'gözden kaçanları öne çıkarma' },
+  { id: 'guilty-pleasures', tone: 'eğlenceli ve suçluluk hissiz', style: 'suçlu zevkler' },
+  { id: 'science-explains', tone: 'bilimsel ve meraklı', style: 'bilimsel açıklama' },
+  { id: 'social-experiment', tone: 'deneysel ve ilgi çekici', style: 'sosyal deney formatı' }
 ];
 
 // Her açı için benzersiz giriş cümleleri
@@ -112,41 +126,233 @@ const UNIQUE_OPENINGS: Record<string, string[]> = {
     "Genre-hopping marathons hit different. Here's the exact sequence for the ultimate weekend viewing experience.",
     "The 'emotional rollercoaster' marathon format that will leave you feeling genuinely transformed. Trust the order.",
     "I've hosted 50+ movie marathons. These are the unbreakable rules I've learned for keeping everyone engaged."
+  ],
+  // YENİ AÇILAR İÇİN GİRİŞLER
+  'myth-busting': [
+    "Everything you've been told about finding good movies is wrong. Here's what actually works.",
+    "The streaming industry has been lying to you for years. Time to expose the truth.",
+    "That 'algorithm hack' everyone's sharing? Complete nonsense. Here's what really helps.",
+    "5 movie myths I believed for 10 years that turned out to be completely false.",
+    "Critics say this type of content is dying. The data proves the exact opposite."
+  ],
+  'deep-dive': [
+    "I spent 6 months analyzing viewing patterns across 50,000 users. The findings are disturbing.",
+    "What happens inside the Netflix algorithm when you hover over a title for 3 seconds? I found out.",
+    "The hidden psychology of movie poster colors and why they manipulate your choices.",
+    "I interviewed 20 Hollywood insiders. Here's what they revealed about recommendation systems.",
+    "A 47-page analysis condensed: why your streaming service knows you better than your therapist."
+  ],
+  'beginners-guide': [
+    "New to streaming? Here's everything I wish someone told me when I started 5 years ago.",
+    "The complete beginner's roadmap to becoming a cinephile (without pretending to like boring films).",
+    "If you've only ever watched mainstream movies, this guide will transform your entertainment life.",
+    "Starting your movie journey in 2025? Here's the ultimate no-judgment starter pack.",
+    "Confused by everyone's movie references? This catch-up guide covers the essential 50 films."
+  ],
+  'expert-picks': [
+    "Film critics were asked: 'What would you recommend to your best friend?' These answers surprised everyone.",
+    "Oscar voters anonymously shared their actual favorite movies. Not a single prestige film made the list.",
+    "Professional cinematographers revealed which movies they rewatch for pure enjoyment. Prepare to be shocked.",
+    "Directors with 20+ years experience share the movies that inspired their careers.",
+    "What do film school professors watch on their day off? Their honest answers might change your queue."
+  ],
+  'seasonal': [
+    "It's that time of year again, and these are the only movies that perfectly capture this exact moment.",
+    "The weather outside is changing, and so should your watchlist. Here's the ultimate seasonal guide.",
+    "Why watching the right movie at the right time of year hits completely different.",
+    "Seasonal depression is real. These movies are clinically proven to help (according to therapists).",
+    "The perfect movie for every single weather condition outside your window right now."
+  ],
+  'quick-tips': [
+    "7 seconds. That's all it takes to know if a movie is worth watching. Here's the trick.",
+    "The 3-question test that eliminates 90% of bad movie choices instantly.",
+    "Stop reading reviews. This 30-second hack tells you everything you need to know.",
+    "Film editors revealed the exact timestamp where you know if a movie will be good.",
+    "The laziest way to find amazing movies (that actually works better than trying hard)."
+  ],
+  'emotional-journey': [
+    "The movie that made me call my estranged father wasn't what I expected. Here's what happened.",
+    "How watching one specific film helped me process grief better than 6 months of therapy.",
+    "I watched movies specifically to make myself cry for 30 days. The results were life-changing.",
+    "The emotional healing power of cinema: a deeply personal exploration.",
+    "When I hit rock bottom, these 5 movies became my unexpected therapists."
+  ],
+  'cultural-analysis': [
+    "Why does every generation think movies were better in their youth? The psychology is fascinating.",
+    "How streaming has fundamentally changed the way we bond as a society.",
+    "The death of 'water cooler TV' and what replaced it might surprise you.",
+    "Cultural critics agree: this decade's movies reflect our collective anxiety perfectly.",
+    "How different countries watch the same movie and see completely different things."
+  ],
+  'underdog-champion': [
+    "This movie made $2 million at the box office. It deserved $200 million. Let me explain.",
+    "The most underrated film of the decade got a 47% on Rotten Tomatoes. Critics were dead wrong.",
+    "5 brilliant movies destroyed by bad marketing that deserve a second chance.",
+    "The streaming algorithm buries these masterpieces. Here's how to find them.",
+    "Why the 'best' movies often fail commercially while mediocre films dominate."
+  ],
+  'guilty-pleasures': [
+    "I'm a film school graduate and I unironically love these 'terrible' movies. No shame.",
+    "The movies critics hate that regular people secretly adore (backed by data).",
+    "Why your 'guilty pleasure' movies might actually be better than prestige films.",
+    "Film professors confessed their guilty pleasure watches. The list is hilariously relatable.",
+    "Stop feeling bad about your movie taste. Science says 'bad' movies serve a real purpose."
+  ],
+  'science-explains': [
+    "Neuroscientists finally explained why rewatching movies feels so good. The answer involves dopamine.",
+    "The scientific reason why you cry at movies but not in real life.",
+    "Psychologists discovered why we love watching scary movies. Evolution is wild.",
+    "The chemistry of movie-watching: what happens in your brain during a plot twist.",
+    "Why certain movie soundtracks give you chills. The science is absolutely fascinating."
+  ],
+  'social-experiment': [
+    "I made 100 people watch the same movie and recorded their reactions. The patterns were eerie.",
+    "What happens when you only watch AI-recommended movies for a month? I tried it.",
+    "I let strangers pick my movies for 30 days. Here's what I learned about humanity.",
+    "The social experiment: watching movies alone vs. with friends changes everything.",
+    "I followed Netflix's recommendations blindly for 60 days. The algorithm knows too much."
   ]
 };
 
-// Trend konular - gerçek SEO değeri olan
+// Trend konular - gerçek SEO değeri olan (KAPSAMLI GENİŞLETİLMİŞ)
 const TRENDING_TOPICS = [
+  // DUYGUSAL / MOOD BAZLI
   "best movies to watch when feeling lonely 2025",
-  "how AI is changing movie recommendations",
-  "why Netflix algorithm recommends bad movies",
   "movies that will make you cry healing tears",
-  "underrated sci-fi movies on streaming platforms",
-  "psychological thriller recommendations by mood",
   "best comfort movies for anxiety",
-  "hidden gems on Netflix nobody talks about",
-  "movies to watch based on your zodiac sign",
-  "how to break out of your movie comfort zone",
-  "best foreign films Americans are missing",
-  "movies that changed people's perspective on life",
-  "streaming service comparison 2025",
-  "why we rewatch the same movies psychology",
-  "best movie marathons for weekends",
-  "AI movie recommendations vs human curators",
   "movies to watch when you can't sleep",
   "best feel-good movies for depression",
+  "movies to watch after a breakup 2025",
+  "uplifting movies for when you feel hopeless",
+  "movies that help with grief and loss",
+  "calming movies for stress relief",
+  "movies to boost motivation and confidence",
+  "films that cure existential dread",
+  "movies for when you need a good laugh",
+  "heartwarming movies for cold winter nights",
+  "movies that restore faith in humanity",
+  "therapeutic movies recommended by psychologists",
+
+  // TEKNOLOJİ / AI
+  "how AI is changing movie recommendations",
+  "why Netflix algorithm recommends bad movies",
+  "AI movie recommendations vs human curators",
+  "how streaming algorithms manipulate your choices",
+  "the future of personalized entertainment 2025",
+  "machine learning in movie recommendation systems",
+  "why your For You page shows the same content",
+  "how to hack the Netflix algorithm legally",
+  "AI-powered apps that find perfect movies",
+  "the dark side of recommendation algorithms",
+
+  // PLATFORM KARŞILAŞTIRMA
+  "streaming service comparison 2025",
+  "Netflix vs Max vs Disney+ honest review",
+  "which streaming service has best content 2025",
+  "streaming services not worth the money",
+  "best streaming service for horror fans",
+  "cheapest streaming bundle combinations",
+  "streaming services with best original content",
+  "hidden features in streaming apps you didn't know",
+
+  // GİZLİ HAZİNELER
+  "hidden gems on Netflix nobody talks about",
+  "underrated movies with less than 10000 votes",
+  "best foreign films Americans are missing",
+  "movies that flopped but deserve watching",
+  "indie films that outshine Hollywood blockbusters",
+  "streaming movies with zero marketing",
+  "critically panned movies that are actually good",
+  "festival darlings nobody watched",
+  "direct-to-streaming hidden masterpieces",
+
+  // TÜR BAZLI
+  "underrated sci-fi movies on streaming platforms",
+  "psychological thriller recommendations by mood",
   "underrated horror movies streaming now",
-  "movies with unexpected plot twists",
-  "best documentaries that will change your mind",
   "romantic comedies that aren't cringe",
   "action movies with actual good plots",
   "animated movies for adults only",
-  "best movie soundtracks for productivity",
-  "movies based on true stories worth watching",
-  "cult classic movies streaming in 2025",
-  "movies to watch before you die updated list",
+  "best documentaries that will change your mind",
   "best international thrillers on Netflix",
-  "movies that are better than the book"
+  "crime dramas better than Breaking Bad",
+  "space movies that aren't boring",
+  "mystery movies with satisfying endings",
+  "comedy movies that are actually funny 2025",
+  "war movies that show reality not glory",
+  "sports movies for non-sports fans",
+  "musical movies for people who hate musicals",
+
+  // PSİKOLOJİ / BİLİM
+  "why we rewatch the same movies psychology",
+  "science behind why movies make us cry",
+  "psychology of binge watching explained",
+  "how movies affect mental health",
+  "the neuroscience of movie addiction",
+  "why sad movies make us feel better paradox",
+  "color psychology in movie posters",
+  "how filmmakers manipulate emotions",
+
+  // PRATİK REHBERLER
+  "movies to watch based on your zodiac sign",
+  "how to break out of your movie comfort zone",
+  "best movie marathons for weekends",
+  "movies to watch before you die updated list",
+  "perfect date night movies by relationship stage",
+  "movies to watch with parents without awkwardness",
+  "family movie night picks everyone will enjoy",
+  "movies to fall asleep to peacefully",
+  "background movies for working from home",
+  "movies under 90 minutes worth watching",
+  "movies over 3 hours that don't feel long",
+
+  // TREND / GÜNCEL
+  "movies that changed people's perspective on life",
+  "cult classic movies streaming in 2025",
+  "movies based on true stories worth watching",
+  "movies that are better than the book",
+  "movies with unexpected plot twists",
+  "most rewatchable movies of all time",
+  "movies everyone pretends to have seen",
+  "overrated movies people need to stop praising",
+  "movies that aged poorly vs aged like wine",
+  "controversial movies worth the debate",
+
+  // BEST OF LİSTELERİ
+  "best movie soundtracks for productivity",
+  "best cinematography in recent movies",
+  "best acting performances of the decade",
+  "best directorial debuts in film history",
+  "best ensemble casts in movie history",
+  "best movies shot in single locations",
+  "best nonlinear storytelling films",
+  "best movie opening scenes of all time",
+  "best movie endings that stick with you",
+  "best villain performances in cinema",
+
+  // NİŞ / ÖZEL
+  "movies for introverts who hate crowds",
+  "movies that understand neurodivergent minds",
+  "movies with accurate mental health portrayal",
+  "movies that capture quarter life crisis perfectly",
+  "movies for people going through career change",
+  "movies that make long distance relationships easier",
+  "movies for new parents feeling overwhelmed",
+  "movies that help with impostor syndrome",
+  "movies for when you feel stuck in life",
+  "movies that inspired people to travel",
+
+  // YARATICI / FARKLI
+  "movies with no dialogue that tell amazing stories",
+  "movies filmed in real time",
+  "movies where the villain wins",
+  "movies with unreliable narrators explained",
+  "movies that break the fourth wall brilliantly",
+  "found footage movies that feel real",
+  "anthology movies worth your time",
+  "movies within movies inception style",
+  "movies shot entirely on phones that look professional",
+  "black and white movies released after 2000"
 ];
 
 interface BlogContent {

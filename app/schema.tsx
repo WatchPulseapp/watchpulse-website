@@ -68,7 +68,7 @@ export default function Schema() {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD",
-      "availability": "https://schema.org/PreOrder"
+      "availability": "https://schema.org/InStock"
     },
     "aggregateRating": {
       "@type": "AggregateRating",
@@ -207,9 +207,9 @@ export default function Schema() {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD",
-      "availability": "https://schema.org/PreOrder",
+      "availability": "https://schema.org/InStock",
       "url": "https://watchpulseapp.com",
-      "priceValidUntil": "2025-12-31"
+      "priceValidUntil": "2026-12-31"
     },
     "aggregateRating": {
       "@type": "AggregateRating",
@@ -292,14 +292,14 @@ export default function Schema() {
     ]
   };
 
-  // Event Schema for launch countdown
+  // Event Schema for app availability
   const eventSchema = {
     "@context": "https://schema.org",
     "@type": "Event",
-    "name": "WatchPulse App Launch",
-    "description": "Join the waitlist for the official launch of WatchPulse - AI-powered movie recommendations based on your mood.",
+    "name": "WatchPulse App - Now Available",
+    "description": "Download WatchPulse - AI-powered movie recommendations based on your mood. Available on iOS and Android.",
     "startDate": "2025-01-15T00:00:00Z",
-    "endDate": "2025-01-15T23:59:59Z",
+    "endDate": "2025-12-31T23:59:59Z",
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
     "location": {
@@ -317,7 +317,7 @@ export default function Schema() {
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
       "url": "https://watchpulseapp.com",
-      "validFrom": "2024-12-01T00:00:00Z"
+      "validFrom": "2025-01-15T00:00:00Z"
     },
     "image": "https://watchpulseapp.com/og-image.jpg"
   };
@@ -456,8 +456,111 @@ export default function Schema() {
       "name": "WatchPulse Team"
     },
     "dateCreated": "2024",
+    "dateModified": "2025",
     "description": "An innovative AI system that matches movies and TV shows to users' current emotional states",
     "keywords": "AI, machine learning, movie recommendations, mood detection, entertainment, streaming"
+  };
+
+  // Blog Schema for the blog section
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "WatchPulse Blog",
+    "description": "Expert guides on AI movie recommendations, streaming platform tips, mood-based watching guides, and entertainment industry insights.",
+    "url": "https://watchpulseapp.com/blog",
+    "publisher": {
+      "@type": "Organization",
+      "name": "WatchPulse",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://watchpulseapp.com/logo.png"
+      }
+    },
+    "blogPost": [
+      {
+        "@type": "BlogPosting",
+        "headline": "Best AI Movie Recommendation Apps in 2025",
+        "url": "https://watchpulseapp.com/blog/best-ai-movie-apps-2025",
+        "datePublished": "2025-01-15",
+        "author": { "@type": "Organization", "name": "WatchPulse Team" }
+      },
+      {
+        "@type": "BlogPosting",
+        "headline": "Why Netflix Recommendations Suck (And What to Use Instead)",
+        "url": "https://watchpulseapp.com/blog/why-netflix-recommendations-suck",
+        "datePublished": "2025-01-14",
+        "author": { "@type": "Organization", "name": "WatchPulse Team" }
+      },
+      {
+        "@type": "BlogPosting",
+        "headline": "How AI Recommends Movies Based on Your Mood",
+        "url": "https://watchpulseapp.com/blog/how-ai-recommends-movies",
+        "datePublished": "2025-01-12",
+        "author": { "@type": "Organization", "name": "WatchPulse Team" }
+      }
+    ],
+    "inLanguage": "en-US"
+  };
+
+  // LocalBusiness Schema for better local SEO
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "WatchPulse",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "iOS, Android",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "2847",
+      "bestRating": "5"
+    }
+  };
+
+  // Service Schema
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "AI Movie Recommendations",
+    "provider": {
+      "@type": "Organization",
+      "name": "WatchPulse"
+    },
+    "description": "Free AI-powered movie and TV show recommendations based on your current mood",
+    "serviceType": "Entertainment Recommendation",
+    "areaServed": "Worldwide",
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "WatchPulse Features",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Mood-Based Recommendations"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Smart Watchlist"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Cross-Platform Sync"
+          }
+        }
+      ]
+    }
   };
 
   return (
@@ -513,6 +616,18 @@ export default function Schema() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(creativeWorkSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
     </>
   );

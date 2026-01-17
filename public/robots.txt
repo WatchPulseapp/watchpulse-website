@@ -1,28 +1,80 @@
 # robots.txt for WatchPulse
-# Allow all crawlers
+# https://watchpulseapp.com
 
+# Allow all major search engine crawlers
 User-agent: *
 Allow: /
+Allow: /blog/
+Allow: /blog/*
+
+# Disallow admin and API routes
 Disallow: /admin/
 Disallow: /api/
 Disallow: /private/
+Disallow: /_next/
+Disallow: /static/
 
 # Sitemap location
 Sitemap: https://watchpulseapp.com/sitemap.xml
 
-# Specific bot instructions
+# Google specific
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 0
 
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /og-image.jpg
+Allow: /logo.png
+
+User-agent: Googlebot-Video
+Allow: /
+
+# Bing specific
 User-agent: Bingbot
 Allow: /
-Crawl-delay: 0
+Crawl-delay: 1
 
+# Yahoo
 User-agent: Slurp
 Allow: /
+Crawl-delay: 1
 
-# Block AI training bots (optional - protects content)
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Yandex
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2
+
+# Apple
+User-agent: Applebot
+Allow: /
+
+# Facebook crawler
+User-agent: facebookexternalhit
+Allow: /
+
+# Twitter crawler
+User-agent: Twitterbot
+Allow: /
+
+# LinkedIn crawler
+User-agent: LinkedInBot
+Allow: /
+
+# Pinterest
+User-agent: Pinterest
+Allow: /
+
+# Block AI training bots (protects content)
 User-agent: GPTBot
 Disallow: /
 
@@ -37,3 +89,28 @@ Disallow: /
 
 User-agent: Claude-Web
 Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# Block aggressive/unwanted bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Host directive
+Host: https://watchpulseapp.com
