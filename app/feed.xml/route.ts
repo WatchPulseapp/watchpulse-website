@@ -43,10 +43,12 @@ const staticBlogs = [
   }
 ];
 
-// Rebuild hourly rather than once at build time. A route handler with no
-// request-dependent input is prerendered by default, which would freeze the
-// feed at whatever existed on deploy day and never show a single new article.
-export const revalidate = 3600;
+// Rebuild every five minutes rather than once at build time. A route handler
+// with no request-dependent input is prerendered by default, which would freeze
+// the feed at whatever existed on deploy day and never show a new article.
+// revalidatePath cannot shorten this from the publisher — it does not invalidate
+// metadata routes in Next 14.2 — so the interval is the whole mechanism.
+export const revalidate = 300;
 
 export async function GET() {
   try {

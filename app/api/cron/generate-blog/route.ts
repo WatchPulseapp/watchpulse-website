@@ -128,8 +128,11 @@ async function handle(request: NextRequest) {
       // editions, since the same article appears in each.
       revalidatePath('/blog');
       revalidatePath('/tr/blog');
-      revalidatePath('/sitemap.xml');
-      revalidatePath('/feed.xml');
+      // Deliberately not revalidating /sitemap.xml or /feed.xml here: measured
+      // on Next 14.2, revalidatePath leaves a metadata route's cached copy in
+      // place with or without the 'page' type. Both carry a five-minute
+      // revalidate of their own instead, and IndexNow is already told about the
+      // new URLs below, so nothing waits on a crawler noticing the sitemap.
 
       // Tell the IndexNow engines the article exists rather than waiting to be
       // crawled. Failures are reported, never thrown: the article is already

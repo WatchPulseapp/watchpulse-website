@@ -70,14 +70,18 @@ interface DBBlog {
   createdAt?: Date;
 }
 
-// Rebuild hourly instead of once at build time.
+// Rebuild every five minutes instead of once at build time.
 //
-// Without this Next prerenders the sitemap during the build and serves that
-// snapshot forever, so every article published afterwards — ten a day — stays
-// invisible to crawlers until the next deploy. An hour is short enough that a
-// new post is announced the same day and long enough that crawler traffic
-// never turns into a database query per hit.
-export const revalidate = 3600;
+// Without a revalidate Next prerenders the sitemap during the build and serves
+// that snapshot forever, so every article published afterwards — ten a day —
+// stays invisible to crawlers until the next deploy.
+//
+// Five minutes rather than an hour because the publisher cannot shorten it on
+// demand: revalidatePath does not invalidate a metadata route in Next 14.2
+// (measured — the cached copy survived the call and only changed on a rebuild).
+// Time is therefore the only lever, and five minutes caps crawler traffic at
+// twelve queries an hour however often the file is fetched.
+export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://watchpulseapp.com'
