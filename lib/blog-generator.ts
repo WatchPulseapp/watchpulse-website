@@ -158,6 +158,7 @@ export interface GenerationResult {
   angle?: string;
   /** Which TMDB story format produced this, or null if the fallback path ran. */
   format?: string | null;
+  category?: string;
   model?: string;
   words?: number;
   reason?: string;
@@ -744,6 +745,7 @@ export async function generateAndPublish(): Promise<GenerationResult> {
       topic: article.meta.topic,
       angle: article.meta.angle,
       format: article.meta.storyFormat,
+      category: article.category,
       model: article.meta.writerModel,
       words: article.words,
     };

@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { generateAndPublish, countTodaysAutoPosts } from '@/lib/blog-generator';
 import connectDB from '@/lib/mongodb';
 import BlogRun from '@/lib/models/BlogRun';
+import { submitToIndexNow, urlsForNewPost, type IndexNowResult } from '@/lib/indexnow';
+import { categorySlug } from '@/lib/blog-index';
 
 /**
  * Persists the outcome of an attempt. Deliberately swallows its own errors:
@@ -117,6 +119,8 @@ async function handle(request: NextRequest) {
     const published = results.filter((r) => r.ok);
     const failed = results.filter((r) => !r.ok);
 
+    let indexNow: IndexNowResult | null = null;
+
     if (published.length > 0) {
       // Refresh the Next data cache for the surfaces that list posts. The CDN
       // still holds /blog for up to an hour (see the Cache-Control header in
@@ -124,6 +128,14 @@ async function handle(request: NextRequest) {
       revalidatePath('/blog');
       revalidatePath('/sitemap.xml');
       revalidatePath('/feed.xml');
+
+      // Tell the IndexNow engines the article exists rather than waiting to be
+      // crawled. Failures are reported, never thrown: the article is already
+      // published and a search engine being unreachable must not fail the run.
+      const urls = published.flatMap((r) =>
+        r.slug ? urlsForNewPost(r.slug, categorySlug(r.category || '')) : []
+      );
+      indexNow = await submitToIndexNow([...new Set(urls)]);
     }
 
     return NextResponse.json(
@@ -139,6 +151,7 @@ async function handle(request: NextRequest) {
           model: r.model,
         })),
         failed: failed.map((r) => ({ topic: r.topic, reason: r.reason })),
+        indexNow,
       },
       { status: published.length > 0 ? 200 : 502 }
     );

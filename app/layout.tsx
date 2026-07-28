@@ -90,6 +90,13 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  // Search Console's HTML-tag verification. Set GOOGLE_SITE_VERIFICATION on the
+  // server to the token Google hands you and the meta tag appears; leave it
+  // unset and nothing is emitted. Verification via the existing Google
+  // Analytics property also works and needs nothing here.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   alternates: {
     canonical: "https://watchpulseapp.com",
     languages: {
