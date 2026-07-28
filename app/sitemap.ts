@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import connectDB from '@/lib/mongodb'
 import Blog from '@/lib/models/Blog'
 import { blogPostContent } from '@/data/static-blog-content'
-import { getAllPosts, collectCategories } from '@/lib/blog-index'
+import { getCategories } from '@/lib/blog-index'
 
 // Static blog post slugs with their creation dates for accurate lastModified
 const staticBlogPosts: Array<{ slug: string; date: string; priority: number }> = [
@@ -152,8 +152,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // they are listed in their own right rather than left to be discovered.
   let categoryUrls: MetadataRoute.Sitemap = [];
   try {
-    const posts = await getAllPosts();
-    categoryUrls = collectCategories(posts).map((c) => ({
+    categoryUrls = (await getCategories()).map((c) => ({
       url: `${baseUrl}/blog/category/${c.slug}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,

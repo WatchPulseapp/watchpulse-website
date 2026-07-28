@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { JournalMasthead, JournalFooter } from '@/components/blog/JournalChrome';
 import { JournalThemeProvider } from '@/components/blog/JournalTheme';
 import JournalIndex from '@/components/blog/JournalIndex';
-import { getAllPosts, collectCategories, findCategoryBySlug, paginate } from '@/lib/blog-index';
+import { getPostsPage, getCategories } from '@/lib/blog-index';
 import { categoryCopy } from '@/lib/blog-category-copy';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ type Props = { params: Promise<{ category: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: slug } = await params;
-  const found = findCategoryBySlug(await getAllPosts(), slug);
+  const found = (await getCategories()).find((c) => c.slug === slug) || null;
   if (!found) return { title: 'Category Not Found | WatchPulse Journal' };
 
   const copy = categoryCopy(found.name);
@@ -40,12 +40,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogCategoryPage({ params }: Props) {
   const { category: slug } = await params;
-  const all = await getAllPosts();
-  const found = findCategoryBySlug(all, slug);
+  const categories = await getCategories();
+  const found = categories.find((c) => c.slug === slug) || null;
   if (!found) notFound();
 
-  const inCategory = all.filter((p) => p.category === found.name);
-  const { items, page, totalPages, total } = paginate(inCategory, 1);
+  const { items, page, totalPages, total } = await getPostsPage(1, undefined, found.name);
   const copy = categoryCopy(found.name);
 
   const breadcrumb = {
@@ -69,7 +68,7 @@ export default async function BlogCategoryPage({ params }: Props) {
           <JournalMasthead />
           <JournalIndex
             posts={items}
-            categories={collectCategories(all)}
+            categories={categories}
             activeCategory={found.slug}
             page={page}
             totalPages={totalPages}
@@ -77,7 +76,6 @@ export default async function BlogCategoryPage({ params }: Props) {
             basePath={`/blog/category/${found.slug}`}
             heading={found.name}
             intro={copy.intro}
-            searchIndex={all.map((p) => ({ slug: p.slug, title: p.title, category: p.category }))}
           />
           <JournalFooter />
         </div>

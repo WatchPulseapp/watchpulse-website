@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { JournalMasthead, JournalFooter } from '@/components/blog/JournalChrome';
 import { JournalThemeProvider } from '@/components/blog/JournalTheme';
 import JournalIndex from '@/components/blog/JournalIndex';
-import { getAllPosts, collectCategories, findCategoryBySlug, paginate, POSTS_PER_PAGE } from '@/lib/blog-index';
+import { getPostsPage, getCategories } from '@/lib/blog-index';
 import { categoryCopy } from '@/lib/blog-category-copy';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ function parsePage(raw: string): number | null {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category: slug, page: raw } = await params;
   const page = parsePage(raw);
-  const found = page ? findCategoryBySlug(await getAllPosts(), slug) : null;
+  const found = page ? (await getCategories()).find((c) => c.slug === slug) || null : null;
   if (!found || !page) return { title: 'Page Not Found | WatchPulse Journal' };
 
   return {
@@ -40,14 +40,12 @@ export default async function BlogCategoryPaginatedPage({ params }: Props) {
   const requested = parsePage(raw);
   if (!requested) notFound();
 
-  const all = await getAllPosts();
-  const found = findCategoryBySlug(all, slug);
+  const categories = await getCategories();
+  const found = categories.find((c) => c.slug === slug) || null;
   if (!found) notFound();
 
-  const inCategory = all.filter((p) => p.category === found.name);
-  if (requested > Math.ceil(inCategory.length / POSTS_PER_PAGE)) notFound();
-
-  const { items, page, totalPages, total } = paginate(inCategory, requested);
+  const { items, page, totalPages, total } = await getPostsPage(requested, undefined, found.name);
+  if (requested > totalPages) notFound();
 
   return (
     <JournalThemeProvider>
@@ -55,7 +53,7 @@ export default async function BlogCategoryPaginatedPage({ params }: Props) {
         <JournalMasthead />
         <JournalIndex
           posts={items}
-          categories={collectCategories(all)}
+          categories={categories}
           activeCategory={found.slug}
           page={page}
           totalPages={totalPages}
@@ -63,7 +61,6 @@ export default async function BlogCategoryPaginatedPage({ params }: Props) {
           basePath={`/blog/category/${found.slug}`}
           heading={found.name}
           intro={categoryCopy(found.name).intro}
-          searchIndex={all.map((p) => ({ slug: p.slug, title: p.title, category: p.category }))}
         />
         <JournalFooter />
       </div>

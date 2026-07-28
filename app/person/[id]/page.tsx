@@ -14,7 +14,9 @@ import { getPersonDetails, profileUrl, backdropUrl } from '@/lib/tmdb';
  * which is also the only case where the page would be worth reading.
  */
 
-export const dynamic = 'force-dynamic';
+// A filmography changes far less often than an hour, and without caching every
+// view would cost a TMDB request and an extra round trip before first paint.
+export const revalidate = 86400;
 
 const SITE_URL = 'https://watchpulseapp.com';
 

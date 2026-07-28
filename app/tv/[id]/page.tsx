@@ -3,9 +3,11 @@ import { notFound } from 'next/navigation';
 import TitlePage from '@/components/title/TitlePage';
 import { loadTitle, titleMetadata, titleSchema } from '@/lib/title-page';
 
-// Fetched per request: streaming availability changes constantly, and a cached
-// "where to watch" answer is worse than none.
-export const dynamic = 'force-dynamic';
+// Cached for an hour and revalidated in the background. Without this every
+// page view is a TMDB request, which turns traffic — the thing we are trying to
+// attract — into an upstream bill and an extra round trip on every load.
+// Streaming availability moves on the order of weeks, not minutes.
+export const revalidate = 3600;
 
 type Props = { params: Promise<{ id: string }> };
 

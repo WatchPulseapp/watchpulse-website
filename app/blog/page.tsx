@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { JournalMasthead, JournalFooter } from '@/components/blog/JournalChrome';
 import { JournalThemeProvider } from '@/components/blog/JournalTheme';
 import JournalIndex from '@/components/blog/JournalIndex';
-import { getAllPosts, collectCategories, paginate } from '@/lib/blog-index';
+import { getPostsPage, getCategories } from '@/lib/blog-index';
 
 // Rendered per request so newly published posts appear immediately and the page
 // HTML always contains the article list for crawlers. The DB is on the same
@@ -36,8 +36,10 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-  const all = await getAllPosts();
-  const { items, page, totalPages, total } = paginate(all, 1);
+  const [{ items, page, totalPages, total }, categories] = await Promise.all([
+    getPostsPage(1),
+    getCategories(),
+  ]);
 
   return (
     <JournalThemeProvider>
@@ -45,7 +47,7 @@ export default async function BlogPage() {
         <JournalMasthead />
         <JournalIndex
           posts={items}
-          categories={collectCategories(all)}
+          categories={categories}
           activeCategory={null}
           page={page}
           totalPages={totalPages}
@@ -53,7 +55,6 @@ export default async function BlogPage() {
           basePath="/blog"
           heading="The Journal"
           intro="What to watch and why — new releases, streaming guides and the films worth clearing an evening for."
-          searchIndex={all.map((p) => ({ slug: p.slug, title: p.title, category: p.category }))}
           showLead
         />
         <JournalFooter />

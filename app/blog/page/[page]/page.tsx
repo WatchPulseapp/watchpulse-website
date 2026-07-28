@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { JournalMasthead, JournalFooter } from '@/components/blog/JournalChrome';
 import { JournalThemeProvider } from '@/components/blog/JournalTheme';
 import JournalIndex from '@/components/blog/JournalIndex';
-import { getAllPosts, collectCategories, paginate, POSTS_PER_PAGE } from '@/lib/blog-index';
+import { getPostsPage, getCategories } from '@/lib/blog-index';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,10 +40,12 @@ export default async function BlogPaginatedPage({ params }: Props) {
   const requested = parsePage(raw);
   if (!requested) notFound();
 
-  const all = await getAllPosts();
-  if (requested > Math.ceil(all.length / POSTS_PER_PAGE)) notFound();
-
-  const { items, page, totalPages, total } = paginate(all, requested);
+  const [{ items, page, totalPages, total }, categories] = await Promise.all([
+    getPostsPage(requested),
+    getCategories(),
+  ]);
+  // A page beyond the end is a URL that never existed.
+  if (requested > totalPages) notFound();
 
   return (
     <JournalThemeProvider>
@@ -51,7 +53,7 @@ export default async function BlogPaginatedPage({ params }: Props) {
         <JournalMasthead />
         <JournalIndex
           posts={items}
-          categories={collectCategories(all)}
+          categories={categories}
           activeCategory={null}
           page={page}
           totalPages={totalPages}
@@ -59,7 +61,6 @@ export default async function BlogPaginatedPage({ params }: Props) {
           basePath="/blog"
           heading="The Journal"
           intro="What to watch and why — new releases, streaming guides and the films worth clearing an evening for."
-          searchIndex={all.map((p) => ({ slug: p.slug, title: p.title, category: p.category }))}
         />
         <JournalFooter />
       </div>

@@ -32,6 +32,119 @@ export function categorySlug(category: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * One page of posts, fetched with skip/limit rather than by loading the archive
+ * and slicing it.
+ *
+ * The DB holds the generated posts newest-first and the curated static posts sit
+ * after them, so the combined list is just those two runs concatenated — which
+ * means a page can be resolved with a count and a bounded query instead of
+ * pulling every document on every request. At five posts a day the difference is
+ * a few kilobytes today and megabytes per request within the year.
+ */
+export async function getPostsPage(
+  page: number,
+  perPage = POSTS_PER_PAGE,
+  category?: string
+): Promise<{ items: BlogListItem[]; page: number; totalPages: number; total: number }> {
+  const query: Record<string, unknown> = { isPublished: true };
+  if (category) query.category = category;
+
+  const staticMatching = category
+    ? staticBlogPosts.filter((p) => p.category === category)
+    : staticBlogPosts;
+
+  let dbCount = 0;
+  try {
+    await connectDB();
+    dbCount = await Blog.countDocuments(query);
+  } catch (error) {
+    console.error('Blog count failed, serving static posts only:', error);
+  }
+
+  const total = dbCount + staticMatching.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const start = (safePage - 1) * perPage;
+
+  const items: BlogListItem[] = [];
+  const seen = new Set<string>();
+
+  // The window may start inside the DB run, inside the static run, or span both.
+  if (start < dbCount) {
+    try {
+      const dbBlogs = await Blog.find(query)
+        .select('slug title excerpt date readTime category coverImage')
+        .sort({ createdAt: -1 })
+        .skip(start)
+        .limit(perPage)
+        .lean();
+
+      for (const b of dbBlogs as Array<Record<string, any>>) {
+        if (!b.slug || seen.has(b.slug)) continue;
+        seen.add(b.slug);
+        items.push({
+          slug: b.slug,
+          title: b.title?.en || b.title?.tr || '',
+          excerpt: b.excerpt?.en || b.excerpt?.tr || '',
+          category: b.category || 'General',
+          date: b.date || '',
+          readTime: b.readTime || '5 min read',
+          coverImage: b.coverImage,
+        });
+      }
+    } catch (error) {
+      console.error('Blog page fetch failed, falling back to static:', error);
+    }
+  }
+
+  const staticStart = Math.max(0, start - dbCount);
+  for (const p of staticMatching.slice(staticStart)) {
+    if (items.length >= perPage) break;
+    if (seen.has(p.slug)) continue;
+    seen.add(p.slug);
+    items.push({
+      slug: p.slug,
+      title: p.title.en,
+      excerpt: p.excerpt.en,
+      category: p.category,
+      date: p.date,
+      readTime: p.readTime,
+      coverImage: p.coverImage,
+    });
+  }
+
+  return { items, page: safePage, totalPages, total };
+}
+
+/**
+ * Distinct categories with their counts, read from the DB rather than derived
+ * from a full document scan.
+ */
+export async function getCategories(): Promise<CategoryInfo[]> {
+  const counts = new Map<string, number>();
+
+  try {
+    await connectDB();
+    const grouped = await Blog.aggregate([
+      { $match: { isPublished: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+    for (const g of grouped as Array<{ _id: string; count: number }>) {
+      if (g._id) counts.set(g._id, g.count);
+    }
+  } catch (error) {
+    console.error('Category aggregation failed, using static categories:', error);
+  }
+
+  for (const p of staticBlogPosts) counts.set(p.category, (counts.get(p.category) || 0) + 1);
+
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, slug: categorySlug(name), count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+/** Full archive. Only for surfaces that genuinely need every post, like the sitemap. */
 export async function getAllPosts(): Promise<BlogListItem[]> {
   const items: BlogListItem[] = [];
   const seen = new Set<string>();
@@ -84,27 +197,4 @@ export interface CategoryInfo {
   count: number;
 }
 
-/** Categories that actually have posts, most populated first. */
-export function collectCategories(posts: BlogListItem[]): CategoryInfo[] {
-  const counts = new Map<string, number>();
-  for (const p of posts) counts.set(p.category, (counts.get(p.category) || 0) + 1);
 
-  return [...counts.entries()]
-    .map(([name, count]) => ({ name, slug: categorySlug(name), count }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-}
-
-export function findCategoryBySlug(posts: BlogListItem[], slug: string): CategoryInfo | null {
-  return collectCategories(posts).find((c) => c.slug === slug) || null;
-}
-
-export function paginate<T>(items: T[], page: number, perPage = POSTS_PER_PAGE) {
-  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
-  const safePage = Math.min(Math.max(page, 1), totalPages);
-  return {
-    items: items.slice((safePage - 1) * perPage, safePage * perPage),
-    page: safePage,
-    totalPages,
-    total: items.length,
-  };
-}

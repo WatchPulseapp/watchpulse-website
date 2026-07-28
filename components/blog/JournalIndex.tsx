@@ -27,8 +27,6 @@ interface JournalIndexProps {
   basePath: string;
   heading: string;
   intro: string;
-  /** Lightweight title index for search, covering every post on the site. */
-  searchIndex: Array<{ slug: string; title: string; category: string }>;
   /** The lead story treatment only makes sense on the unfiltered first page. */
   showLead?: boolean;
 }
@@ -58,7 +56,6 @@ export default function JournalIndex({
   basePath,
   heading,
   intro,
-  searchIndex,
   showLead = false,
 }: JournalIndexProps) {
   const lead = showLead && page === 1 ? posts[0] : null;
@@ -136,7 +133,7 @@ export default function JournalIndex({
             })}
           </nav>
 
-          <JournalSearch index={searchIndex} />
+          <JournalSearch />
         </div>
 
         {lead && (

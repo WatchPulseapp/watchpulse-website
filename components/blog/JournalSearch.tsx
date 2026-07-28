@@ -1,31 +1,57 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
+
+interface Result {
+  slug: string;
+  title: string;
+  category: string;
+}
 
 /**
  * Title search across the whole archive.
  *
- * Now that the grid is server-rendered per page, search cannot filter it in
- * place without contradicting the URL, so it works as an overlay: it holds a
- * title-only index of every post and shows matches as links. Titles alone keep
- * the payload small enough to ship on every index page.
+ * Queries the server rather than holding an index in the browser. The previous
+ * version shipped every post's title inside the HTML of every index page, which
+ * grows with the archive; this ships nothing and asks only when someone types.
  */
-export default function JournalSearch({
-  index,
-}: {
-  index: Array<{ slug: string; title: string; category: string }>;
-}) {
+export default function JournalSearch() {
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
-    return index
-      .filter((p) => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [query, index]);
+  // Tracks the latest request so a slow earlier response cannot overwrite the
+  // results of a later, more specific query.
+  const latest = useRef(0);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    const id = ++latest.current;
+    setLoading(true);
+
+    // Debounced so a typed word is one request, not one per keystroke.
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/blog-search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (id === latest.current) setResults(data.results || []);
+      } catch {
+        if (id === latest.current) setResults([]);
+      } finally {
+        if (id === latest.current) setLoading(false);
+      }
+    }, 220);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const open = query.trim().length >= 2;
 
@@ -60,7 +86,9 @@ export default function JournalSearch({
           className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border"
           style={{ borderColor: 'var(--rule)', background: 'var(--card)', boxShadow: 'var(--shadow-lift)' }}
         >
-          {results.length === 0 ? (
+          {loading && results.length === 0 ? (
+            <p className="journal-meta px-4 py-3">Searching…</p>
+          ) : results.length === 0 ? (
             <p className="journal-meta px-4 py-3">No articles match “{query.trim()}”.</p>
           ) : (
             <ul>
