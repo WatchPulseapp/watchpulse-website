@@ -40,6 +40,13 @@ export interface TmdbTitleDetails extends TmdbTitle {
   cast: string[];
   /** Subscription streaming services carrying it in the US. */
   providers: string[];
+  /**
+   * Providers keyed by country. Title pages are reached from shares made in the
+   * app, whose audience is largely in Turkey, while the blog speaks to a global
+   * readership — so both are carried and each surface shows what it can honestly
+   * claim rather than presenting one region's availability as universal.
+   */
+  providersByRegion: Record<string, string[]>;
   tagline: string | null;
 }
 
@@ -498,14 +505,28 @@ export async function getTitleDetails(id: number, mediaType: 'movie' | 'tv'): Pr
   const crew = raw.credits?.crew || [];
   const director = crew.find((c) => c.job === 'Director')?.name || crew.find((c) => c.job === 'Executive Producer')?.name || null;
 
+  // One /watch/providers response carries every country, so the regions a title
+  // page cares about cost nothing extra to pull out.
+  const allRegions = raw['watch/providers']?.results || {};
+  const providersByRegion: Record<string, string[]> = {};
+  for (const region of ['TR', 'US', 'GB']) {
+    const names = (allRegions[region]?.flatrate || []).map((p) => p.provider_name).slice(0, 6);
+    if (names.length) providersByRegion[region] = names;
+  }
+
   return {
     ...base,
     runtime: raw.runtime || raw.episode_run_time?.[0] || null,
     tagline: raw.tagline?.trim() || null,
     director,
     cast: (raw.credits?.cast || []).slice(0, 6).map((c) => c.name),
-    providers: (raw['watch/providers']?.results?.[REGION]?.flatrate || []).map((p) => p.provider_name).slice(0, 6),
+    providers: (allRegions[REGION]?.flatrate || []).map((p) => p.provider_name).slice(0, 6),
+    providersByRegion,
   };
+}
+
+export function posterUrl(path: string | null, size: 'w342' | 'w500' = 'w500'): string | undefined {
+  return path ? `${TMDB_IMAGE_BASE}/${size}${path}` : undefined;
 }
 
 export interface TmdbTrailer {
