@@ -43,6 +43,11 @@ const staticBlogs = [
   }
 ];
 
+// Rebuild hourly rather than once at build time. A route handler with no
+// request-dependent input is prerendered by default, which would freeze the
+// feed at whatever existed on deploy day and never show a single new article.
+export const revalidate = 3600;
+
 export async function GET() {
   try {
     // Fetch dynamic blogs from database
@@ -56,7 +61,9 @@ export async function GET() {
 
     try {
       await connectDB();
-      dbBlogs = await Blog.find({ isPublished: true })
+      // English edition only: this feed declares itself as en-us, and a Turkish
+      // article has no /blog/<slug> URL to link to.
+      dbBlogs = await Blog.find({ isPublished: true, lang: { $ne: 'tr' } })
         .select('slug title excerpt date category')
         .sort({ createdAt: -1 })
         .limit(20)

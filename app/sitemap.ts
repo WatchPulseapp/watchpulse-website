@@ -65,26 +65,48 @@ const staticBlogPosts: Array<{ slug: string; date: string; priority: number }> =
 
 interface DBBlog {
   slug: string;
+  lang?: string;
   updatedAt?: Date;
   createdAt?: Date;
 }
+
+// Rebuild hourly instead of once at build time.
+//
+// Without this Next prerenders the sitemap during the build and serves that
+// snapshot forever, so every article published afterwards — ten a day — stays
+// invisible to crawlers until the next deploy. An hour is short enough that a
+// new post is announced the same day and long enough that crawler traffic
+// never turns into a database query per hit.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://watchpulseapp.com'
 
   // Get dynamic blogs from database with their dates
   let dynamicBlogs: Array<{ slug: string; lastModified: Date; priority: number }> = [];
+  let turkishBlogs: Array<{ slug: string; lastModified: Date }> = [];
   try {
     await connectDB();
     const dbBlogs = await Blog.find({ isPublished: true })
-      .select('slug updatedAt createdAt')
+      .select('slug lang updatedAt createdAt')
       .lean() as DBBlog[];
 
-    dynamicBlogs = dbBlogs.map((blog) => ({
-      slug: blog.slug,
-      lastModified: blog.updatedAt || blog.createdAt || new Date(),
-      priority: 0.8 // AI-generated blogs get good priority
-    }));
+    // Split by edition. A Turkish article only exists at /tr/blog/<slug>, so
+    // listing it under /blog/ would point crawlers at a 404 — the precise harm
+    // a sitemap is supposed to prevent.
+    const modified = (blog: DBBlog) => blog.updatedAt || blog.createdAt || new Date();
+
+    dynamicBlogs = dbBlogs
+      .filter((blog) => blog.lang !== 'tr')
+      .map((blog) => ({
+        slug: blog.slug,
+        lastModified: modified(blog),
+        priority: 0.8 // AI-generated blogs get good priority
+      }));
+
+    turkishBlogs = dbBlogs
+      .filter((blog) => blog.lang === 'tr')
+      .map((blog) => ({ slug: blog.slug, lastModified: modified(blog) }));
   } catch (error) {
     console.error('Failed to fetch blogs for sitemap:', error);
   }
@@ -152,7 +174,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // they are listed in their own right rather than left to be discovered.
   let categoryUrls: MetadataRoute.Sitemap = [];
   try {
-    categoryUrls = (await getCategories()).map((c) => ({
+    categoryUrls = (await getCategories('en')).map((c) => ({
       url: `${baseUrl}/blog/category/${c.slug}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
@@ -162,5 +184,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to build category sitemap entries:', error);
   }
 
-  return [...corePages, ...categoryUrls, ...allBlogUrls];
+  // The Turkish edition. Its articles are not translations of the English ones,
+  // so they are listed as URLs in their own right rather than as alternates.
+  let turkishUrls: MetadataRoute.Sitemap = [];
+  try {
+    const categories = await getCategories('tr');
+    turkishUrls = [
+      {
+        url: `${baseUrl}/tr/blog`,
+        lastModified: new Date(),
+        changeFrequency: 'daily' as const,
+        priority: 0.95,
+      },
+      ...categories.map((c) => ({
+        url: `${baseUrl}/tr/blog/category/${c.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily' as const,
+        priority: 0.7,
+      })),
+      ...turkishBlogs.map((p) => ({
+        url: `${baseUrl}/tr/blog/${p.slug}`,
+        lastModified: p.lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      })),
+    ];
+  } catch (error) {
+    console.error('Failed to build Turkish sitemap entries:', error);
+  }
+
+  return [...corePages, ...categoryUrls, ...turkishUrls, ...allBlogUrls];
 }

@@ -60,6 +60,13 @@ async function getRelatedTurkish(slug: string, category: string) {
   }
 }
 
+/** "July 28, 2026" was written by the generator in English; show it in Turkish. */
+function formatTrDate(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -82,7 +89,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const siteUrl = 'https://watchpulseapp.com';
-  const postUrl = `${siteUrl}/blog/${slug}`;
+  const postUrl = `${siteUrl}/tr/blog/${slug}`;
   const imageUrl = post.coverImage || `${siteUrl}/og-image.jpg`;
 
   return {
@@ -94,6 +101,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     publisher: 'WatchPulse',
     formatDetection: { email: false, address: false, telephone: false },
     metadataBase: new URL(siteUrl),
+    // No hreflang alternate: the editions carry different articles, so there is
+    // no English version of this piece to point at. Claiming one would be false.
     alternates: { canonical: postUrl },
     openGraph: {
       title: post.title,
@@ -220,7 +229,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                     {post.category}
                   </span>
                   <span aria-hidden="true" className="h-px w-5" style={{ background: 'var(--rule-strong)' }} />
-                  <span className="journal-meta">{post.date}</span>
+                  <span className="journal-meta">{formatTrDate(post.date)}</span>
                   <span aria-hidden="true" style={{ color: 'var(--ink-faint)' }}>·</span>
                   <span className="journal-meta">{post.readTime}</span>
                 </div>

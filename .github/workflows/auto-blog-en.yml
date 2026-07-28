@@ -1,0 +1,80 @@
+name: Auto Blog Publisher (English)
+
+# Publishes one English article per run, five times a day. Ten a day across
+# both editions.
+#
+# Offset from the Turkish run so the two editions never contend for the
+# same Groq per-minute token budget.
+#
+# The minute is deliberately not :00 — GitHub's scheduler is busiest on the hour
+# and delays runs the most there.
+#
+# Note: GitHub disables scheduled workflows in repositories with no activity for
+# 60 days. If commits go quiet, re-enable it from the Actions tab.
+
+on:
+  schedule:
+    - cron: '37 7,10,13,16,19 * * *'
+  workflow_dispatch:
+
+# Only guards against a run of THIS edition overlapping itself; the two editions
+# are meant to interleave.
+concurrency:
+  group: auto-blog-en
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Publish English article
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://watchpulseapp.com' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repository secret is not set."
+            exit 1
+          fi
+
+          echo "Requesting a English article from $SITE_URL"
+
+          # curl treats 429 and 502 as transient, which is exactly what the route
+          # returns when Groq refuses on a rate limit. The 90s delay lets Groq's
+          # per-minute window reset before the next attempt — without the retries
+          # a throttled slot would silently cost that article.
+          http_code=$(curl -sS -o response.json -w '%{http_code}'             --max-time 120             --retry 3 --retry-delay 90 --retry-connrefused             -X POST "$SITE_URL/api/cron/generate-blog?lang=en"             -H "Authorization: Bearer $CRON_SECRET")
+
+          echo "HTTP $http_code"
+          cat response.json
+          echo
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Blog generation failed with HTTP $http_code"
+            exit 1
+          fi
+
+          {
+            echo "### Auto Blog Publisher (English)"
+            echo ""
+            python3 -c "
+          import json
+          with open('response.json') as f:
+              data = json.load(f)
+          published = data.get('published', [])
+          if data.get('skipped'):
+              print('Skipped: ' + data.get('message', 'daily limit reached'))
+          elif published:
+              print('Published {} of {} today ({}):'.format(
+                  data.get('publishedToday'), data.get('dailyLimit'), data.get('lang')))
+              print('')
+              for p in published:
+                  print('- **{}** ({} words, {})'.format(p.get('title'), p.get('words'), p.get('format')))
+          for f_ in data.get('failed', []):
+              print('- Failed: {}'.format(f_.get('reason')))
+          "
+          } >> "$GITHUB_STEP_SUMMARY"
