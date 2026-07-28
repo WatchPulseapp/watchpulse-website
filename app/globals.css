@@ -4,24 +4,114 @@
 
 @layer base {
   body {
-    @apply bg-background-dark text-text-primary;
+    @apply bg-background-deep text-text-primary;
+    font-family: var(--font-sans), 'Inter', system-ui, -apple-system, sans-serif;
   }
 
-  /* Performance optimizations */
   * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* GPU acceleration for animations */
-  [class*="motion-"] {
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+  /* Bebas Neue display headings: cinematic poster type */
+  .font-display {
+    letter-spacing: 0.015em;
+  }
+
+  :focus-visible {
+    outline: 2px solid #8B9FE7;
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 }
 
-/* Reduce motion for accessibility */
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    @apply bg-background-card/60 backdrop-blur-xl border border-white/5 rounded-2xl;
+  }
+
+  /* Premium gradient border */
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #1A1F2A, #151820);
+    border-radius: 1.25rem;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(107, 127, 215, 0.3), rgba(168, 181, 220, 0.1), rgba(107, 127, 215, 0.3));
+    z-index: -1;
+  }
+
+  /* Phone mockup frame */
+  .phone-mockup {
+    @apply relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden;
+    background: linear-gradient(135deg, #1A1F2A, #252B3A);
+    padding: 10px;
+    box-shadow:
+      0 0 0 1px rgba(107, 127, 215, 0.15),
+      0 25px 60px -10px rgba(0, 0, 0, 0.5),
+      0 0 40px rgba(107, 127, 215, 0.1);
+  }
+  .phone-mockup .phone-screen {
+    @apply rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden;
+    background: #0D0F14;
+    aspect-ratio: 9 / 19.5;
+  }
+
+  /* Animated gradient text (app primary gradient) */
+  .text-gradient {
+    background: linear-gradient(135deg, #6B7FD7, #A8B5DC, #6B7FD7);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+  }
+
+  /* Wordmark gradient: periwinkle -> gold, like the logo's pulse line into the reel */
+  .text-gradient-pulse {
+    background: linear-gradient(100deg, #6B7FD7 0%, #A8B5DC 45%, #F0C97E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Section eyebrow label */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent;
+  }
+
+  /* App-style mood chip (pill with emoji, straight from the app UI) */
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-background-card/80 px-4 py-2 text-sm font-medium text-text-primary backdrop-blur-md;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  }
+  .chip-gold {
+    @apply border-brand-gold/40 bg-brand-gold/90 text-background-dark;
+  }
+
+  /* Section divider glow */
+  .section-glow {
+    @apply absolute w-full h-px;
+    background: linear-gradient(90deg, transparent, rgba(107, 127, 215, 0.3), transparent);
+  }
+
+  /* Store button styling */
+  .store-button {
+    @apply flex items-center gap-3 px-6 py-3.5 rounded-xl font-semibold transition-all duration-300;
+  }
+  .store-button-primary {
+    @apply store-button bg-white text-black hover:shadow-glow-lg hover:scale-105;
+  }
+  .store-button-secondary {
+    @apply store-button bg-white/10 text-white border border-white/20 hover:bg-white/15 hover:scale-105;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -34,28 +124,26 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #121417;
+  background: #0D0F14;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7C8DB0;
-  border-radius: 5px;
+  background: #6B7FD7;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8977E;
+  background: #A8B5DC;
 }
 
-/* Image loading optimization */
 img {
   content-visibility: auto;
 }
 
-/* Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
@@ -64,4 +152,240 @@ html {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* Custom selection color */
+::selection {
+  background: rgba(107, 127, 215, 0.3);
+  color: #F0F2F5;
+}
+
+/* ===========================================================================
+   The Journal — blog surface
+   ---------------------------------------------------------------------------
+   The blog is the only themeable surface on the site; the marketing pages are
+   dark-only and use literal Tailwind colours, so they are untouched by these
+   tokens. Everything here is driven by custom properties scoped to
+   html[data-journal], which an inline script in the blog layout sets before
+   first paint. Components style through the tokens and never name a raw colour,
+   which is what keeps the two themes honest.
+   =========================================================================== */
+
+:root,
+html[data-journal='dark'] {
+  --paper: #0d0f14;        /* page ground — the site's native background */
+  --paper-sunken: #0a0c10; /* recessed bands */
+  --card: #141821;
+  --card-hover: #191e29;
+  --ink: #e9ebf1;          /* body text: ~14:1 on --paper */
+  --ink-strong: #f6f7fa;   /* headings */
+  --ink-soft: #99a1b5;     /* meta, captions: ~6:1 */
+  --ink-faint: #8b91a1;    /* 5.8:1 — still readable, just quieter than --ink-soft */
+  --rule: rgba(255, 255, 255, 0.08);
+  --rule-strong: rgba(255, 255, 255, 0.14);
+  --accent: #8b9fe7;       /* brand light — brand primary is too dim on this ground */
+  --accent-soft: rgba(139, 159, 231, 0.13);
+  --accent-line: rgba(139, 159, 231, 0.28);
+  --marquee: #f0c97e;      /* gold, reserved for the lead story */
+  --marquee-soft: rgba(240, 201, 126, 0.13);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lift: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+html[data-journal='light'] {
+  --paper: #fcfcfd;        /* near-white, faintly cool toward the accent */
+  --paper-sunken: #f4f5f8;
+  --card: #ffffff;
+  --card-hover: #ffffff;
+  --ink: #14161c;          /* ~16:1 on --paper */
+  --ink-strong: #0a0c11;
+  --ink-soft: #565d6e;     /* ~7:1 */
+  --ink-faint: #6b7285;    /* 4.7:1 on paper */
+  --rule: #e5e7ed;
+  --rule-strong: #d3d7e0;
+  --accent: #4a5ba0;       /* the dark end of the brand gradient — AA on white */
+  --accent-soft: rgba(74, 91, 160, 0.09);
+  --accent-line: rgba(74, 91, 160, 0.22);
+  --marquee: #8a6412;      /* gold darkened until it holds up on paper */
+  --marquee-soft: rgba(138, 100, 18, 0.1);
+  --shadow-card: 0 1px 2px rgba(20, 22, 28, 0.05);
+  --shadow-lift: 0 12px 32px -12px rgba(20, 22, 28, 0.16);
+  color-scheme: light;
+}
+
+/* Only the blog sets the attribute, so the ground only changes there. */
+html[data-journal],
+html[data-journal] body {
+  background-color: var(--paper);
+}
+
+.journal {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+/* --- Reading rhythm ------------------------------------------------------ */
+
+/* The measure is set in ch against the serif itself, so it stays near 68
+   characters at every step of the type scale rather than at one fixed width. */
+.journal-measure {
+  max-width: 68ch;
+  margin-inline: auto;
+}
+
+.journal-prose {
+  font-family: var(--font-serif), Georgia, 'Times New Roman', serif;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--ink);
+  letter-spacing: 0.001em;
+}
+
+@media (min-width: 768px) {
+  .journal-prose {
+    font-size: 1.1875rem;
+    line-height: 1.78;
+  }
+}
+
+.journal-prose p {
+  margin-block: 0 1.35em;
+  text-wrap: pretty;
+}
+
+.journal-prose > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Section headings sit closer to the text they introduce than to the text they
+   follow, so the eye groups them correctly without a rule to help. */
+.journal-prose h2 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: -0.012em;
+  color: var(--ink-strong);
+  margin-block: 2.6em 0.7em;
+  text-wrap: balance;
+  scroll-margin-top: 6rem;
+}
+
+@media (min-width: 768px) {
+  .journal-prose h2 {
+    font-size: 1.75rem;
+  }
+}
+
+.journal-prose h2:first-child {
+  margin-top: 0;
+}
+
+.journal-prose ul {
+  margin-block: 1.6em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+
+.journal-prose li {
+  position: relative;
+  padding-left: 1.6em;
+  text-wrap: pretty;
+}
+
+.journal-prose li::before {
+  content: '';
+  position: absolute;
+  left: 0.15em;
+  top: 0.72em;
+  width: 0.32em;
+  height: 0.32em;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.journal-prose blockquote {
+  margin-block: 2.2em;
+  padding: 0.2em 0 0.2em 1.4em;
+  border-left: 2px solid var(--accent-line);
+  font-style: italic;
+  font-size: 1.15em;
+  line-height: 1.6;
+  color: var(--ink-strong);
+  text-wrap: pretty;
+}
+
+.journal-prose blockquote p {
+  margin-bottom: 0;
+}
+
+/* --- Chrome -------------------------------------------------------------- */
+
+.journal-eyebrow {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.journal-meta {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+a.journal-meta:hover,
+a:hover .journal-meta {
+  color: var(--ink);
+}
+
+.journal-headline {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  color: var(--ink-strong);
+  text-wrap: balance;
+}
+
+.journal-card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.journal-card:hover {
+  border-color: var(--rule-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journal-card,
+  .journal-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+.journal :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Theme switching.
+   A colour transition that is mid-flight when the underlying custom property
+   changes latches onto the old value and never repaints — measured on the
+   Journal's footer links, which stayed at the dark --ink-soft after switching to
+   light. Suppressing transitions for the duration of the swap fixes that, and
+   makes the change read as instant rather than as a staggered crossfade. */
+html[data-journal-switching] *,
+html[data-journal-switching] *::before,
+html[data-journal-switching] *::after {
+  transition: none !important;
 }

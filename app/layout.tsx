@@ -1,25 +1,47 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bebas_Neue, Newsreader } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+// Reading face for the Journal. Newsreader is drawn for long-form text on
+// screen — generous x-height, real italics, an optical range that holds up from
+// caption to headline — which Inter, a UI face, is not trying to do.
+const newsreader = Newsreader({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-serif",
+  display: "swap",
+  style: ["normal", "italic"],
+  // Next has no built-in metrics for Newsreader, so the fallback stack is named
+  // explicitly. Without it the swap from Georgia shifts the text noticeably.
+  fallback: ["Georgia", "Times New Roman", "serif"],
+  adjustFontFallback: false,
+});
+
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-display",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#7C8DB0",
+  themeColor: "#0D0F14",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://watchpulseapp.com'),
-  title: "WatchPulse - AI-Powered Movie & TV Show Recommendations Based on Your Mood",
-  description: "Discover personalized movie and TV show recommendations with AI-powered mood detection. Smart watchlist, TMDB integration, social features. Download free!",
-  keywords: "movie recommendations, tv show suggestions, AI movies, mood-based recommendations, netflix alternative, watchlist app, TMDB, personalized streaming, movie app, AI film recommendation, what to watch, streaming guide, watchpulse",
-  authors: [{ name: "WatchPulse Team" }],
+  title: "WatchPulse — Film & Dizi Takip, AI Öneri ve Sosyal Uygulama",
+  description: "Bu akşam ne izlesem derdine son. Ruh haline göre AI önerileri, bölüm takibi, hangi film hangi platformda, film zevkine göre eşleşme ve gerçek zamanlı sohbet. Google Play ve App Store'da ücretsiz.",
+  keywords: "ne izlesem, film önerisi, dizi önerisi, film takip uygulaması, dizi takip, bölüm takibi, hangi platformda, yapay zeka film önerisi, film uygulaması, izleme listesi, watchpulse, movie tracker, tv show tracker, what to watch, AI movie recommendations",
+  authors: [{ name: "WatchPulse" }],
   creator: "WatchPulse",
   publisher: "WatchPulse",
   icons: {
@@ -29,10 +51,11 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   openGraph: {
-    title: "WatchPulse - AI Movie Recommendations Based on Your Mood",
-    description: "Get personalized movie and TV show recommendations powered by AI. Discover what to watch next based on your current mood and preferences.",
+    title: "WatchPulse — Bu akşam ne izlesem derdine son",
+    description: "Ruh haline göre AI film & dizi önerileri, bölüm takibi, platform bulucu ve film zevkine göre sosyal eşleşme. Ücretsiz indir.",
     type: "website",
-    locale: "en_US",
+    locale: "tr_TR",
+    alternateLocale: "en_US",
     url: "https://watchpulseapp.com",
     siteName: "WatchPulse",
     images: [
@@ -40,20 +63,20 @@ export const metadata: Metadata = {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'WatchPulse - AI-Powered Movie Recommendations Based on Your Mood',
+        alt: 'WatchPulse — Film & Dizi Takip, AI Öneri ve Sosyal Uygulama',
         type: 'image/jpeg',
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WatchPulse - AI Movie Recommendations",
-    description: "AI-powered movie and TV show recommendations based on your mood. Discover what to watch next!",
+    title: "WatchPulse — Bu akşam ne izlesem derdine son",
+    description: "Ruh haline göre AI film & dizi önerileri, bölüm takibi, platform bulucu ve sosyal eşleşme. Ücretsiz indir.",
     creator: "@watchpulseapp",
     site: "@watchpulseapp",
     images: {
       url: '/og-image.jpg',
-      alt: 'WatchPulse - AI Movie Recommendations',
+      alt: 'WatchPulse — Film & Dizi Takip ve AI Öneri Uygulaması',
     },
   },
   robots: {
@@ -70,22 +93,29 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://watchpulseapp.com",
     languages: {
-      'en': 'https://watchpulseapp.com',
       'tr': 'https://watchpulseapp.com',
+      'en': 'https://watchpulseapp.com',
       'x-default': 'https://watchpulseapp.com',
     },
   },
   category: 'entertainment',
-  verification: {
-    // Google Search Console - kullanıcı kendi kodunu ekleyecek
-    // google: 'YOUR_GOOGLE_VERIFICATION_CODE',
+  appLinks: {
+    ios: {
+      app_store_id: '6759836378',
+      url: 'https://apps.apple.com/app/id6759836378',
+    },
+    android: {
+      package: 'com.watchpulse.app',
+      url: 'https://play.google.com/store/apps/details?id=com.watchpulse.app',
+    },
   },
   other: {
+    'apple-itunes-app': 'app-id=6759836378',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': 'WatchPulse',
     'mobile-web-app-capable': 'yes',
-    'msapplication-TileColor': '#7C8DB0',
+    'msapplication-TileColor': '#0D0F14',
     'format-detection': 'telephone=no',
   },
 };
@@ -101,11 +131,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="tr" className="scroll-smooth">
       <head>
         <Schema />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${bebasNeue.variable} ${newsreader.variable} font-sans antialiased`}>
         <GoogleAnalytics />
         <LanguageProvider>
           {children}

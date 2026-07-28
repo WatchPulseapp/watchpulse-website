@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ArrowRight, Clock, Tag } from 'lucide-react';
 
 interface RelatedPost {
   slug: string;
@@ -9,56 +8,47 @@ interface RelatedPost {
   readTime: string;
 }
 
-interface RelatedPostsProps {
+/**
+ * Further reading.
+ *
+ * Spans the full width rather than the measure — the article has ended, and
+ * three side-by-side entries scan faster than a stack the reader has to scroll.
+ */
+export default function RelatedPosts({
+  posts,
+  currentSlug,
+}: {
   posts: RelatedPost[];
   currentSlug: string;
-}
-
-export default function RelatedPosts({ posts, currentSlug }: RelatedPostsProps) {
-  const filteredPosts = posts
-    .filter(post => post.slug !== currentSlug)
-    .slice(0, 3);
-
-  if (filteredPosts.length === 0) return null;
+}) {
+  const items = posts.filter((p) => p.slug !== currentSlug).slice(0, 3);
+  if (items.length === 0) return null;
 
   return (
-    <section className="mt-16 pt-12 border-t border-brand-primary/20">
-      <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-        <span className="bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent">
-          You Might Also Like
-        </span>
+    <section className="mt-20 border-t pt-12" style={{ borderColor: 'var(--rule)' }}>
+      <h2 className="journal-eyebrow" style={{ color: 'var(--ink-soft)' }}>
+        Keep reading
       </h2>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {filteredPosts.map((post) => (
-          <Link
-            key={post.slug}
-            href={`/blog/${post.slug}`}
-            className="group bg-background-card rounded-xl border border-brand-primary/10 hover:border-brand-primary/30 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-brand-primary/10"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-2 py-0.5 bg-brand-primary/10 text-brand-primary text-xs rounded-full flex items-center gap-1">
-                <Tag className="w-3 h-3" />
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((post) => (
+          <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
+            <article className="journal-card flex h-full flex-col gap-3 rounded-xl p-6">
+              <span className="journal-eyebrow" style={{ color: 'var(--accent)' }}>
                 {post.category}
               </span>
-              <span className="text-xs text-text-muted flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {post.readTime}
-              </span>
-            </div>
 
-            <h3 className="font-semibold text-white group-hover:text-brand-primary transition-colors line-clamp-2 mb-2">
-              {post.title}
-            </h3>
+              <h3 className="journal-headline text-[1.0625rem] leading-[1.35]">{post.title}</h3>
 
-            <p className="text-sm text-text-secondary line-clamp-2 mb-3">
-              {post.excerpt}
-            </p>
+              <p
+                className="line-clamp-2 flex-1 text-[14px] leading-[1.6]"
+                style={{ color: 'var(--ink-soft)', fontFamily: 'var(--font-serif), Georgia, serif' }}
+              >
+                {post.excerpt}
+              </p>
 
-            <span className="inline-flex items-center gap-1 text-sm text-brand-primary group-hover:gap-2 transition-all">
-              Read more
-              <ArrowRight className="w-4 h-4" />
-            </span>
+              <p className="journal-meta">{post.readTime}</p>
+            </article>
           </Link>
         ))}
       </div>
