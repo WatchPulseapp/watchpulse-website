@@ -288,7 +288,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   })}
                 </div>
 
-                <BlogAppCTA />
+                <BlogAppCTA category={post.category} slug={slug} />
 
                 {/* Spacing alone separates the tags — the CTA above already draws
                     a rule, and a third one here would stack up. */}
