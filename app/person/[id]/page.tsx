@@ -24,7 +24,8 @@ type Props = { params: Promise<{ id: string }> };
 
 async function load(rawId: string) {
   if (!/^\d+$/.test(rawId)) return null;
-  const person = await getPersonDetails(Number(rawId));
+  // A filmography changes far slower than a day.
+  const person = await getPersonDetails(Number(rawId), 86400);
   // Fewer than three notable credits makes for a page with nothing on it.
   return person && person.credits.length >= 3 ? person : null;
 }

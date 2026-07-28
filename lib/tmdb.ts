@@ -67,7 +67,19 @@ function isV4Token(key: string): boolean {
   return key.startsWith('eyJ') && key.split('.').length === 3;
 }
 
-async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): Promise<T | null> {
+/**
+ * @param revalidate seconds to cache for, or undefined to bypass the cache.
+ *
+ * This has to be explicit per call site. `cache: 'no-store'` does not merely
+ * skip the data cache — it marks the whole route dynamic, which silently
+ * defeated `export const revalidate` on the title pages and had them calling
+ * TMDB on every view. The generator wants fresh data; the pages want cached.
+ */
+async function tmdbFetch<T>(
+  path: string,
+  params: Record<string, string> = {},
+  revalidate?: number
+): Promise<T | null> {
   if (!TMDB_API_KEY) return null;
 
   const url = new URL(`${TMDB_BASE}${path}`);
@@ -88,7 +100,11 @@ async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): 
   const timeout = setTimeout(() => controller.abort(), 6000);
 
   try {
-    const res = await fetch(url.toString(), { headers, cache: 'no-store', signal: controller.signal });
+    const res = await fetch(url.toString(), {
+      headers,
+      signal: controller.signal,
+      ...(revalidate === undefined ? { cache: 'no-store' as const } : { next: { revalidate } }),
+    });
     if (!res.ok) {
       console.error(`[tmdb] ${path} -> HTTP ${res.status}`);
       return null;
@@ -399,8 +415,12 @@ export async function getTrendingPeople(limit = 10): Promise<Array<{ id: number;
 }
 
 /** Full profile plus their most notable, best-reviewed work. */
-export async function getPersonDetails(id: number): Promise<TmdbPerson | null> {
-  const raw = await tmdbFetch<RawPerson>(`/person/${id}`, { append_to_response: 'combined_credits' });
+export async function getPersonDetails(id: number, revalidate?: number): Promise<TmdbPerson | null> {
+  const raw = await tmdbFetch<RawPerson>(
+    `/person/${id}`,
+    { append_to_response: 'combined_credits' },
+    revalidate
+  );
   if (!raw?.name) return null;
   if (raw.adult || textIsUnsafe(raw.biography)) {
     console.warn(`[tmdb] skipping person ${raw.name} — fails the content safety check`);
@@ -490,10 +510,16 @@ interface RawDetails extends RawTitle {
 }
 
 /** Full detail for one title: cast, director, runtime and US streaming homes. */
-export async function getTitleDetails(id: number, mediaType: 'movie' | 'tv'): Promise<TmdbTitleDetails | null> {
-  const raw = await tmdbFetch<RawDetails>(`/${mediaType}/${id}`, {
-    append_to_response: 'credits,watch/providers',
-  });
+export async function getTitleDetails(
+  id: number,
+  mediaType: 'movie' | 'tv',
+  revalidate?: number
+): Promise<TmdbTitleDetails | null> {
+  const raw = await tmdbFetch<RawDetails>(
+    `/${mediaType}/${id}`,
+    { append_to_response: 'credits,watch/providers' },
+    revalidate
+  );
   if (!raw) return null;
 
   const base = normalize(raw, mediaType);

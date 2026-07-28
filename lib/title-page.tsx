@@ -14,7 +14,8 @@ export async function loadTitle(rawId: string, mediaType: 'movie' | 'tv'): Promi
   // TMDB ids are integers. Anything else is a URL that was never real, and
   // should 404 rather than cost an upstream request.
   if (!/^\d+$/.test(rawId)) return null;
-  return getTitleDetails(Number(rawId), mediaType);
+  // Cached for an hour; streaming availability moves on the order of weeks.
+  return getTitleDetails(Number(rawId), mediaType, 3600);
 }
 
 export function titleMetadata(title: TmdbTitleDetails | null, path: string): Metadata {
