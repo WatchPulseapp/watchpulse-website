@@ -5,9 +5,9 @@ import { journalIndexMetadata } from '@/lib/blog-meta';
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return journalIndexMetadata({ locale: 'en' });
+  return journalIndexMetadata({ locale: 'tr' });
 }
 
 export default async function Page() {
-  return <JournalIndexPage locale="en" />;
+  return <JournalIndexPage locale="tr" />;
 }

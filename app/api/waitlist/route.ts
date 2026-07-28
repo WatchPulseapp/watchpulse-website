@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Waitlist from '@/lib/models/Waitlist';
 
-// Admin secret key from environment
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'change_this_secret_key';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+
 const MAX_HOURLY_REQUESTS = parseInt(process.env.MAX_REQUESTS_PER_HOUR || '5', 10);
 const MAX_DAILY_REQUESTS = parseInt(process.env.MAX_REQUESTS_PER_IP_PER_DAY || '10', 10);
 
@@ -96,30 +96,19 @@ function checkRateLimit(ip: string): { allowed: boolean; reason?: string } {
   return { allowed: true };
 }
 
-// Verify admin authentication
-function verifyAdmin(request: NextRequest): boolean {
+// Verify admin authentication — Bearer token only, role verified against backend.
+async function verifyAdmin(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('authorization');
-  const apiKey = request.headers.get('x-api-key');
-
-  // Check Bearer token
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    return token === ADMIN_SECRET;
-  }
-
-  // Check API key header
-  if (apiKey === ADMIN_SECRET) {
-    return true;
-  }
-
-  return false;
+  if (!authHeader?.startsWith('Bearer ')) return false;
+  const token = authHeader.substring(7);
+  return verifyAdminAuth(token);
 }
 
 // GET - Retrieve waitlist (ADMIN ONLY)
 export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
-    if (!verifyAdmin(request)) {
+    if (!(await verifyAdmin(request))) {
       return NextResponse.json(
         {
           success: false,
@@ -245,7 +234,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     // Verify admin authentication
-    if (!verifyAdmin(request)) {
+    if (!(await verifyAdmin(request))) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }

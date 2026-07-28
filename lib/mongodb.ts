@@ -29,6 +29,9 @@ async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      // Fail fast instead of hanging ~30s when the DB is unreachable, so pages
+      // fall back to their static content quickly (build + runtime resilience).
+      serverSelectionTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

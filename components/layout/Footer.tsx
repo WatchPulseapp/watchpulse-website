@@ -1,174 +1,211 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import Container from './Container';
-import ShareButtons from '../ui/ShareButtons';
-import { SOCIAL_LINKS } from '@/lib/constants';
-import { Mail, Instagram } from 'lucide-react';
-import { fadeInUp } from '@/lib/animations';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SOCIAL_LINKS, GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
+import { Instagram, Mail } from 'lucide-react';
 
 interface FooterProps {
   forceEnglish?: boolean;
 }
 
-export default function Footer({ forceEnglish = false }: FooterProps = {}) {
-  const { t } = useLanguage();
+const EN_FALLBACKS: Record<string, string> = {
+  'footer.description': 'Movie & TV tracking, AI recommendations, a where-to-watch finder and taste-based social matching; all in one app.',
+  'footer.product': 'Product',
+  'footer.features': 'Features',
+  'footer.howItWorks': 'How It Works',
+  'footer.faqLink': 'FAQ',
+  'footer.blog': 'Blog',
+  'footer.legal': 'Legal',
+  'footer.privacy': 'Privacy Policy',
+  'footer.terms': 'Terms of Service',
+  'footer.deleteAccount': 'Delete Account',
+  'footer.contact': 'Contact',
+  'footer.downloadTitle': 'Download',
+  'footer.copyright': 'All rights reserved.',
+  'footer.tmdb': 'This product uses the TMDB API but is not endorsed or certified by TMDB.',
+};
 
-  // English translations for blog pages
-  const englishTranslations = {
-    'contact.title': 'Get in Touch',
-    'contact.email': 'Email',
-    'contact.twitter': 'Twitter',
-    'contact.tiktok': 'TikTok',
-    'contact.instagram': 'Instagram',
-    'footer.copyright': '© 2025 WatchPulse. All rights reserved.'
-  };
-
-  // Use English translations when forceEnglish is true
-  const getText = (key: string) => {
-    return forceEnglish ? englishTranslations[key as keyof typeof englishTranslations] : t(key);
-  };
+function XIcon({ className }: { className?: string }) {
   return (
-    <footer className="relative py-10 sm:py-12 border-t border-brand-primary/20">
-      {/* Gradient Top Border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-hero opacity-50" />
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
-      <Container>
-        <div className="flex flex-col items-center gap-6 sm:gap-8 px-4 sm:px-0">
-          {/* Contact Section */}
-          <motion.div
-            className="text-center"
-            {...fadeInUp}
-          >
-            <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{getText('contact.title')}</h3>
-          </motion.div>
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+    </svg>
+  );
+}
 
-          {/* Social Links */}
-          <motion.div
-            className="flex items-center gap-4 sm:gap-6"
-            {...fadeInUp}
-            transition={{ delay: 0.2 }}
-          >
-            {/* Email */}
-            <motion.a
-              href={`https://mail.google.com/mail/?view=cm&to=${SOCIAL_LINKS.email}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-3 sm:p-4 bg-background-card rounded-full border border-brand-primary/20 hover:border-brand-primary/50 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary group-hover:text-brand-accent transition-colors" />
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                {getText('contact.email')}
-              </span>
-            </motion.a>
+export default function Footer({ forceEnglish = false }: FooterProps) {
+  const { t: contextT } = useLanguage();
+  const t = (key: string) => (forceEnglish ? EN_FALLBACKS[key] ?? contextT(key) : contextT(key));
 
-            {/* X (Twitter) */}
-            <motion.a
-              href={SOCIAL_LINKS.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-3 sm:p-4 bg-background-card rounded-full border border-brand-primary/20 hover:border-brand-primary/50 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary group-hover:text-brand-accent transition-colors fill-current"
-                aria-hidden="true"
-              >
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                X (Twitter)
-              </span>
-            </motion.a>
+  return (
+    <footer className="relative border-t border-white/5">
+      <div className="absolute inset-0 bg-gradient-to-b from-background-deep to-background-elevated/30" aria-hidden="true" />
 
-            {/* TikTok */}
-            <motion.a
-              href={SOCIAL_LINKS.tiktok}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-3 sm:p-4 bg-background-card rounded-full border border-brand-primary/20 hover:border-brand-primary/50 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary group-hover:text-brand-accent transition-colors"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-              </svg>
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                {getText('contact.tiktok')}
-              </span>
-            </motion.a>
-
-            {/* Instagram */}
-            <motion.a
-              href={SOCIAL_LINKS.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-3 sm:p-4 bg-background-card rounded-full border border-brand-primary/20 hover:border-brand-primary/50 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Instagram className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary group-hover:text-brand-accent transition-colors" />
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-text-muted whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                {getText('contact.instagram')}
-              </span>
-            </motion.a>
-          </motion.div>
-
-          {/* Share Section */}
-          <motion.div
-            className="w-full max-w-2xl border-t border-brand-primary/20 pt-6 sm:pt-8"
-            {...fadeInUp}
-            transition={{ delay: 0.25 }}
-          >
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-sm sm:text-base text-text-secondary text-center">
-                {getText('footer.shareText')}
+      <Container className="relative z-10">
+        <div className="py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-14">
+            {/* Brand */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-2.5 mb-4">
+                <Image src="/logo.png" alt="WatchPulse" width={32} height={32} className="rounded-lg" />
+                <span className="text-xl font-bold">
+                  <span className="text-white">Watch</span>
+                  <span className="text-gradient-pulse">Pulse</span>
+                </span>
+              </div>
+              <p className="text-sm text-text-secondary max-w-sm leading-relaxed mb-6">
+                {t('footer.description')}
               </p>
-              <div className="flex justify-center">
-                <ShareButtons compact />
+              <div className="flex items-center gap-2">
+                <a
+                  href={SOCIAL_LINKS.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="X"
+                  className="p-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                >
+                  <XIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="p-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href={SOCIAL_LINKS.tiktok}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
+                  className="p-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                >
+                  <TikTokIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href={`mailto:${SOCIAL_LINKS.email}`}
+                  aria-label="E-mail"
+                  className="p-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                </a>
               </div>
             </div>
-          </motion.div>
 
-          {/* Legal Links */}
-          <motion.div
-            className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm"
-            {...fadeInUp}
-            transition={{ delay: 0.3 }}
-          >
-            <Link
-              href="/privacy"
-              className="text-text-muted hover:text-brand-primary transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <span className="text-text-muted/50">•</span>
-            <Link
-              href="/delete-account"
-              className="text-text-muted hover:text-brand-primary transition-colors"
-            >
-              Delete Account
-            </Link>
-          </motion.div>
+            {/* Product */}
+            <nav aria-label={t('footer.product')}>
+              <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">
+                {t('footer.product')}
+              </h3>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <Link href="/#features" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.features')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#how-it-works" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.howItWorks')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#faq" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.faqLink')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/blog" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.blog')}
+                  </Link>
+                </li>
+              </ul>
+            </nav>
 
-          {/* Copyright */}
-          <motion.div
-            className="text-center text-xs sm:text-sm text-text-muted mt-4 sm:mt-6"
-            {...fadeInUp}
-            transition={{ delay: 0.35 }}
-          >
-            <p>{getText('footer.copyright')}</p>
-          </motion.div>
+            {/* Legal + download */}
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">
+                {t('footer.legal')}
+              </h3>
+              <ul className="space-y-3 text-sm mb-8">
+                <li>
+                  <Link href="/privacy" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.privacy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.terms')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/delete-account" className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.deleteAccount')}
+                  </Link>
+                </li>
+                <li>
+                  <a href={`mailto:${SOCIAL_LINKS.email}`} className="text-text-secondary hover:text-text-primary transition-colors">
+                    {t('footer.contact')}
+                  </a>
+                </li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider mb-4">
+                {t('footer.downloadTitle')}
+              </h3>
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <a
+                    href={GOOGLE_PLAY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Google Play
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={APP_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    App Store
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-text-muted">
+              © {new Date().getFullYear()} WatchPulse. {t('footer.copyright')}
+            </p>
+            <div className="flex items-center gap-3">
+              <Image
+                src="/images/brand/tmdb_logo.svg"
+                alt="TMDB"
+                width={80}
+                height={11}
+                className="opacity-60"
+              />
+              <p className="text-[11px] text-text-muted max-w-xs">{t('footer.tmdb')}</p>
+            </div>
+          </div>
         </div>
       </Container>
     </footer>

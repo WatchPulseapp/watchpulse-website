@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, page } = await params;
   const n = parsePage(page);
   if (!n) return { title: 'Not Found | WatchPulse', robots: { index: false, follow: false } };
-  return journalIndexMetadata({ locale: 'en', page: n, categorySlug: category });
+  return journalIndexMetadata({ locale: 'tr', page: n, categorySlug: category });
 }
 
 export default async function Page({ params }: Props) {
   const { category, page } = await params;
   const n = parsePage(page);
   if (!n) notFound();
-  return <JournalIndexPage locale="en" page={n} categorySlug={category} />;
+  return <JournalIndexPage locale="tr" page={n} categorySlug={category} />;
 }

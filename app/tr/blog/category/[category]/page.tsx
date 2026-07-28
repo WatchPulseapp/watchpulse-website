@@ -8,10 +8,10 @@ type Props = { params: Promise<{ category: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
-  return journalIndexMetadata({ locale: 'en', categorySlug: category });
+  return journalIndexMetadata({ locale: 'tr', categorySlug: category });
 }
 
 export default async function Page({ params }: Props) {
   const { category } = await params;
-  return <JournalIndexPage locale="en" categorySlug={category} />;
+  return <JournalIndexPage locale="tr" categorySlug={category} />;
 }

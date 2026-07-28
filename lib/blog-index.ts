@@ -1,6 +1,10 @@
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { staticBlogPosts } from '@/data/static-blogs';
+import { localePrefix, categorySlug, type Locale } from '@/lib/blog-locale';
+
+export { localePrefix, categorySlug };
+export type { Locale };
 
 /**
  * Shared reader for the Journal index.
@@ -23,13 +27,22 @@ export interface BlogListItem {
 
 export const POSTS_PER_PAGE = 12;
 
-/** Category names become URL segments: "TV Shows" -> "tv-shows". */
-export function categorySlug(category: string): string {
-  return category
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+/**
+ * Curated static posts are English-only, so they join the English edition and
+ * are absent from the Turkish one — which is correct, not a gap: the Turkish
+ * edition is written in Turkish rather than translated.
+ */
+function staticFor(locale: Locale) {
+  return locale === 'en' ? staticBlogPosts : [];
+}
+
+/**
+ * Posts written before the Turkish edition existed carry no `lang` field, and
+ * they are all English — so the English filter has to accept a missing value
+ * or the archive would vanish from its own index.
+ */
+function langFilter(locale: Locale): Record<string, unknown> {
+  return locale === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
 }
 
 /**
@@ -45,14 +58,14 @@ export function categorySlug(category: string): string {
 export async function getPostsPage(
   page: number,
   perPage = POSTS_PER_PAGE,
-  category?: string
+  category?: string,
+  locale: Locale = 'en'
 ): Promise<{ items: BlogListItem[]; page: number; totalPages: number; total: number }> {
-  const query: Record<string, unknown> = { isPublished: true };
+  const query: Record<string, unknown> = { isPublished: true, ...langFilter(locale) };
   if (category) query.category = category;
 
-  const staticMatching = category
-    ? staticBlogPosts.filter((p) => p.category === category)
-    : staticBlogPosts;
+  const base = staticFor(locale);
+  const staticMatching = category ? base.filter((p) => p.category === category) : base;
 
   let dbCount = 0;
   try {
@@ -121,13 +134,13 @@ export async function getPostsPage(
  * Distinct categories with their counts, read from the DB rather than derived
  * from a full document scan.
  */
-export async function getCategories(): Promise<CategoryInfo[]> {
+export async function getCategories(locale: Locale = 'en'): Promise<CategoryInfo[]> {
   const counts = new Map<string, number>();
 
   try {
     await connectDB();
     const grouped = await Blog.aggregate([
-      { $match: { isPublished: true } },
+      { $match: { isPublished: true, ...langFilter(locale) } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
     ]);
     for (const g of grouped as Array<{ _id: string; count: number }>) {
@@ -137,7 +150,7 @@ export async function getCategories(): Promise<CategoryInfo[]> {
     console.error('Category aggregation failed, using static categories:', error);
   }
 
-  for (const p of staticBlogPosts) counts.set(p.category, (counts.get(p.category) || 0) + 1);
+  for (const p of staticFor(locale)) counts.set(p.category, (counts.get(p.category) || 0) + 1);
 
   return [...counts.entries()]
     .map(([name, count]) => ({ name, slug: categorySlug(name), count }))
@@ -145,13 +158,13 @@ export async function getCategories(): Promise<CategoryInfo[]> {
 }
 
 /** Full archive. Only for surfaces that genuinely need every post, like the sitemap. */
-export async function getAllPosts(): Promise<BlogListItem[]> {
+export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
   const items: BlogListItem[] = [];
   const seen = new Set<string>();
 
   try {
     await connectDB();
-    const dbBlogs = await Blog.find({ isPublished: true })
+    const dbBlogs = await Blog.find({ isPublished: true, ...(locale ? langFilter(locale) : {}) })
       .select('slug title excerpt date readTime category coverImage')
       .sort({ createdAt: -1 })
       .lean();
@@ -174,7 +187,7 @@ export async function getAllPosts(): Promise<BlogListItem[]> {
   }
 
   // Curated static posts, skipping any the DB already served.
-  for (const p of staticBlogPosts) {
+  for (const p of locale === 'tr' ? [] : staticBlogPosts) {
     if (seen.has(p.slug)) continue;
     seen.add(p.slug);
     items.push({

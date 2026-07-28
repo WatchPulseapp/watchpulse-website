@@ -70,10 +70,11 @@ export async function submitToIndexNow(urls: string[]): Promise<IndexNowResult> 
  * The URLs worth announcing when an article goes live: the article itself, the
  * index it now leads, and the category page it was added to.
  */
-export function urlsForNewPost(slug: string, categorySlug: string): string[] {
+export function urlsForNewPost(slug: string, categorySlug: string, locale: 'en' | 'tr' = 'en'): string[] {
+  const prefix = locale === 'tr' ? '/tr' : '';
   return [
-    `https://${SITE_HOST}/blog/${slug}`,
-    `https://${SITE_HOST}/blog`,
-    `https://${SITE_HOST}/blog/category/${categorySlug}`,
+    `https://${SITE_HOST}${prefix}/blog/${slug}`,
+    `https://${SITE_HOST}${prefix}/blog`,
+    `https://${SITE_HOST}${prefix}/blog/category/${categorySlug}`,
   ];
 }

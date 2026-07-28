@@ -3,6 +3,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import BlogCard from '@/components/blog/BlogCard';
 import JournalSearch from '@/components/blog/JournalSearch';
 import type { BlogListItem, CategoryInfo } from '@/lib/blog-index';
+import type { Locale } from '@/lib/blog-locale';
+import { localePrefix } from '@/lib/blog-locale';
+import { strings } from '@/lib/blog-i18n';
 
 /**
  * The Journal index, shared by /blog, /blog/page/N and /blog/category/X.
@@ -29,11 +32,13 @@ interface JournalIndexProps {
   intro: string;
   /** The lead story treatment only makes sense on the unfiltered first page. */
   showLead?: boolean;
+  locale: Locale;
 }
 
-function pageHref(basePath: string, page: number): string {
+function pageHref(basePath: string, page: number, locale: Locale): string {
   if (page <= 1) return basePath;
-  return basePath === '/blog' ? `/blog/page/${page}` : `${basePath}/page/${page}`;
+  const indexPath = `${localePrefix(locale)}/blog`;
+  return basePath === indexPath ? `${indexPath}/page/${page}` : `${basePath}/page/${page}`;
 }
 
 function pageNumbers(page: number, totalPages: number): Array<number | 'gap'> {
@@ -57,7 +62,10 @@ export default function JournalIndex({
   heading,
   intro,
   showLead = false,
+  locale,
 }: JournalIndexProps) {
+  const t = strings(locale);
+  const prefix = localePrefix(locale);
   const lead = showLead && page === 1 ? posts[0] : null;
   const rest = lead ? posts.slice(1) : posts;
 
@@ -78,13 +86,13 @@ export default function JournalIndex({
           </div>
 
           <p className="journal-meta shrink-0 md:text-right">
-            {total} {total === 1 ? 'article' : 'articles'}
+            {t.articles(total)}
             {totalPages > 1 && (
               <>
                 <span className="mx-2" aria-hidden="true" style={{ color: 'var(--ink-faint)' }}>
                   ·
                 </span>
-                Page {page} of {totalPages}
+                {t.pageOf(page, totalPages)}
               </>
             )}
           </p>
@@ -99,10 +107,10 @@ export default function JournalIndex({
           <nav
             className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:pb-0"
             style={{ scrollbarWidth: 'none' }}
-            aria-label="Article categories"
+            aria-label={t.categoriesAria}
           >
             <Link
-              href="/blog"
+              href={`${prefix}/blog`}
               aria-current={activeCategory === null ? 'page' : undefined}
               className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
               style={
@@ -111,14 +119,14 @@ export default function JournalIndex({
                   : { color: 'var(--ink-soft)' }
               }
             >
-              All
+              {t.all}
             </Link>
             {categories.map((c) => {
               const active = activeCategory === c.slug;
               return (
                 <Link
                   key={c.slug}
-                  href={`/blog/category/${c.slug}`}
+                  href={`${prefix}/blog/category/${c.slug}`}
                   aria-current={active ? 'page' : undefined}
                   className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors"
                   style={
@@ -133,7 +141,7 @@ export default function JournalIndex({
             })}
           </nav>
 
-          <JournalSearch />
+          <JournalSearch locale={locale} />
         </div>
 
         {lead && (
@@ -151,19 +159,19 @@ export default function JournalIndex({
         ) : (
           !lead && (
             <div className="py-24 text-center">
-              <p className="journal-headline text-[1.25rem]">Nothing here yet</p>
-              <p className="journal-meta mt-2">Try another category.</p>
+              <p className="journal-headline text-[1.25rem]">{t.emptyTitle}</p>
+              <p className="journal-meta mt-2">{t.emptyBody}</p>
             </div>
           )
         )}
 
         {totalPages > 1 && (
-          <nav className="mt-14 flex items-center justify-center gap-1" aria-label="Pagination">
+          <nav className="mt-14 flex items-center justify-center gap-1" aria-label={t.pagination}>
             {page > 1 ? (
               <Link
-                href={pageHref(basePath, page - 1)}
+                href={pageHref(basePath, page - 1, locale)}
                 rel="prev"
-                aria-label="Previous page"
+                aria-label={t.previousPage}
                 className="grid h-9 w-9 place-items-center rounded-full transition-colors"
                 style={{ color: 'var(--ink-soft)' }}
               >
@@ -183,7 +191,7 @@ export default function JournalIndex({
               ) : (
                 <Link
                   key={n}
-                  href={pageHref(basePath, n)}
+                  href={pageHref(basePath, n, locale)}
                   aria-current={page === n ? 'page' : undefined}
                   className="grid h-9 min-w-9 place-items-center rounded-full px-3 text-[13px] font-medium tabular-nums transition-colors"
                   style={
@@ -199,9 +207,9 @@ export default function JournalIndex({
 
             {page < totalPages ? (
               <Link
-                href={pageHref(basePath, page + 1)}
+                href={pageHref(basePath, page + 1, locale)}
                 rel="next"
-                aria-label="Next page"
+                aria-label={t.nextPage}
                 className="grid h-9 w-9 place-items-center rounded-full transition-colors"
                 style={{ color: 'var(--ink-soft)' }}
               >

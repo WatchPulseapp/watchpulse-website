@@ -12,8 +12,7 @@ import BlogAppCTA from '@/components/blog/BlogAppCTA';
 import { ArrowLeft } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
-import { blogPostContent, type BlogPostContent } from '@/data/static-blog-content';
-import { staticBlogPosts } from '@/data/static-blogs';
+import { type BlogPostContent } from '@/data/static-blog-content';
 
 async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<BlogPostContent | null> {
   try {
@@ -40,6 +39,27 @@ async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<Bl
   return null;
 }
 
+/** Same-category Turkish posts, newest first. */
+async function getRelatedTurkish(slug: string, category: string) {
+  try {
+    await connectDB();
+    const rows = await Blog.find({ isPublished: true, lang: 'tr', category, slug: { $ne: slug } })
+      .select('slug title excerpt category readTime')
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+    return (rows as Array<Record<string, any>>).map((r) => ({
+      slug: r.slug,
+      title: r.title?.en || r.slug,
+      excerpt: r.excerpt?.en || '',
+      category: r.category,
+      readTime: r.readTime || '',
+    }));
+  } catch {
+    return [];
+  }
+}
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
@@ -47,9 +67,11 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  let post = await getBlogFromDB(slug);
+  let post = await getBlogFromDB(slug, 'tr');
   if (!post) {
-    post = blogPostContent[slug] || null;
+    // No fallback to the curated English posts: they are not Turkish, and
+    // serving one here would put an English article on a Turkish URL.
+    post = null;
   }
 
   if (!post) {
@@ -78,7 +100,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: post.excerpt,
       url: postUrl,
       siteName: 'WatchPulse',
-      locale: 'en_US',
+      locale: 'tr_TR',
       type: 'article',
       publishedTime: new Date(post.date).toISOString(),
       authors: [post.author],
@@ -107,16 +129,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export async function generateStaticParams() {
-  return Object.keys(blogPostContent).map((slug) => ({ slug }));
-}
+// Turkish posts live only in the DB, so there is nothing to prerender.
+export const dynamic = 'force-dynamic';
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
 
-  let post = await getBlogFromDB(slug);
+  let post = await getBlogFromDB(slug, 'tr');
   if (!post) {
-    post = blogPostContent[slug] || null;
+    // No fallback to the curated English posts: they are not Turkish, and
+    // serving one here would put an English article on a Turkish URL.
+    post = null;
   }
 
   if (!post) {
@@ -132,30 +155,8 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   let headingIndex = 0;
 
-  const relatedPosts = Object.entries(blogPostContent)
-    .filter(([key, p]) => key !== slug && p.category === post!.category)
-    .slice(0, 3)
-    .map(([key, p]) => ({
-      slug: key,
-      title: p.title,
-      excerpt: p.excerpt,
-      category: p.category,
-      readTime: p.readTime,
-    }));
-
-  if (relatedPosts.length < 3) {
-    const morePosts = staticBlogPosts
-      .filter(p => p.slug !== slug && p.category === post!.category && !relatedPosts.find(r => r.slug === p.slug))
-      .slice(0, 3 - relatedPosts.length)
-      .map(p => ({
-        slug: p.slug,
-        title: typeof p.title === 'string' ? p.title : p.title.en,
-        excerpt: typeof p.excerpt === 'string' ? p.excerpt : p.excerpt.en,
-        category: p.category,
-        readTime: p.readTime,
-      }));
-    relatedPosts.push(...morePosts);
-  }
+  // Further reading comes from the Turkish edition only.
+  const relatedPosts = await getRelatedTurkish(slug, post.category);
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -172,7 +173,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     },
     "datePublished": new Date(post.date).toISOString(),
     "dateModified": new Date(post.date).toISOString(),
-    "mainEntityOfPage": { "@type": "WebPage", "@id": `https://watchpulseapp.com/blog/${slug}` },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": `https://watchpulseapp.com/tr/blog/${slug}` },
     "image": post.coverImage || "https://watchpulseapp.com/og-image.jpg",
     "articleSection": post.category,
     "keywords": post.tags.join(", "),
@@ -183,8 +184,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://watchpulseapp.com" },
-      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://watchpulseapp.com/blog" },
-      { "@type": "ListItem", "position": 3, "name": post.title, "item": `https://watchpulseapp.com/blog/${slug}` },
+      { "@type": "ListItem", "position": 2, "name": "Günlük", "item": "https://watchpulseapp.com/tr/blog" },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": `https://watchpulseapp.com/tr/blog/${slug}` },
     ],
   };
 
@@ -199,15 +200,15 @@ export default async function BlogPostPage({ params }: PageProps) {
 
       <JournalThemeProvider>
         <div className="journal min-h-screen">
-          <JournalMasthead />
+          <JournalMasthead locale="tr" />
 
           <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-10 sm:px-6 md:px-8 md:pt-14">
             <Link
-              href="/blog"
+              href="/tr/blog"
               className="group journal-meta mb-10 inline-flex items-center gap-2 transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
-              All articles
+              Tüm yazılar
             </Link>
 
             <article>
@@ -239,7 +240,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   className="journal-meta mt-7 border-t pt-5"
                   style={{ borderColor: 'var(--rule)' }}
                 >
-                  By {post.author}
+                  {post.author}
                 </p>
               </header>
 
@@ -319,7 +320,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             </article>
           </div>
 
-          <JournalFooter />
+          <JournalFooter locale="tr" />
         </div>
       </JournalThemeProvider>
     </>

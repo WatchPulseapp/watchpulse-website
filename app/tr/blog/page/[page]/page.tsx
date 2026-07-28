@@ -5,7 +5,7 @@ import { journalIndexMetadata } from '@/lib/blog-meta';
 
 export const dynamic = 'force-dynamic';
 
-type Props = { params: Promise<{ category: string; page: string }> };
+type Props = { params: Promise<{ page: string }> };
 
 function parsePage(raw: string): number | null {
   // Only bare integers above 1 are pages: "/page/1" would duplicate the index,
@@ -16,15 +16,15 @@ function parsePage(raw: string): number | null {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { category, page } = await params;
+  const { page } = await params;
   const n = parsePage(page);
   if (!n) return { title: 'Not Found | WatchPulse', robots: { index: false, follow: false } };
-  return journalIndexMetadata({ locale: 'en', page: n, categorySlug: category });
+  return journalIndexMetadata({ locale: 'tr', page: n });
 }
 
 export default async function Page({ params }: Props) {
-  const { category, page } = await params;
+  const { page } = await params;
   const n = parsePage(page);
   if (!n) notFound();
-  return <JournalIndexPage locale="en" page={n} categorySlug={category} />;
+  return <JournalIndexPage locale="tr" page={n} />;
 }

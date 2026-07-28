@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import BlogRun from '@/lib/models/BlogRun';
 import { submitToIndexNow, urlsForNewPost, type IndexNowResult } from '@/lib/indexnow';
 import { categorySlug } from '@/lib/blog-index';
+import type { Locale } from '@/lib/blog-locale';
 
 /**
  * Persists the outcome of an attempt. Deliberately swallows its own errors:
@@ -72,12 +73,18 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  const requested = Number(new URL(request.url).searchParams.get('count') || 1);
+  const params = new URL(request.url).searchParams;
+
+  // Which edition this run writes for. The scheduler passes it explicitly so the
+  // day's output can be split between the two languages.
+  const locale: Locale = params.get('lang') === 'tr' ? 'tr' : 'en';
+
+  const requested = Number(params.get('count') || 1);
   const count = Math.min(Math.max(Number.isFinite(requested) ? requested : 1, 1), MAX_COUNT_PER_REQUEST);
   const startedAt = Date.now();
 
   try {
-    const alreadyToday = await countTodaysAutoPosts();
+    const alreadyToday = await countTodaysAutoPosts(locale);
     const remaining = MAX_POSTS_PER_DAY - alreadyToday;
 
     if (remaining <= 0) {
@@ -98,7 +105,7 @@ async function handle(request: NextRequest) {
     const results = [];
     for (let i = 0; i < Math.min(count, remaining); i++) {
       const attemptStart = Date.now();
-      const result = await generateAndPublish();
+      const result = await generateAndPublish(locale);
       results.push(result);
 
       // Recorded per attempt, success or failure, so the admin view can answer
@@ -125,7 +132,7 @@ async function handle(request: NextRequest) {
       // Refresh the Next data cache for the surfaces that list posts. The CDN
       // still holds /blog for up to an hour (see the Cache-Control header in
       // next.config.js), so a new post can take that long to appear publicly.
-      revalidatePath('/blog');
+      revalidatePath(locale === 'tr' ? '/tr/blog' : '/blog');
       revalidatePath('/sitemap.xml');
       revalidatePath('/feed.xml');
 
@@ -133,7 +140,7 @@ async function handle(request: NextRequest) {
       // crawled. Failures are reported, never thrown: the article is already
       // published and a search engine being unreachable must not fail the run.
       const urls = published.flatMap((r) =>
-        r.slug ? urlsForNewPost(r.slug, categorySlug(r.category || '')) : []
+        r.slug ? urlsForNewPost(r.slug, categorySlug(r.category || ''), locale) : []
       );
       indexNow = await submitToIndexNow([...new Set(urls)]);
     }
@@ -143,6 +150,7 @@ async function handle(request: NextRequest) {
         success: published.length > 0,
         publishedToday: alreadyToday + published.length,
         dailyLimit: MAX_POSTS_PER_DAY,
+        lang: locale,
         published: published.map((r) => ({
           slug: r.slug,
           title: r.title,

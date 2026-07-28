@@ -23,7 +23,11 @@ function escapeRegex(value: string): string {
 }
 
 export async function GET(request: NextRequest) {
-  const query = (new URL(request.url).searchParams.get('q') || '').trim();
+  const params = new URL(request.url).searchParams;
+  const query = (params.get('q') || '').trim();
+  const lang = params.get('lang') === 'tr' ? 'tr' : 'en';
+  // Posts predating the Turkish edition carry no lang field and are English.
+  const langQuery = lang === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
   if (query.length < 2) return NextResponse.json({ results: [] });
 
   // A long query is a bad query; capping it keeps the regex bounded.
@@ -37,6 +41,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const matches = await Blog.find({
       isPublished: true,
+      ...langQuery,
       $or: [{ 'title.en': pattern }, { category: pattern }, { tags: pattern }],
     })
       .select('slug title category')
@@ -53,8 +58,8 @@ export async function GET(request: NextRequest) {
     console.error('[blog-search] DB query failed, falling back to static:', error);
   }
 
-  // Curated posts live in code, not the DB, so they are matched separately.
-  for (const p of staticBlogPosts) {
+  // Curated posts are English-only and live in code rather than the DB.
+  for (const p of lang === 'tr' ? [] : staticBlogPosts) {
     if (results.length >= MAX_RESULTS) break;
     if (seen.has(p.slug)) continue;
     if (pattern.test(p.title.en) || pattern.test(p.category)) {

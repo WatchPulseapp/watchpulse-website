@@ -52,7 +52,61 @@ export const CATEGORY_COPY: Record<string, { title: string; description: string;
   },
 };
 
-export function categoryCopy(name: string) {
+const TR_COPY: Record<string, { title: string; description: string; intro: string }> = {
+  'TV Shows': {
+    title: 'Diziler — Ne İzlenir, Nereden Başlanır',
+    description:
+      'Başlamaya değer diziler, bu hafta yeni bölüm yayınlayanlar ve şimdi mi başlamalı yoksa baştan mı izlemeli.',
+    intro: 'Başlamaya değer diziler ve yeni bir izleyicinin nereden gireceği.',
+  },
+  'Genre Guide': {
+    title: 'Tür Rehberleri — Türlere Göre En İyi Filmler',
+    description:
+      'Korku, bilim kurgu, gerilim, komedi ve dram türlerinde en iyi filmler; her birinin neyi iyi yaptığıyla birlikte.',
+    intro: 'Her türün en iyileri ve hangisinin akşamınıza değdiği.',
+  },
+  Trends: {
+    title: 'Yakında — Vizyona Girecek Filmler ve Gündemdekiler',
+    description:
+      'Önümüzdeki aylarda gelecek filmler, bu hafta konuşulanlar ve iki dakikanıza değen fragmanlar.',
+    intro: 'Sırada ne var, şu an herkes ne izliyor.',
+  },
+  Streaming: {
+    title: 'Platform Rehberleri — Nerede Ne İzlenir',
+    description:
+      'Platformlarda izlemeye değer olanlar ve bir akşamı gezinerek harcamadan bir şey bulmanın yolu.',
+    intro: 'Platformlarda izlemeye değenler, gezinerek vakit kaybetmeden.',
+  },
+  Entertainment: {
+    title: 'Sinema Dosyaları — İnceleme ve Öneriler',
+    description:
+      'Tek tek filmlere ve onları yapanlara yakın bakış, vizyondakiler ve bileti hak edenler.',
+    intro: 'Filmlere ve arkalarındaki isimlere yakın bakış.',
+  },
+  'Hidden Gems': {
+    title: 'Gözden Kaçanlar — Keşfedilmeyi Bekleyen Filmler',
+    description: 'Hak ettiğinden az izleyiciye ulaşmış filmler ve onları nerede bulacağınız.',
+    intro: 'Hak ettiğinden az izleyiciye ulaşmış filmler.',
+  },
+  'Mood Guide': {
+    title: 'Ruh Haline Göre — Nasıl Hissediyorsanız Ona Göre İzleyin',
+    description:
+      'Ruh halinize göre film ve dizi seçkileri; ana sayfadaki hiçbir şeyin doğru gelmediği akşamlar için.',
+    intro: 'Ruh halinize göre seçkiler, hiçbir şeyin doğru gelmediği akşamlar için.',
+  },
+};
+
+export function categoryCopy(name: string, locale: 'en' | 'tr' = 'en') {
+  if (locale === 'tr') {
+    return (
+      TR_COPY[name] || {
+        title: `${name} — Film ve Dizi Rehberleri`,
+        description: `WatchPulse Günlük'te ${name} başlığı altındaki yazılar: öneriler, rehberler ve akşamınıza değecekler.`,
+        intro: `Günlük'te ${name} başlığı altındaki her şey.`,
+      }
+    );
+  }
+
   return (
     CATEGORY_COPY[name] || {
       title: `${name} — Film and TV Guides`,

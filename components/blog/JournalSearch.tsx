@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
+import { strings } from '@/lib/blog-i18n';
+import { localePrefix, type Locale } from '@/lib/blog-locale';
 
 interface Result {
   slug: string;
@@ -17,7 +19,9 @@ interface Result {
  * version shipped every post's title inside the HTML of every index page, which
  * grows with the archive; this ships nothing and asks only when someone types.
  */
-export default function JournalSearch() {
+export default function JournalSearch({ locale = 'en' }: { locale?: Locale }) {
+  const t = strings(locale);
+  const prefix = localePrefix(locale);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +44,7 @@ export default function JournalSearch() {
     // Debounced so a typed word is one request, not one per keystroke.
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/blog-search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/blog-search?q=${encodeURIComponent(q)}&lang=${locale}`);
         const data = await res.json();
         if (id === latest.current) setResults(data.results || []);
       } catch {
@@ -51,7 +55,7 @@ export default function JournalSearch() {
     }, 220);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, locale]);
 
   const open = query.trim().length >= 2;
 
@@ -65,15 +69,15 @@ export default function JournalSearch() {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search articles"
-        aria-label="Search articles"
+        placeholder={t.searchPlaceholder}
+        aria-label={t.searchAria}
         className="w-full rounded-full border py-2 pl-10 pr-9 text-[14px] outline-none transition-colors"
         style={{ borderColor: 'var(--rule)', background: 'var(--card)', color: 'var(--ink)' }}
       />
       {query && (
         <button
           onClick={() => setQuery('')}
-          aria-label="Clear search"
+          aria-label={t.clearSearch}
           className="absolute right-3 top-1/2 -translate-y-1/2"
           style={{ color: 'var(--ink-faint)' }}
         >
@@ -87,15 +91,15 @@ export default function JournalSearch() {
           style={{ borderColor: 'var(--rule)', background: 'var(--card)', boxShadow: 'var(--shadow-lift)' }}
         >
           {loading && results.length === 0 ? (
-            <p className="journal-meta px-4 py-3">Searching…</p>
+            <p className="journal-meta px-4 py-3">{t.searching}</p>
           ) : results.length === 0 ? (
-            <p className="journal-meta px-4 py-3">No articles match “{query.trim()}”.</p>
+            <p className="journal-meta px-4 py-3">{t.noMatch(query.trim())}</p>
           ) : (
             <ul>
               {results.map((r) => (
                 <li key={r.slug}>
                   <Link
-                    href={`/blog/${r.slug}`}
+                    href={`${prefix}/blog/${r.slug}`}
                     onClick={() => setQuery('')}
                     className="block border-b px-4 py-2.5 last:border-b-0"
                     style={{ borderColor: 'var(--rule)' }}
