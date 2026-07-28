@@ -15,12 +15,12 @@ import Blog from '@/lib/models/Blog';
 import { blogPostContent, type BlogPostContent } from '@/data/static-blog-content';
 import { staticBlogPosts } from '@/data/static-blogs';
 
-async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<BlogPostContent | null> {
+async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
   try {
     await connectDB();
-    // Posts predating the Turkish edition carry no lang field and are English.
-    const langQuery = lang === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
-    const blog = await Blog.findOne({ slug, isPublished: true, ...langQuery }).lean();
+    // One document per article; this edition reads its English fields, and
+    // /tr/blog/<slug> reads the Turkish ones from the same row.
+    const blog = await Blog.findOne({ slug, isPublished: true }).lean();
     if (blog) {
       return {
         title: blog.title.en,
@@ -48,6 +48,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
 
   let post = await getBlogFromDB(slug);
+  // Only DB articles have a Turkish side; the curated static posts are
+  // hand-written English with no /tr/blog counterpart to point at.
+  const hasTurkish = Boolean(post);
   if (!post) {
     post = blogPostContent[slug] || null;
   }
@@ -72,7 +75,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     publisher: 'WatchPulse',
     formatDetection: { email: false, address: false, telephone: false },
     metadataBase: new URL(siteUrl),
-    alternates: { canonical: postUrl },
+    alternates: hasTurkish
+      ? {
+          canonical: postUrl,
+          languages: {
+            'en-US': postUrl,
+            'tr-TR': `${siteUrl}/tr/blog/${slug}`,
+            'x-default': postUrl,
+          },
+        }
+      : { canonical: postUrl },
     openGraph: {
       title: post.title,
       description: post.excerpt,

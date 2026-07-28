@@ -1,7 +1,7 @@
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { buildStoryBrief, type StoryBrief } from '@/lib/blog-stories';
-import type { Locale } from '@/lib/blog-locale';
+import { translateArticle } from '@/lib/blog-translate';
 
 /**
  * Autonomous blog generation pipeline (Groq).
@@ -116,26 +116,6 @@ const FALLBACK_TOPICS = [
   'why sequels dominate every streaming homepage',
 ];
 
-/**
- * Turkish articles are written in Turkish, not translated into it.
- *
- * The fact sheet is language-neutral, so the same TMDB grounding works for both
- * editions — only the writing instruction changes. Translating an English draft
- * produces text that reads like a translation and ranks like one; asking for the
- * article in Turkish from the start does not.
- *
- * Film and series names stay in their original spelling: a Turkish reader
- * searches for "Breaking Bad", not for an invented Turkish rendering of it.
- */
-const TURKISH_INSTRUCTIONS = `Write the entire article in Turkish — headline, excerpt, headings and body.
-
-TURKISH LANGUAGE RULES:
-- Write as a Turkish film writer would, not as a translation. Natural sentence order, natural idiom.
-- Grammatically and orthographically perfect. Turkish characters (ç, ğ, ı, İ, ö, ş, ü) used correctly.
-- Keep film, series, brand and platform names in their original spelling: "Breaking Bad", "Netflix", "WatchPulse". Never invent a Turkish name for a title.
-- Address the reader with "siz", the way a magazine would.
-- The slug stays in ASCII lowercase with hyphens, and may use the Turkish words with their accents stripped.`;
-
 export interface BlogContentBlock {
   type: 'paragraph' | 'heading' | 'list' | 'quote';
   content: string | string[];
@@ -168,6 +148,8 @@ export interface GeneratedArticle {
     angle: string;
     writerModel: string;
     storyFormat: string | null;
+    /** Titles the translator must copy verbatim rather than translate. */
+    requiredTitles: string[];
   };
 }
 
@@ -182,6 +164,8 @@ export interface GenerationResult {
   category?: string;
   model?: string;
   words?: number;
+  /** False when the article published but its Turkish side could not be produced. */
+  translated?: boolean;
   reason?: string;
 }
 
@@ -344,8 +328,7 @@ function buildWriterPrompt(
   topic: string,
   angle: (typeof BLOG_ANGLES)[number],
   existingSlugs: string[],
-  brief: StoryBrief | null,
-  locale: Locale
+  brief: StoryBrief | null
 ): string {
   // With a brief, the article is pinned to verified TMDB data. Without one
   // (no TMDB key, or every format came back empty) the domain is enforced by
@@ -376,23 +359,12 @@ TONE: ${angle.tone}
 
 ${grounding}
 
-${
-  locale === 'tr'
-    ? `STRUCTURE — follow this exactly, it is not a suggestion. Lengths are in
-CHARACTERS because Turkish is agglutinative and packs into far fewer words than
-English, which makes a word count the wrong instrument:
-- 1 opening "paragraph" block of 550-750 characters that hooks the reader.
-- Then EXACTLY 8 sections. Each section = 1 "heading" block followed by 2 "paragraph" blocks of 550-750 CHARACTERS EACH.
-- Insert 2 "list" blocks (4-5 items each) and 1 "quote" block at natural points between sections.
-- The "content" array must therefore contain AT LEAST 28 blocks.
-- A paragraph under 450 characters is a FAILED response, as is a whole article under 6000 characters.`
-    : `STRUCTURE — follow this exactly, it is not a suggestion:
+STRUCTURE — follow this exactly, it is not a suggestion:
 - 1 opening "paragraph" block of 100-140 words that hooks the reader.
 - Then EXACTLY 8 sections. Each section = 1 "heading" block followed by 2 "paragraph" blocks of 100-140 words EACH.
 - Insert 2 "list" blocks (4-5 items each) and 1 "quote" block at natural points between sections.
 - The "content" array must therefore contain AT LEAST 28 blocks.
-- A response with fewer than 28 blocks, or with paragraphs shorter than 100 words, is a FAILED response.`
-}
+- A response with fewer than 28 blocks, or with paragraphs shorter than 100 words, is a FAILED response.
 
 CONTENT RULES:
 1. Always give a title's release year the first time you name it, e.g. "Inception (2010)".
@@ -404,10 +376,10 @@ CONTENT RULES:
 AVOID these existing article slugs — pick a genuinely different angle:
 ${existingSlugs.slice(0, 25).join(', ') || '(none yet)'}
 
-${locale === 'tr' ? TURKISH_INSTRUCTIONS : 'Write in English only.'} Return ONLY valid JSON:
+Write in English only. Return ONLY valid JSON:
 {
   "slug": "seo-friendly-url-slug",
-  "title": "${locale === 'tr' ? 'Çarpıcı Türkçe başlık' : 'Compelling English title'}, 25-80 characters, containing the main keyword. Never a vague fragment.",
+  "title": "Compelling English title, 25-80 characters, containing the main keyword. Never a vague fragment.",
   "excerpt": "Meta description, 110-200 characters",
   "content": [
     { "type": "paragraph", "content": "..." },
@@ -420,19 +392,13 @@ ${locale === 'tr' ? TURKISH_INSTRUCTIONS : 'Write in English only.'} Return ONLY
 }`;
 }
 
-/**
- * Length floors, per language.
- *
- * Turkish carries in one word what English needs two or three for, so the same
- * article measures roughly half as many words — measured across test runs,
- * English lands at 1000-1900 words and Turkish at 450-550 for equivalent depth.
- * Holding Turkish to the English floor would reject every article it wrote.
- */
-const MIN_WORDS: Record<Locale, number> = { en: 700, tr: 400 };
+// Measured English output lands at 1000-1900 words, so this rejects a run that
+// quietly produced a stub without rejecting an ordinary short article.
+const MIN_WORDS = 700;
 const MIN_BLOCKS = 12;
 
 /** Rejects anything we would be embarrassed to publish. */
-function validateWriterOutput(blog: WriterOutput | null, locale: Locale = 'en'): string | null {
+function validateWriterOutput(blog: WriterOutput | null): string | null {
   if (!blog) return 'unparseable JSON';
   if (!blog.slug || typeof blog.slug !== 'string') return 'missing slug';
   if (!blog.title || typeof blog.title !== 'string') return 'missing title';
@@ -451,8 +417,7 @@ function validateWriterOutput(blog: WriterOutput | null, locale: Locale = 'en'):
   if (malformed) return 'malformed content block';
 
   const words = wordCount(blog.content);
-  const floor = MIN_WORDS[locale];
-  if (words < floor) return `article too short (${words} words, need ${floor} for ${locale})`;
+  if (words < MIN_WORDS) return `article too short (${words} words, need ${MIN_WORDS})`;
 
   return null;
 }
@@ -535,8 +500,7 @@ function namesAFeaturedTitle(title: string, featuredTitles: string[]): boolean {
 async function writeHeadline(
   content: BlogContentBlock[],
   topic: string,
-  featuredTitles: string[] = [],
-  locale: Locale = 'en'
+  featuredTitles: string[] = []
 ): Promise<{ title: string; excerpt: string } | null> {
   const body = content
     .filter((b) => b.type === 'paragraph' || b.type === 'heading')
@@ -561,7 +525,7 @@ Rules:
 ${namingRule}
 - The title must do more than list names. Pair the titles with what the reader gets from the article — "Nosferatu, Jaws & The Thing: Must-Watch Horror Classics That Still Terrify" works; "Obsession, Masters of the Universe" does not.
 - Excerpt: between ${EXCERPT_MIN} and ${EXCERPT_MAX} characters, written as a search-result meta description that makes someone click.
-${locale === 'tr' ? '- Türkçe yaz, doğal ve akıcı. Film ve dizi adlarını orijinal yazımıyla bırak.' : '- English only.'}
+- English only.
 
 Return JSON: {"title": "...", "excerpt": "..."}`;
 
@@ -626,8 +590,7 @@ function normalizeForMatch(value: string): string {
  */
 export async function generateArticle(
   existingSlugs: string[] = [],
-  existingTitles: string[] = [],
-  locale: Locale = 'en'
+  existingTitles: string[] = []
 ): Promise<{ article: GeneratedArticle | null; reason?: string }> {
   if (!GROQ_API_KEY) return { article: null, reason: 'GROQ_API_KEY is not set' };
 
@@ -639,11 +602,8 @@ export async function generateArticle(
   if (!brief) console.warn('[blog-generator] no TMDB story brief available, falling back to invented topic');
 
   const topic = brief ? brief.topic : await inventTopic(existingTitles, angle);
-  const prompt = buildWriterPrompt(topic, angle, existingSlugs, brief, locale);
-  const system =
-    locale === 'tr'
-      ? `Sen film ve dizi üzerine uzun soluklu yazan bir Türk yazarsın. ${angle.tone} bir üslupla yaz. İstenen yapıya ve uzunluğa her zaman uyarsın, sana verilmeyen hiçbir bilgiyi uydurmazsın. YALNIZCA geçerli JSON döndür.`
-      : `You are an expert entertainment writer producing long-form SEO content about film and television. Write in a ${angle.tone} voice. You always hit the requested structure and length, and you never state a fact you were not given. Return ONLY valid JSON.`;
+  const prompt = buildWriterPrompt(topic, angle, existingSlugs, brief);
+  const system = `You are an expert entertainment writer producing long-form SEO content about film and television. Write in a ${angle.tone} voice. You always hit the requested structure and length, and you never state a fact you were not given. Return ONLY valid JSON.`;
 
   let lastReason = 'no writer model produced a valid article';
 
@@ -666,7 +626,7 @@ export async function generateArticle(
 
         parsed = parseJson<WriterOutput>(raw);
         problem =
-          validateWriterOutput(parsed, locale) ||
+          validateWriterOutput(parsed) ||
           (parsed ? checkGrounding(parsed.content, brief) : null) ||
           (parsed && !brief ? checkDomain(parsed.content) : null);
 
@@ -687,7 +647,7 @@ export async function generateArticle(
       // the actual films, which the writer's own title reliably fails to do.
       // Without one it is only a repair step for a headline that failed the checks.
       if (brief || !headlineLooksGood(titleEn, excerptEn)) {
-        const written = await writeHeadline(parsed.content, topic, brief?.requiredTitles || [], locale);
+        const written = await writeHeadline(parsed.content, topic, brief?.requiredTitles || []);
         if (written) {
           titleEn = written.title;
           excerptEn = written.excerpt;
@@ -699,9 +659,9 @@ export async function generateArticle(
       return {
         article: {
           slug: slugify(parsed.slug) || slugify(titleEn),
-          // The blog publishes in English only. The schema still requires the
-          // `tr` fields, and app/blog/page.tsx reads them purely as a fallback
-          // for a missing `en`, so they mirror the English text.
+          // Written in English, then translated by generateAndPublish. The tr
+          // fields mirror the English until that runs, so a translation failure
+          // leaves a readable page rather than an empty one.
           title: { en: titleEn, tr: titleEn },
           excerpt: { en: excerptEn, tr: excerptEn },
           content: parsed.content,
@@ -718,6 +678,10 @@ export async function generateArticle(
             angle: angle.id,
             writerModel: model.id,
             storyFormat: brief?.format || null,
+            // The exact film and series names the article is grounded in. The
+            // translator needs them verbatim so it copies rather than renders
+            // them — "Fall 2: Deadpoint" must not become "Sonbahar 2".
+            requiredTitles: brief?.requiredTitles || [],
           },
         },
       };
@@ -731,14 +695,8 @@ export async function generateArticle(
 }
 
 /** Titles and slugs already published, used for de-duplication. */
-async function getPublishedIdentity(
-  limit = 60,
-  locale: Locale = 'en'
-): Promise<{ slugs: string[]; titles: string[] }> {
-  // Only the same edition counts for de-duplication: an English article on a
-  // subject does not stop the Turkish edition covering it, and should not.
-  const langQuery = locale === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
-  const blogs = await Blog.find(langQuery).select('slug title').sort({ createdAt: -1 }).limit(limit).lean();
+async function getPublishedIdentity(limit = 60): Promise<{ slugs: string[]; titles: string[] }> {
+  const blogs = await Blog.find().select('slug title').sort({ createdAt: -1 }).limit(limit).lean();
   const rows = blogs as Array<{ slug?: string; title?: { en?: string } }>;
   return {
     slugs: rows.map((b) => b.slug?.toLowerCase() || '').filter(Boolean),
@@ -762,21 +720,35 @@ async function uniqueSlug(candidate: string): Promise<string> {
  * Generates one article and saves it as a published post. Returns a result
  * object rather than throwing, so a cron run can always report cleanly.
  */
-export async function generateAndPublish(locale: Locale = 'en'): Promise<GenerationResult> {
+export async function generateAndPublish(): Promise<GenerationResult> {
   try {
     await connectDB();
-    const { slugs, titles } = await getPublishedIdentity(60, locale);
-    const { article, reason } = await generateArticle(slugs, titles, locale);
+    const { slugs, titles } = await getPublishedIdentity(60);
+    const { article, reason } = await generateArticle(slugs, titles);
 
     if (!article) return { ok: false, reason };
 
     const slug = await uniqueSlug(article.slug);
 
+    // The Turkish side of the same article. A failure here is not a failure of
+    // the run: the article is good, so it is published with the English body
+    // mirrored into the Turkish fields and can be translated on a later pass.
+    const turkish = await translateArticle(
+      { title: article.title.en, excerpt: article.excerpt.en, content: article.content },
+      'tr',
+      article.meta.requiredTitles
+    );
+
+    if (!turkish) {
+      console.warn(`[blog-generator] "${slug}" published without a Turkish translation`);
+    }
+
     await Blog.create({
       slug,
-      title: article.title,
-      excerpt: article.excerpt,
+      title: { en: article.title.en, tr: turkish?.title || article.title.en },
+      excerpt: { en: article.excerpt.en, tr: turkish?.excerpt || article.excerpt.en },
       content: article.content,
+      contentTr: turkish?.content,
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       readTime: article.readTime,
       category: article.category,
@@ -784,14 +756,12 @@ export async function generateAndPublish(locale: Locale = 'en'): Promise<Generat
       coverImage: article.coverImage,
       author: 'WatchPulse Team',
       isPublished: true,
-      // Without this the post lands in the English edition regardless of the
-      // language it was written in: every index filters on it.
-      lang: locale,
+      lang: 'en',
       autoGenerated: true,
     });
 
     console.log(
-      `[blog-generator] published "${slug}" (${article.words} words, ${article.meta.storyFormat || 'no-brief'}, ${article.meta.writerModel})`
+      `[blog-generator] published "${slug}" (${article.words} words, ${article.meta.storyFormat || 'no-brief'}, ${article.meta.writerModel}, tr: ${turkish ? 'yes' : 'no'})`
     );
 
     return {
@@ -804,6 +774,7 @@ export async function generateAndPublish(locale: Locale = 'en'): Promise<Generat
       category: article.category,
       model: article.meta.writerModel,
       words: article.words,
+      translated: Boolean(turkish),
     };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
@@ -813,12 +784,11 @@ export async function generateAndPublish(locale: Locale = 'en'): Promise<Generat
 }
 
 /** How many auto-generated posts were created since midnight UTC. */
-export async function countTodaysAutoPosts(locale?: Locale): Promise<number> {
+export async function countTodaysAutoPosts(): Promise<number> {
   await connectDB();
   const startOfDay = new Date();
   startOfDay.setUTCHours(0, 0, 0, 0);
-  // Each edition gets its own daily allowance, so one language falling behind
-  // never eats into the other's budget.
-  const langQuery = locale ? (locale === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } }) : {};
-  return Blog.countDocuments({ autoGenerated: true, ...langQuery, createdAt: { $gte: startOfDay } });
+  // One counter, not one per language: an article is a single document that
+  // both editions serve, so publishing it costs the day's budget exactly once.
+  return Blog.countDocuments({ autoGenerated: true, createdAt: { $gte: startOfDay } });
 }

@@ -91,22 +91,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('slug lang updatedAt createdAt')
       .lean() as DBBlog[];
 
-    // Split by edition. A Turkish article only exists at /tr/blog/<slug>, so
-    // listing it under /blog/ would point crawlers at a 404 — the precise harm
-    // a sitemap is supposed to prevent.
+    // Every article is published in both languages under the same slug, so each
+    // one contributes two URLs. They are alternates rather than duplicates —
+    // the pages declare each other via hreflang.
     const modified = (blog: DBBlog) => blog.updatedAt || blog.createdAt || new Date();
 
-    dynamicBlogs = dbBlogs
-      .filter((blog) => blog.lang !== 'tr')
-      .map((blog) => ({
-        slug: blog.slug,
-        lastModified: modified(blog),
-        priority: 0.8 // AI-generated blogs get good priority
-      }));
+    dynamicBlogs = dbBlogs.map((blog) => ({
+      slug: blog.slug,
+      lastModified: modified(blog),
+      priority: 0.8 // AI-generated blogs get good priority
+    }));
 
-    turkishBlogs = dbBlogs
-      .filter((blog) => blog.lang === 'tr')
-      .map((blog) => ({ slug: blog.slug, lastModified: modified(blog) }));
+    turkishBlogs = dbBlogs.map((blog) => ({ slug: blog.slug, lastModified: modified(blog) }));
   } catch (error) {
     console.error('Failed to fetch blogs for sitemap:', error);
   }

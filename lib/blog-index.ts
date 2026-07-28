@@ -38,25 +38,23 @@ function staticFor(locale: Locale) {
 }
 
 /**
- * Posts written before the Turkish edition existed carry no `lang` field, and
- * they are all English — so the English filter has to accept a missing value
- * or the archive would vanish from its own index.
- */
-function langFilter(locale: Locale): Record<string, unknown> {
-  return locale === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
-}
-
-/**
  * Turns a stored post into what the edition displays.
  *
- * The category and the read time are written once, in English, because they are
- * also a query key and a computed number. They are translated on the way out so
- * a Turkish reader never meets "Genre Guide · 5 min read" under a Turkish
- * headline — the one detail that would give away a translated site.
+ * Every article exists once and is served by both editions, so this is where a
+ * document becomes an English or a Turkish list entry: the language-specific
+ * title and excerpt are selected, and the category and read time — written once
+ * in English because one is a query key and the other a computed number — are
+ * translated on the way out. Left alone they would put "Genre Guide · 5 min
+ * read" under a Turkish headline, the one detail that gives a translation away.
  */
 function display(locale: Locale) {
   const t = strings(locale);
+  const pick = (field: { en?: string; tr?: string } | undefined): string =>
+    (locale === 'tr' ? field?.tr || field?.en : field?.en || field?.tr) || '';
+
   return {
+    title: pick,
+    excerpt: pick,
     category: (name: string) => t.categoryLabel(name),
     readTime: (value: string) => t.readTime(value),
   };
@@ -78,7 +76,7 @@ export async function getPostsPage(
   category?: string,
   locale: Locale = 'en'
 ): Promise<{ items: BlogListItem[]; page: number; totalPages: number; total: number }> {
-  const query: Record<string, unknown> = { isPublished: true, ...langFilter(locale) };
+  const query: Record<string, unknown> = { isPublished: true };
   if (category) query.category = category;
 
   const base = staticFor(locale);
@@ -116,8 +114,8 @@ export async function getPostsPage(
         seen.add(b.slug);
         items.push({
           slug: b.slug,
-          title: b.title?.en || b.title?.tr || '',
-          excerpt: b.excerpt?.en || b.excerpt?.tr || '',
+          title: show.title(b.title),
+          excerpt: show.excerpt(b.excerpt),
           category: show.category(b.category || 'General'),
           date: b.date || '',
           readTime: show.readTime(b.readTime || '5 min read'),
@@ -158,7 +156,7 @@ export async function getCategories(locale: Locale = 'en'): Promise<CategoryInfo
   try {
     await connectDB();
     const grouped = await Blog.aggregate([
-      { $match: { isPublished: true, ...langFilter(locale) } },
+      { $match: { isPublished: true } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
     ]);
     for (const g of grouped as Array<{ _id: string; count: number }>) {
@@ -184,7 +182,7 @@ export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
 
   try {
     await connectDB();
-    const dbBlogs = await Blog.find({ isPublished: true, ...(locale ? langFilter(locale) : {}) })
+    const dbBlogs = await Blog.find({ isPublished: true })
       .select('slug title excerpt date readTime category coverImage')
       .sort({ createdAt: -1 })
       .lean();
@@ -194,8 +192,8 @@ export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
       seen.add(b.slug);
       items.push({
         slug: b.slug,
-        title: b.title?.en || b.title?.tr || '',
-        excerpt: b.excerpt?.en || b.excerpt?.tr || '',
+        title: show.title(b.title),
+        excerpt: show.excerpt(b.excerpt),
         category: show.category(b.category || 'General'),
         date: b.date || '',
         readTime: show.readTime(b.readTime || '5 min read'),

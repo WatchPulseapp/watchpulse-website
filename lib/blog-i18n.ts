@@ -177,13 +177,13 @@ export function otherLocale(locale: Locale): Locale {
 }
 
 /**
- * Maps a path in one edition to the same surface in the other. Article slugs do
- * not translate — the editions carry different articles — so a switch from an
- * article lands on that edition's index rather than a URL that does not exist.
+ * Maps a path in one edition to the same surface in the other.
+ *
+ * Both editions serve the same articles under the same slugs, so switching
+ * language on an article keeps the reader on that article instead of dropping
+ * them back at the index.
  */
 export function switchPath(pathname: string, to: Locale): string {
   const bare = pathname.replace(/^\/tr(?=\/|$)/, '') || '/blog';
-  const isArticle = /^\/blog\/[^/]+$/.test(bare) && !bare.startsWith('/blog/page') && !bare.startsWith('/blog/category');
-  const target = isArticle ? '/blog' : bare;
-  return to === 'tr' ? `/tr${target}` : target;
+  return to === 'tr' ? `/tr${bare}` : bare;
 }

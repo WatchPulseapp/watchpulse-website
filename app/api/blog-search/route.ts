@@ -26,8 +26,6 @@ export async function GET(request: NextRequest) {
   const params = new URL(request.url).searchParams;
   const query = (params.get('q') || '').trim();
   const lang = params.get('lang') === 'tr' ? 'tr' : 'en';
-  // Posts predating the Turkish edition carry no lang field and are English.
-  const langQuery = lang === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
   if (query.length < 2) return NextResponse.json({ results: [] });
 
   // A long query is a bad query; capping it keeps the regex bounded.
@@ -39,10 +37,11 @@ export async function GET(request: NextRequest) {
 
   try {
     await connectDB();
+    // Search both language fields whichever edition is asking: a Turkish reader
+    // typing an original film title should still find the article that covers it.
     const matches = await Blog.find({
       isPublished: true,
-      ...langQuery,
-      $or: [{ 'title.en': pattern }, { category: pattern }, { tags: pattern }],
+      $or: [{ 'title.en': pattern }, { 'title.tr': pattern }, { category: pattern }, { tags: pattern }],
     })
       .select('slug title category')
       .sort({ createdAt: -1 })
@@ -52,7 +51,8 @@ export async function GET(request: NextRequest) {
     for (const m of matches as Array<Record<string, any>>) {
       if (!m.slug || seen.has(m.slug)) continue;
       seen.add(m.slug);
-      results.push({ slug: m.slug, title: m.title?.en || m.slug, category: m.category || 'General' });
+      const title = lang === 'tr' ? m.title?.tr || m.title?.en : m.title?.en || m.title?.tr;
+      results.push({ slug: m.slug, title: title || m.slug, category: m.category || 'General' });
     }
   } catch (error) {
     console.error('[blog-search] DB query failed, falling back to static:', error);

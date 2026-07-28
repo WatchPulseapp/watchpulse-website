@@ -61,9 +61,10 @@ export async function GET() {
 
     try {
       await connectDB();
-      // English edition only: this feed declares itself as en-us, and a Turkish
-      // article has no /blog/<slug> URL to link to.
-      dbBlogs = await Blog.find({ isPublished: true, lang: { $ne: 'tr' } })
+      // The feed declares itself as en-us and links to /blog/<slug>, so it
+      // carries the English side of each article. The Turkish side of the same
+      // piece is reachable from that page.
+      dbBlogs = await Blog.find({ isPublished: true })
         .select('slug title excerpt date category')
         .sort({ createdAt: -1 })
         .limit(20)

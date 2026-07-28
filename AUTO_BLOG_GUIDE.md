@@ -1,13 +1,13 @@
 # Otomatik Blog Yayınlama
 
-Groq ile günde 5 makale üretip yayınlayan otomatik sistem. Makaleler TMDB'den
+Groq ile günde 10 makale üretip iki dilde yayınlayan otomatik sistem. Makaleler TMDB'den
 çekilen **gerçek film/dizi verisine** dayanır — vizyona girecekler, haftanın
 trendleri, yeni yayına girenler, hangi platformda.
 
 ## Nasıl çalışıyor
 
 ```
-GitHub Actions (günde 5 kez)
+GitHub Actions (günde 10 kez)
         │  POST /api/cron/generate-blog   (Authorization: Bearer CRON_SECRET)
         ▼
 app/api/cron/generate-blog/route.ts      → yetki + günlük limit kontrolü
@@ -131,10 +131,39 @@ Model seçimleri ölçümle belirlendi, tahminle değil:
 token bütçesini reasoning'e harcayıp **her seferinde boş gövde dönüyor** (ölçüldü,
 3/3 başarısız; parametreyle 3/3 başarılı).
 
-Blog tamamen İngilizce yayınlanıyor. Şema `title.tr` / `excerpt.tr` alanlarını
-zorunlu tuttuğu ve `app/blog/page.tsx` bunları yalnızca `en` boşsa yedek olarak
-okuduğu için, bu alanlara İngilizce metnin aynısı yazılıyor. Ayrı bir Türkçe
-üretim adımı yok.
+### Türkçe: aynı makale, ikinci dil
+
+Her makale **bir kez** yazılıyor (İngilizce) ve yayınlanmadan önce Türkçeye
+çevriliyor. İki ayrı arşiv yok: tek doküman, tek slug, iki dil. `/blog/<slug>`
+İngilizce gövdeyi (`content`), `/tr/blog/<slug>` Türkçe gövdeyi (`contentTr`)
+sunuyor; iki sayfa birbirini `hreflang` ile ilan ediyor. Dil değiştirici okuyucuyu
+aynı makalede tutuyor.
+
+Çeviri `lib/blog-translate.ts` içinde ve iki şeyi yapıya gömerek çözüyor:
+
+- **Blok yapısı bozulmuyor.** Makale düz bir dizeler listesine indirgenip öyle
+  çevriliyor, sonra burada yeniden kuruluyor. İki paragrafı birleştiren bir model
+  dizi uzunluğunu değiştirir, bu da yakalanır — sessizce makaleyi yeniden
+  şekillendiremez.
+- **Film adları çevrilmiyor.** Ölçüldü: listelenmediğinde her aday model
+  "Fall 2: Deadpoint"i "Sonbahar 2: Deadpoint" yaptı — Türk okuyucunun arayamayacağı
+  bir ad. TMDB brief'indeki `requiredTitles` çeviriciye birebir veriliyor ve sonuç
+  programatik olarak doğrulanıyor.
+
+| Model | TPM | Sonuç (5.717 karakterlik makale, 35 parça) |
+|---|---|---|
+| `openai/gpt-oss-120b` + `reasoning_effort: 'low'` | 8.000 | 3,7sn, 35/35, adlar korundu — **birincil** |
+| `openai/gpt-oss-20b` + `reasoning_effort: 'low'` | 8.000 | 3,8sn, 35/35, ama olguyu kaydırdı ("Çekimlere Çıkan") — yedek |
+| `qwen/qwen3.6-27b` | 8.000 | JSON doğrulaması her denemede başarısız — zincirde yok |
+| `llama-3.3-70b-versatile` | 12.000 | Çalışıyor ama gövdeyi de o yazdığı için bütçesi tükenmiş olur — son çare |
+
+`max_tokens` sabit değil: `prompt + max_tokens` dakikalık limite sayıldığı için
+istem uzunluğundan hesaplanıyor. 8.000 TPM'li bir modele düz 8.000 istemek, istek
+daha başlamadan 413 ile reddediliyor.
+
+Çeviri başarısız olursa makale yine yayınlanıyor — Türkçe alanlara İngilizce metin
+yazılıyor, yani okunabilir bir sayfa kalıyor. Cron yanıtındaki `translated: false`
+bunu gösteriyor.
 
 ### Rate limit matematiği
 
@@ -149,7 +178,7 @@ matematiksel olarak sığmıyor, 429 ile boş dönüyor. Toplu içerik için wor
 birkaç kez tetikle, sayıyı artırmaya çalışma.
 
 Ücretsiz tier'da dakikalık limitin üstünde bir de **saatlik/günlük kota** var.
-Aşıldığında Groq `retry-after: ~3500` saniye ile kilitliyor. Günde 5 makale bunun
+Aşıldığında Groq `retry-after: ~3500` saniye ile kilitliyor. Günde 10 makale bunun
 çok altında; ama arka arkaya manuel test yaparsan kotayı yakabilirsin.
 
 ## Kurulum
@@ -160,7 +189,7 @@ Aşıldığında Groq `retry-after: ~3500` saniye ile kilitliyor. Günde 5 makal
 
 ```
 CRON_SECRET=<64 karakterlik rastgele hex>
-MAX_AUTO_POSTS_PER_DAY=5
+MAX_AUTO_POSTS_PER_DAY=10
 TMDB_API_KEY=<TMDB v3 api key veya v4 read access token>
 ```
 
@@ -300,7 +329,7 @@ Bir yazıyı yayından kaldırmak için `isPublished: false` yap.
   vadede trafiği onlar taşır. Ağırlıkları `lib/blog-stories.ts` içindeki
   `FORMATS` dizisinden ayarlayabilirsin.
 - **Google ve ölçekli AI içeriği:** Google'ın spam politikaları, arama sıralaması
-  için üretilen ölçekli içeriği hedefliyor. Günde 5 yazı bu eşiğe yakın bir hacim.
+  için üretilen ölçekli içeriği hedefliyor. Günde 10 yazı bu eşiği rahatça aşan bir hacim.
   Gerçek veriye dayanması ve özgün kapak görselleri işi hatırı sayılır ölçüde
   iyileştiriyor, ama hacmi kısmak istersen `MAX_AUTO_POSTS_PER_DAY` ve
   workflow'daki `cron` satırı tek dokunuşluk.

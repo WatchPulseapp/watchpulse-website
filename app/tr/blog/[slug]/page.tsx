@@ -15,23 +15,29 @@ import Blog from '@/lib/models/Blog';
 import { type BlogPostContent } from '@/data/static-blog-content';
 import { strings } from '@/lib/blog-i18n';
 
-async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<BlogPostContent | null> {
+/**
+ * The Turkish side of an article.
+ *
+ * There is one document per article and both editions serve it, so this reads
+ * the same row /blog/<slug> does and simply picks the Turkish fields. An article
+ * whose translation has not landed yet falls back to English rather than 404ing
+ * — a readable page in the wrong language beats no page at all.
+ */
+async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
   try {
     await connectDB();
-    // Posts predating the Turkish edition carry no lang field and are English.
-    const langQuery = lang === 'tr' ? { lang: 'tr' } : { lang: { $ne: 'tr' } };
-    const blog = await Blog.findOne({ slug, isPublished: true, ...langQuery }).lean();
+    const blog = await Blog.findOne({ slug, isPublished: true }).lean();
     if (blog) {
       return {
-        title: blog.title.en,
-        excerpt: blog.excerpt.en,
+        title: blog.title.tr || blog.title.en,
+        excerpt: blog.excerpt.tr || blog.excerpt.en,
         date: blog.date,
         readTime: blog.readTime,
         category: blog.category,
         author: blog.author || 'WatchPulse Team',
         tags: blog.tags || [],
         coverImage: blog.coverImage,
-        content: blog.content,
+        content: blog.contentTr?.length ? blog.contentTr : blog.content,
       };
     }
   } catch (error) {
@@ -40,11 +46,11 @@ async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<Bl
   return null;
 }
 
-/** Same-category Turkish posts, newest first. */
+/** Same-category articles, newest first, shown in Turkish. */
 async function getRelatedTurkish(slug: string, category: string) {
   try {
     await connectDB();
-    const rows = await Blog.find({ isPublished: true, lang: 'tr', category, slug: { $ne: slug } })
+    const rows = await Blog.find({ isPublished: true, category, slug: { $ne: slug } })
       .select('slug title excerpt category readTime')
       .sort({ createdAt: -1 })
       .limit(3)
@@ -52,8 +58,8 @@ async function getRelatedTurkish(slug: string, category: string) {
     const t = strings('tr');
     return (rows as Array<Record<string, any>>).map((r) => ({
       slug: r.slug,
-      title: r.title?.en || r.slug,
-      excerpt: r.excerpt?.en || '',
+      title: r.title?.tr || r.title?.en || r.slug,
+      excerpt: r.excerpt?.tr || r.excerpt?.en || '',
       category: t.categoryLabel(r.category),
       readTime: r.readTime ? t.readTime(r.readTime) : '',
     }));
@@ -76,12 +82,10 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  let post = await getBlogFromDB(slug, 'tr');
-  if (!post) {
-    // No fallback to the curated English posts: they are not Turkish, and
-    // serving one here would put an English article on a Turkish URL.
-    post = null;
-  }
+  // No fallback to the curated static posts: those are hand-written English and
+  // have no Turkish side, so serving one here would put an English article on a
+  // Turkish URL.
+  const post = await getBlogFromDB(slug);
 
   if (!post) {
     return {
@@ -103,9 +107,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     publisher: 'WatchPulse',
     formatDetection: { email: false, address: false, telephone: false },
     metadataBase: new URL(siteUrl),
-    // No hreflang alternate: the editions carry different articles, so there is
-    // no English version of this piece to point at. Claiming one would be false.
-    alternates: { canonical: postUrl },
+    // The same article exists in English at the same slug, so the two are
+    // genuine alternates. x-default points at English as the original.
+    alternates: {
+      canonical: postUrl,
+      languages: {
+        'tr-TR': postUrl,
+        'en-US': `${siteUrl}/blog/${slug}`,
+        'x-default': `${siteUrl}/blog/${slug}`,
+      },
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -146,12 +157,10 @@ export const dynamic = 'force-dynamic';
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
 
-  let post = await getBlogFromDB(slug, 'tr');
-  if (!post) {
-    // No fallback to the curated English posts: they are not Turkish, and
-    // serving one here would put an English article on a Turkish URL.
-    post = null;
-  }
+  // No fallback to the curated static posts: those are hand-written English and
+  // have no Turkish side, so serving one here would put an English article on a
+  // Turkish URL.
+  const post = await getBlogFromDB(slug);
 
   if (!post) {
     notFound();

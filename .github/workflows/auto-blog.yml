@@ -1,10 +1,14 @@
-name: Auto Blog Publisher (English)
+name: Auto Blog Publisher
 
-# Publishes one English article per run, five times a day. Ten a day across
-# both editions.
+# Publishes one article per run, ten times a day.
 #
-# Offset from the Turkish run so the two editions never contend for the
-# same Groq per-minute token budget.
+# Each run produces a single article that is written in English and translated
+# into Turkish before it is saved, so one run fills both editions — there is no
+# separate Turkish schedule to keep in step.
+#
+# The hours are spread across the day rather than bunched, so the archive gains
+# a fresh piece roughly every ninety minutes of waking hours. Turkey is UTC+3:
+# 05:11 UTC is 08:11 there, and the last run lands at 23:11 local.
 #
 # The minute is deliberately not :00 — GitHub's scheduler is busiest on the hour
 # and delays runs the most there.
@@ -14,13 +18,13 @@ name: Auto Blog Publisher (English)
 
 on:
   schedule:
-    - cron: '37 7,10,13,16,19 * * *'
+    - cron: '11 5,7,9,11,13,15,17,19,20,21 * * *'
   workflow_dispatch:
 
-# Only guards against a run of THIS edition overlapping itself; the two editions
-# are meant to interleave.
+# One run at a time: two overlapping runs would contend for the same Groq
+# per-minute token budget and one of them would come back empty.
 concurrency:
-  group: auto-blog-en
+  group: auto-blog
   cancel-in-progress: false
 
 jobs:
@@ -29,7 +33,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Publish English article
+      - name: Publish article
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://watchpulseapp.com' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
@@ -41,13 +45,17 @@ jobs:
             exit 1
           fi
 
-          echo "Requesting a English article from $SITE_URL"
+          echo "Requesting an article from $SITE_URL"
 
           # curl treats 429 and 502 as transient, which is exactly what the route
           # returns when Groq refuses on a rate limit. The 90s delay lets Groq's
           # per-minute window reset before the next attempt — without the retries
           # a throttled slot would silently cost that article.
-          http_code=$(curl -sS -o response.json -w '%{http_code}'             --max-time 120             --retry 3 --retry-delay 90 --retry-connrefused             -X POST "$SITE_URL/api/cron/generate-blog?lang=en"             -H "Authorization: Bearer $CRON_SECRET")
+          http_code=$(curl -sS -o response.json -w '%{http_code}' \
+            --max-time 150 \
+            --retry 3 --retry-delay 90 --retry-connrefused \
+            -X POST "$SITE_URL/api/cron/generate-blog" \
+            -H "Authorization: Bearer $CRON_SECRET")
 
           echo "HTTP $http_code"
           cat response.json
@@ -59,7 +67,7 @@ jobs:
           fi
 
           {
-            echo "### Auto Blog Publisher (English)"
+            echo "### Auto Blog Publisher"
             echo ""
             python3 -c "
           import json
@@ -69,11 +77,13 @@ jobs:
           if data.get('skipped'):
               print('Skipped: ' + data.get('message', 'daily limit reached'))
           elif published:
-              print('Published {} of {} today ({}):'.format(
-                  data.get('publishedToday'), data.get('dailyLimit'), data.get('lang')))
+              print('Published {} of {} today:'.format(
+                  data.get('publishedToday'), data.get('dailyLimit')))
               print('')
               for p in published:
-                  print('- **{}** ({} words, {})'.format(p.get('title'), p.get('words'), p.get('format')))
+                  print('- **{}** ({} words, {}, Turkish: {})'.format(
+                      p.get('title'), p.get('words'), p.get('format'),
+                      'yes' if p.get('translated') else 'NO'))
           for f_ in data.get('failed', []):
               print('- Failed: {}'.format(f_.get('reason')))
           "
