@@ -160,7 +160,9 @@ export default async function BlogPostPage({ params }: PageProps) {
     "@type": "Article",
     "headline": post.title,
     "description": post.excerpt,
-    "author": { "@type": "Person", "name": post.author },
+    // "WatchPulse Team" is a masthead, not a person; Google treats a Person
+    // author as a real individual and expects an entity behind it.
+    "author": { "@type": "Organization", "name": post.author, "url": "https://watchpulseapp.com" },
     "publisher": {
       "@type": "Organization",
       "name": "WatchPulse",

@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next'
 import connectDB from '@/lib/mongodb'
 import Blog from '@/lib/models/Blog'
+import { blogPostContent } from '@/data/static-blog-content'
+import { getAllPosts, collectCategories } from '@/lib/blog-index'
 
 // Static blog post slugs with their creation dates for accurate lastModified
 const staticBlogPosts: Array<{ slug: string; date: string; priority: number }> = [
@@ -87,13 +89,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to fetch blogs for sitemap:', error);
   }
 
-  // Create blog URLs with proper dates
-  const staticBlogUrls = staticBlogPosts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
-    changeFrequency: 'weekly' as const,
-    priority: post.priority,
-  }));
+  // Only list static slugs that actually have rendered content — otherwise the
+  // page 404s and the sitemap sends crawlers to dead URLs (SEO harm).
+  const staticBlogUrls = staticBlogPosts
+    .filter((post) => blogPostContent[post.slug])
+    .map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: 'weekly' as const,
+      priority: post.priority,
+    }));
 
   const dynamicBlogUrls = dynamicBlogs
     .filter(blog => !staticBlogPosts.some(s => s.slug === blog.slug))
@@ -120,8 +125,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date('2024-12-01'),
+      lastModified: new Date('2026-07-23'),
       changeFrequency: 'monthly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date('2026-03-08'),
+      changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
@@ -136,5 +147,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const allBlogUrls = [...staticBlogUrls, ...dynamicBlogUrls]
     .sort((a, b) => b.priority - a.priority || b.lastModified.getTime() - a.lastModified.getTime());
 
-  return [...corePages, ...allBlogUrls];
+  // Category landing pages. Each targets a distinct search intent — "best
+  // horror films" is a different visitor from "what is on TV this week" — so
+  // they are listed in their own right rather than left to be discovered.
+  let categoryUrls: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await getAllPosts();
+    categoryUrls = collectCategories(posts).map((c) => ({
+      url: `${baseUrl}/blog/category/${c.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error('Failed to build category sitemap entries:', error);
+  }
+
+  return [...corePages, ...categoryUrls, ...allBlogUrls];
 }
