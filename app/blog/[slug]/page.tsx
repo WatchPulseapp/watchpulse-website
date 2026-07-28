@@ -290,11 +290,10 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 <BlogAppCTA />
 
+                {/* Spacing alone separates the tags — the CTA above already draws
+                    a rule, and a third one here would stack up. */}
                 {post.tags.length > 0 && (
-                  <div
-                    className="mt-14 flex flex-wrap gap-2 border-t pt-8"
-                    style={{ borderColor: 'var(--rule)' }}
-                  >
+                  <div className="mt-10 flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
                       <span
                         key={tag}
