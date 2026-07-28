@@ -135,7 +135,7 @@ export default function JournalIndex({
                       : { color: 'var(--ink-soft)' }
                   }
                 >
-                  {c.name}
+                  {c.label}
                 </Link>
               );
             })}

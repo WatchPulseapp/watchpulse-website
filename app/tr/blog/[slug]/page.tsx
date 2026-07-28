@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { type BlogPostContent } from '@/data/static-blog-content';
+import { strings } from '@/lib/blog-i18n';
 
 async function getBlogFromDB(slug: string, lang: 'en' | 'tr' = 'en'): Promise<BlogPostContent | null> {
   try {
@@ -48,12 +49,13 @@ async function getRelatedTurkish(slug: string, category: string) {
       .sort({ createdAt: -1 })
       .limit(3)
       .lean();
+    const t = strings('tr');
     return (rows as Array<Record<string, any>>).map((r) => ({
       slug: r.slug,
       title: r.title?.en || r.slug,
       excerpt: r.excerpt?.en || '',
-      category: r.category,
-      readTime: r.readTime || '',
+      category: t.categoryLabel(r.category),
+      readTime: r.readTime ? t.readTime(r.readTime) : '',
     }));
   } catch {
     return [];
@@ -167,6 +169,12 @@ export default async function BlogPostPage({ params }: PageProps) {
   // Further reading comes from the Turkish edition only.
   const relatedPosts = await getRelatedTurkish(slug, post.category);
 
+  // post.category stays the canonical English name — it is the query key above
+  // and the lookup key for the app prompt below. Only what the reader sees is
+  // translated.
+  const t = strings('tr');
+  const categoryLabel = t.categoryLabel(post.category);
+
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -184,7 +192,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     "dateModified": new Date(post.date).toISOString(),
     "mainEntityOfPage": { "@type": "WebPage", "@id": `https://watchpulseapp.com/tr/blog/${slug}` },
     "image": post.coverImage || "https://watchpulseapp.com/og-image.jpg",
-    "articleSection": post.category,
+    "articleSection": categoryLabel,
     "keywords": post.tags.join(", "),
   };
 
@@ -226,12 +234,12 @@ export default async function BlogPostPage({ params }: PageProps) {
               <header className="journal-measure">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span className="journal-eyebrow" style={{ color: 'var(--accent)' }}>
-                    {post.category}
+                    {categoryLabel}
                   </span>
                   <span aria-hidden="true" className="h-px w-5" style={{ background: 'var(--rule-strong)' }} />
                   <span className="journal-meta">{formatTrDate(post.date)}</span>
                   <span aria-hidden="true" style={{ color: 'var(--ink-faint)' }}>·</span>
-                  <span className="journal-meta">{post.readTime}</span>
+                  <span className="journal-meta">{t.readTime(post.readTime)}</span>
                 </div>
 
                 <h1 className="journal-headline mt-5 text-[2.125rem] leading-[1.12] sm:text-[2.625rem] md:text-[3rem]">

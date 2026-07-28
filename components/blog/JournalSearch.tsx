@@ -110,7 +110,7 @@ export default function JournalSearch({ locale = 'en' }: { locale?: Locale }) {
                     >
                       {r.title}
                     </span>
-                    <span className="journal-meta text-[12px]">{r.category}</span>
+                    <span className="journal-meta text-[12px]">{t.categoryLabel(r.category)}</span>
                   </Link>
                 </li>
               ))}

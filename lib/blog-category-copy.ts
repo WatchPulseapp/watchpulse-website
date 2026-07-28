@@ -1,3 +1,5 @@
+import { strings } from '@/lib/blog-i18n';
+
 /**
  * Search-facing copy for category pages.
  *
@@ -98,11 +100,15 @@ const TR_COPY: Record<string, { title: string; description: string; intro: strin
 
 export function categoryCopy(name: string, locale: 'en' | 'tr' = 'en') {
   if (locale === 'tr') {
+    // A category with no hand-written entry still gets Turkish copy, so the
+    // fallback must interpolate the Turkish label rather than the stored
+    // English name — otherwise it reads "Genre Guide başlığı altındaki yazılar".
+    const label = strings('tr').categoryLabel(name);
     return (
       TR_COPY[name] || {
-        title: `${name} — Film ve Dizi Rehberleri`,
-        description: `WatchPulse Günlük'te ${name} başlığı altındaki yazılar: öneriler, rehberler ve akşamınıza değecekler.`,
-        intro: `Günlük'te ${name} başlığı altındaki her şey.`,
+        title: `${label} — Film ve Dizi Rehberleri`,
+        description: `WatchPulse Günlük'te ${label} başlığı altındaki yazılar: öneriler, rehberler ve akşamınıza değecekler.`,
+        intro: `Günlük'te ${label} başlığı altındaki her şey.`,
       }
     );
   }

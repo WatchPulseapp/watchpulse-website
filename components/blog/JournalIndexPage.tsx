@@ -53,7 +53,7 @@ export default async function JournalIndexPage({
           totalPages={totalPages}
           total={total}
           basePath={category ? `${prefix}/blog/category/${category.slug}` : `${prefix}/blog`}
-          heading={category ? category.name : t.heading}
+          heading={category ? category.label : t.heading}
           intro={copy ? copy.intro : t.intro}
           locale={locale}
           showLead={!category && current === 1}

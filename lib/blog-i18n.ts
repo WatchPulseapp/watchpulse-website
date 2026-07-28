@@ -49,7 +49,26 @@ export interface JournalStrings {
   pagination: string;
   previousPage: string;
   nextPage: string;
+  /**
+   * Categories are stored under one canonical English name, because that name is
+   * the query key, the URL slug and the lookup key for per-category copy.
+   * Translating it at write time would fork all three; translating it here keeps
+   * one archive and gives each edition its own label.
+   */
+  categoryLabel: (name: string) => string;
+  /** The generator writes "5 min read" whatever the language it wrote in. */
+  readTime: (value: string) => string;
 }
+
+const TR_CATEGORY_LABELS: Record<string, string> = {
+  'TV Shows': 'Diziler',
+  'Genre Guide': 'Tür Rehberi',
+  Trends: 'Gündem',
+  Streaming: 'Platformlar',
+  Entertainment: 'Sinema',
+  'Hidden Gems': 'Keşfedilmeyi Bekleyenler',
+  'Mood Guide': 'Ruh Haline Göre',
+};
 
 const en: JournalStrings = {
   brand: 'Journal',
@@ -93,6 +112,8 @@ const en: JournalStrings = {
   pagination: 'Pagination',
   previousPage: 'Previous page',
   nextPage: 'Next page',
+  categoryLabel: (name) => name,
+  readTime: (value) => value,
 };
 
 const tr: JournalStrings = {
@@ -137,6 +158,11 @@ const tr: JournalStrings = {
   pagination: 'Sayfalama',
   previousPage: 'Önceki sayfa',
   nextPage: 'Sonraki sayfa',
+  categoryLabel: (name) => TR_CATEGORY_LABELS[name] || name,
+  readTime: (value) => {
+    const minutes = value.match(/\d+/);
+    return minutes ? `${minutes[0]} dk okuma` : value;
+  },
 };
 
 const DICTIONARIES: Record<Locale, JournalStrings> = { en, tr };

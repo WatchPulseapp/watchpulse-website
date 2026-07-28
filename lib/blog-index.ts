@@ -2,6 +2,7 @@ import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { staticBlogPosts } from '@/data/static-blogs';
 import { localePrefix, categorySlug, type Locale } from '@/lib/blog-locale';
+import { strings } from '@/lib/blog-i18n';
 
 export { localePrefix, categorySlug };
 export type { Locale };
@@ -46,6 +47,22 @@ function langFilter(locale: Locale): Record<string, unknown> {
 }
 
 /**
+ * Turns a stored post into what the edition displays.
+ *
+ * The category and the read time are written once, in English, because they are
+ * also a query key and a computed number. They are translated on the way out so
+ * a Turkish reader never meets "Genre Guide · 5 min read" under a Turkish
+ * headline — the one detail that would give away a translated site.
+ */
+function display(locale: Locale) {
+  const t = strings(locale);
+  return {
+    category: (name: string) => t.categoryLabel(name),
+    readTime: (value: string) => t.readTime(value),
+  };
+}
+
+/**
  * One page of posts, fetched with skip/limit rather than by loading the archive
  * and slicing it.
  *
@@ -82,6 +99,7 @@ export async function getPostsPage(
 
   const items: BlogListItem[] = [];
   const seen = new Set<string>();
+  const show = display(locale);
 
   // The window may start inside the DB run, inside the static run, or span both.
   if (start < dbCount) {
@@ -100,9 +118,9 @@ export async function getPostsPage(
           slug: b.slug,
           title: b.title?.en || b.title?.tr || '',
           excerpt: b.excerpt?.en || b.excerpt?.tr || '',
-          category: b.category || 'General',
+          category: show.category(b.category || 'General'),
           date: b.date || '',
-          readTime: b.readTime || '5 min read',
+          readTime: show.readTime(b.readTime || '5 min read'),
           coverImage: b.coverImage,
         });
       }
@@ -152,15 +170,17 @@ export async function getCategories(locale: Locale = 'en'): Promise<CategoryInfo
 
   for (const p of staticFor(locale)) counts.set(p.category, (counts.get(p.category) || 0) + 1);
 
+  const t = strings(locale);
   return [...counts.entries()]
-    .map(([name, count]) => ({ name, slug: categorySlug(name), count }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    .map(([name, count]) => ({ name, label: t.categoryLabel(name), slug: categorySlug(name), count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, locale));
 }
 
 /** Full archive. Only for surfaces that genuinely need every post, like the sitemap. */
 export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
   const items: BlogListItem[] = [];
   const seen = new Set<string>();
+  const show = display(locale || 'en');
 
   try {
     await connectDB();
@@ -176,9 +196,9 @@ export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
         slug: b.slug,
         title: b.title?.en || b.title?.tr || '',
         excerpt: b.excerpt?.en || b.excerpt?.tr || '',
-        category: b.category || 'General',
+        category: show.category(b.category || 'General'),
         date: b.date || '',
-        readTime: b.readTime || '5 min read',
+        readTime: show.readTime(b.readTime || '5 min read'),
         coverImage: b.coverImage,
       });
     }
@@ -205,7 +225,10 @@ export async function getAllPosts(locale?: Locale): Promise<BlogListItem[]> {
 }
 
 export interface CategoryInfo {
+  /** Canonical English name. The query value and the key for per-category copy. */
   name: string;
+  /** What the reader sees, in this edition's language. */
+  label: string;
   slug: string;
   count: number;
 }
