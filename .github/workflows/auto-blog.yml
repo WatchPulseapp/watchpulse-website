@@ -1,0 +1,85 @@
+name: Auto Blog Publisher
+
+# Publishes one AI-written article per run, five times a day.
+#
+# Times are UTC and deliberately set to :17 rather than :00 — GitHub's scheduler
+# is busiest on the hour and delays runs the most there. Turkey is UTC+3, so
+# these land at 09:17, 12:17, 15:17, 18:17 and 21:17 local time.
+#
+# Note: GitHub disables scheduled workflows in repositories with no activity for
+# 60 days. If commits go quiet, re-enable it from the Actions tab.
+
+on:
+  schedule:
+    - cron: '17 6,9,12,15,18 * * *'
+  workflow_dispatch:
+
+# If a run is somehow still going when the next one fires, don't stack them.
+concurrency:
+  group: auto-blog
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Publish article
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://watchpulseapp.com' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repository secret is not set."
+            exit 1
+          fi
+
+          echo "Requesting an article from $SITE_URL"
+
+          # --max-time guards against the endpoint hanging; the route itself
+          # caps out at 60s of work.
+          #
+          # curl treats 429 and 502 as transient, which is exactly what the route
+          # returns when Groq refuses on a rate limit. The 90s delay is chosen so
+          # Groq's per-minute token window has fully reset before the next try —
+          # without the retries a throttled slot would silently cost that
+          # article, a fifth of the day's output.
+          http_code=$(curl -sS -o response.json -w '%{http_code}' \
+            --max-time 120 \
+            --retry 3 --retry-delay 90 --retry-connrefused \
+            -X POST "$SITE_URL/api/cron/generate-blog" \
+            -H "Authorization: Bearer $CRON_SECRET")
+
+          echo "HTTP $http_code"
+          cat response.json
+          echo
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Blog generation failed with HTTP $http_code"
+            exit 1
+          fi
+
+          # Surface the published slugs in the run summary.
+          {
+            echo "### Auto Blog Publisher"
+            echo ""
+            python3 -c "
+          import json
+          with open('response.json') as f:
+              data = json.load(f)
+          published = data.get('published', [])
+          if data.get('skipped'):
+              print('Skipped: ' + data.get('message', 'daily limit reached'))
+          elif published:
+              print('Published {} article(s) — {}/{} today:'.format(
+                  len(published), data.get('publishedToday'), data.get('dailyLimit')))
+              print('')
+              for p in published:
+                  print('- **{}** (\`{}\`)'.format(p.get('title'), p.get('slug')))
+          for f_ in data.get('failed', []):
+              print('- Failed: {}'.format(f_.get('reason')))
+          "
+          } >> "$GITHUB_STEP_SUMMARY"
