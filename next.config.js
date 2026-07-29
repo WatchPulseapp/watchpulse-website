@@ -12,7 +12,15 @@ const nextConfig = {
   // Performance optimizations
   swcMinify: true,
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Strips console.log in production, but NOT error and warn.
+    //
+    // It used to strip everything, which quietly deleted every diagnostic the
+    // server has: the blog generator's rejection reasons, the TMDB failure
+    // logs, every catch block that reports what went wrong. A week of lost
+    // articles left no trace anywhere, and finding out why meant reproducing
+    // the failure by hand against the upstream API. Logs that only exist in
+    // development are not logs.
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
     reactRemoveProperties: process.env.NODE_ENV === 'production',
   },
   // Optimize for faster builds and runtime

@@ -20,6 +20,14 @@ function positiveInt(raw: string | null, fallback: number, max: number): number 
 const MAX_LIMIT = 50;
 const MAX_PAGE = 500;
 
+/**
+ * The route reads request.url, so Next cannot prerender it — without this it
+ * tried at build time and threw "Dynamic server usage" on every build. The
+ * route still worked at runtime, which is why it went unnoticed: the error was
+ * being stripped from the production bundle along with every other console call.
+ */
+export const dynamic = 'force-dynamic';
+
 // GET - List published blogs (public endpoint)
 export async function GET(request: NextRequest) {
   try {

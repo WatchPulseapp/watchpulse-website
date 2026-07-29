@@ -58,7 +58,15 @@ Return ONLY valid JSON.`,
 const LANGUAGE_RULES: Record<TargetLanguage, string> = {
   tr: `- It must read like Turkish written by a Turkish film writer.
 - Grammar and orthography must be perfect. Use ç, ğ, ı, İ, ö, ş, ü correctly.
-- Address the reader with "siz", the way a magazine would.`,
+- Address the reader with "siz", the way a magazine would.
+- Use the vocabulary Turkish film writing actually uses. In particular: a "title"
+  meaning a film or a series is "yapım" or "film/dizi" — NEVER "başlık", which
+  means a heading and reads as a machine translation. "Streaming" is "yayın
+  platformu" or the platform's own name, not "yayın akışı", which is broadcast
+  scheduling. "Show" meaning a series is "dizi", not "şov". "Release date" is
+  "vizyon tarihi" for films and "yayın tarihi" for series.
+- Do not translate an English idiom word for word. If it has no Turkish
+  equivalent, write what it means.`,
   en: `- It must read like English written by a British film writer, not like a translation.
 - Grammar and punctuation must be perfect. No Turkish characters anywhere in the output.
 - Address the reader as "you", the way a magazine would.`,
@@ -162,8 +170,31 @@ function validate(
   const lost = protectedNames.filter((n) => !joined.includes(n));
   if (lost.length) return `translated protected titles: ${lost.join(', ')}`;
 
+  if (target === 'tr') {
+    const tell = MISTRANSLATIONS.find((phrase) => joined.toLowerCase().includes(phrase));
+    if (tell) return `word-for-word translation ("${tell}")`;
+  }
+
   return null;
 }
+
+/**
+ * Phrases that only appear when the model translated the words instead of the
+ * meaning. Each was published before it was caught:
+ *
+ *   "yayın akışı"  — literally "broadcast flow", i.e. a TV schedule. It is what
+ *                    you get by translating "streaming" a word at a time, and a
+ *                    Turkish reader parses it as the opposite of what it means.
+ *   "şov"          — a transliteration of "show". Turkish for a series is
+ *                    "dizi"; "şov" is a stage performance.
+ *
+ * Deliberately short, and deliberately not including "başlık" — that one really
+ * is the word for a heading, so it cannot be rejected on sight even though it is
+ * wrong for "title" meaning a film. The prompt handles that; this catches only
+ * what is unambiguous, because a false rejection costs the article its Turkish
+ * side until the repair pass comes round.
+ */
+const MISTRANSLATIONS = ['yayın akışı', 'yayın akışında', ' şov '];
 
 async function callTranslator(
   model: TranslatorModel,

@@ -225,6 +225,19 @@ export interface GenerationResult {
 
 class RateLimitError extends Error {}
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * How long to wait before asking the same model again.
+ *
+ * Groq's budget is per minute, so a retry only has room if the window has
+ * turned over. Twenty-two seconds is not a full window — it does not need to
+ * be, because the first call's tokens age out continuously — but it is enough
+ * for a second writer call to fit, and it keeps the whole run inside the 150
+ * seconds the scheduler allows per request.
+ */
+const RETRY_WINDOW_MS = 22000;
+
 /** Minimal OpenAI-compatible chat call against Groq, in JSON mode. */
 async function callGroq(model: ModelConfig, system: string, user: string): Promise<string | null> {
   // The route caps out at 60s. A hung Groq connection with no timeout would burn
@@ -270,9 +283,19 @@ async function callGroq(model: ModelConfig, system: string, user: string): Promi
 
     // 413/429 mean we are over the per-minute token budget. Trying the next
     // model immediately is fine (budgets are per-model) but retrying the SAME
-    // one is pointless, so this is surfaced distinctly.
+    // one is pointless, so this is surfaced distinctly. The wait Groq asks for
+    // rides along, so the caller can decide whether it is worth honouring.
     if (response.status === 413 || response.status === 429) {
-      throw new RateLimitError(`${model.id} rate limited (HTTP ${response.status})`);
+      // Groq names the limit it refused on and how long it wants; both go into
+      // the reason so the recorded run says which budget ran out rather than
+      // just "rate limited", which is what made this take a week to diagnose.
+      const wait = response.headers.get('retry-after');
+      const limit = response.headers.get('x-ratelimit-remaining-tokens');
+      throw new RateLimitError(
+        `${model.id} rate limited (HTTP ${response.status}` +
+          `${limit !== null ? `, ${limit} tokens left` : ''}` +
+          `${wait ? `, retry-after ${wait}s` : ''})`
+      );
     }
 
     console.error(`[blog-generator] ${model.id} -> HTTP ${response.status}`, detail.slice(0, 300));
@@ -764,37 +787,50 @@ export async function generateArticle(
 
   let lastReason = 'no writer model produced a valid article';
 
-  for (const model of WRITER_MODELS) {
+  // Two passes over the chain rather than two attempts on each model.
+  //
+  // Generation is stochastic and a rejection is usually bad luck rather than an
+  // incapable model, so a second try is worth having. But two writer calls to
+  // the same model do not fit in one per-minute window: the 70b allows 12,000
+  // tokens a minute and a writer call costs roughly 7,500. Retrying in place
+  // therefore turned one rejected draft into a rate-limit failure and then took
+  // the fallback down with it — measured, three consecutive scheduled runs
+  // failed that way while both models reported full quota.
+  //
+  // Alternating models spends each attempt from a different budget. The wait
+  // between passes lets the first pass age out, and the whole run still fits
+  // inside the 150 seconds the scheduler allows per request.
+  const attempts: Array<{ model: ModelConfig; pass: number }> = [];
+  for (let pass = 1; pass <= 2; pass++) {
+    for (const model of WRITER_MODELS) attempts.push({ model, pass });
+  }
+
+  const exhausted = new Set<string>();
+
+  for (const { model, pass } of attempts) {
+    // A model that has already said it is out of budget will say so again.
+    if (exhausted.has(model.id)) continue;
+
     try {
-      // Two attempts per model. Generation is stochastic and a rejection is
-      // usually bad luck rather than an incapable model — a measured run had
-      // the 8b fallback return 535 words (below the gate) on one call and 1058
-      // on the next. Without this the article for that slot is simply lost.
-      let raw: string | null = null;
-      let parsed: WriterOutput | null = null;
-      let problem: string | null = 'no attempt succeeded';
+      if (pass > 1 && model.id === WRITER_MODELS[0].id) await sleep(RETRY_WINDOW_MS);
 
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        raw = await callGroq(model, system, prompt);
-        if (!raw) {
-          problem = 'returned no usable response';
-          continue;
-        }
-
-        parsed = parseJson<WriterOutput>(raw);
-        problem =
-          validateWriterOutput(parsed) ||
-          (parsed ? checkGrounding(parsed.content, brief) : null) ||
-          // Runs with or without a brief: the app plug and the empty praise are
-          // the model's habits, not the fact sheet's.
-          (parsed ? checkEditorial(parsed.content) : null) ||
-          (parsed && !brief ? checkDomain(parsed.content) : null);
-
-        if (!problem) break;
-        console.warn(`[blog-generator] ${model.id} attempt ${attempt} rejected: ${problem}`);
+      const raw = await callGroq(model, system, prompt);
+      if (!raw) {
+        lastReason = `${model.id}: returned no usable response`;
+        continue;
       }
 
+      const parsed = parseJson<WriterOutput>(raw);
+      const problem =
+        validateWriterOutput(parsed) ||
+        (parsed ? checkGrounding(parsed.content, brief) : null) ||
+        // Runs with or without a brief: the app plug and the empty praise are
+        // the model's habits, not the fact sheet's.
+        (parsed ? checkEditorial(parsed.content) : null) ||
+        (parsed && !brief ? checkDomain(parsed.content) : null);
+
       if (problem || !parsed) {
+        console.warn(`[blog-generator] ${model.id} pass ${pass} rejected: ${problem}`);
         lastReason = `${model.id}: ${problem}`;
         continue;
       }
@@ -848,6 +884,11 @@ export async function generateArticle(
         },
       };
     } catch (error) {
+      if (error instanceof RateLimitError) {
+        // Its budget is gone for this window; the second pass would only ask
+        // again and get the same answer.
+        exhausted.add(model.id);
+      }
       lastReason = error instanceof RateLimitError ? error.message : `${model.id} threw: ${error instanceof Error ? error.message : String(error)}`;
       console.error(`[blog-generator] ${lastReason}`);
     }
