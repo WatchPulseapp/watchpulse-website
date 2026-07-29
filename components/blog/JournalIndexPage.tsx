@@ -43,7 +43,11 @@ export default async function JournalIndexPage({
 
   return (
     <JournalThemeProvider>
-      <div className="journal min-h-screen">
+      {/* The root layout declares lang="tr" because the rest of the site is
+          Turkish. The Journal has two editions, so each one states its own
+          language for the subtree it owns — otherwise an English article tells
+          a screen reader to pronounce it as Turkish. */}
+      <div className="journal min-h-screen" lang={locale}>
         <JournalMasthead locale={locale} />
         <JournalIndex
           posts={items}

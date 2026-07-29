@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
-import { pickCtaVariant } from '@/lib/blog-cta';
+import { pickCtaVariant, CTA_CHROME } from '@/lib/blog-cta';
+import type { Locale } from '@/lib/blog-locale';
 
 type Platform = 'ios' | 'android' | null;
 
@@ -21,9 +22,18 @@ type Platform = 'ios' | 'android' | null;
  * genre roundup wants collections. See lib/blog-cta for the variants and why
  * each claim is one the app can keep.
  */
-export default function BlogAppCTA({ category = '', slug = '' }: { category?: string; slug?: string }) {
+export default function BlogAppCTA({
+  category = '',
+  slug = '',
+  locale = 'en',
+}: {
+  category?: string;
+  slug?: string;
+  locale?: Locale;
+}) {
   const [platform, setPlatform] = useState<Platform>(null);
-  const variant = pickCtaVariant(category, slug);
+  const variant = pickCtaVariant(category, slug, locale);
+  const chrome = CTA_CHROME[locale] || CTA_CHROME.en;
 
   // Two store buttons side by side means one of them is always wrong for the
   // device in the reader's hand. Detection happens after mount so the server
@@ -68,7 +78,7 @@ export default function BlogAppCTA({ category = '', slug = '' }: { category?: st
           className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[14px] font-medium transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--accent)', color: 'var(--paper)' }}
         >
-          Get it free
+          {chrome.getIt}
           <ArrowUpRight className="h-4 w-4" />
         </a>
 
@@ -80,7 +90,7 @@ export default function BlogAppCTA({ category = '', slug = '' }: { category?: st
           rel="noopener"
           className="journal-meta underline-offset-4 hover:underline"
         >
-          Also on {secondary.label}
+          {chrome.alsoOn(secondary.label)}
         </a>
       </div>
     </aside>

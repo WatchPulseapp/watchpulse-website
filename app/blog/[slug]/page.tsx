@@ -210,7 +210,9 @@ export default async function BlogPostPage({ params }: PageProps) {
       <ReadingProgress />
 
       <JournalThemeProvider>
-        <div className="journal min-h-screen">
+        {/* The root layout declares lang="tr" for the rest of the site; this
+            article is English and says so for its own subtree. */}
+        <div className="journal min-h-screen" lang="en">
           <JournalMasthead />
 
           <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-10 sm:px-6 md:px-8 md:pt-14">
@@ -304,7 +306,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   })}
                 </div>
 
-                <BlogAppCTA category={post.category} slug={slug} />
+                <BlogAppCTA category={post.category} slug={slug} locale="en" />
 
                 {/* Spacing alone separates the tags — the CTA above already draws
                     a rule, and a third one here would stack up. */}

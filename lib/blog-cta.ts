@@ -1,94 +1,254 @@
+import type { Locale } from '@/lib/blog-locale';
+
 /**
  * Variants for the end-of-article app prompt.
  *
- * Every line here is derived from a feature the app actually ships, as worded
- * in the site's own showcase copy (contexts/LanguageContext.tsx). Nothing is
- * invented: if a claim is not backed by a real screen, it does not belong here,
- * because a reader who installs on the strength of a promise the app does not
- * keep is worse than a reader who never installs.
+ * Every line is a feature the app actually ships, worded from the site's own
+ * showcase copy in contexts/LanguageContext.tsx — which is itself written from
+ * the app. Nothing is invented: a reader who installs on the strength of a
+ * promise the app does not keep is worse than a reader who never installs.
  *
- * One feature is deliberately absent. The where-to-watch finder scans "the
- * streaming services available in Turkey"; the Journal publishes in English to
- * a global audience, so promising it here would mislead most of the people
- * reading. It stays out until the coverage matches the audience.
+ * The Turkish set is not a translation of the English one. It carries one extra
+ * variant — the where-to-watch finder — because that feature scans the services
+ * available in Turkey, so it is the strongest hook for a Turkish reader and a
+ * misleading one for everybody else. The English set leaves it out for exactly
+ * the same reason.
  */
 
 export interface CtaVariant {
-  /** The feature's own name, as used in the app. */
+  /** The feature's own name, as the app uses it. */
   eyebrow: string;
   headline: string;
   body: string;
 }
 
-export const CTA_VARIANTS: Record<string, CtaVariant> = {
+type VariantKey =
+  | 'mood'
+  | 'taste'
+  | 'tracking'
+  | 'upcoming'
+  | 'collections'
+  | 'mini'
+  | 'social'
+  | 'duels'
+  | 'dailyPick'
+  | 'actors'
+  | 'company'
+  | 'platforms';
+
+// 'platforms' is absent by type, not by discipline: the English edition has no
+// entry for it, so no rotation or category mapping can ever reach it.
+const EN: Record<Exclude<VariantKey, 'platforms'>, CtaVariant> = {
   mood: {
     eyebrow: 'MoodPulse',
     headline: 'Pick a feeling, not a title',
-    body: 'WatchPulse asks how you want to feel tonight, then lines up films and shows that match it — ten moods, from Tired to Nostalgic.',
+    body: 'WatchPulse asks one question — how do you want to feel tonight? — then lines up films and shows that match it. Ten moods, from Tired to Nostalgic.',
   },
   taste: {
     eyebrow: 'For You',
     headline: 'Recommendations that learn what you like',
-    body: 'The For You feed builds a taste profile from what you watch, rate and favourite, then comes back with fresh picks every week.',
+    body: 'The For You feed builds a taste profile from what you watch, rate and favourite, then comes back with fresh picks every week. Like and dislike sharpen it.',
   },
   tracking: {
     eyebrow: 'Tracking',
     headline: 'Never lose your place in a series',
-    body: 'Mark your progress season by season and get a notification the moment a new episode drops.',
+    body: 'Mark your progress episode by episode and get a notification the moment a new one drops — or the day a film you are waiting for reaches cinemas.',
   },
   upcoming: {
     eyebrow: 'Upcoming',
     headline: 'Get told when these actually land',
-    body: 'Follow the films you are waiting for and get a notification on release day, with a calendar of everything still to come.',
+    body: 'Follow what you are waiting for and keep a calendar of everything still to come, with a notification on release day.',
   },
   collections: {
     eyebrow: 'Collections',
     headline: 'Turn this list into your own',
-    body: 'Build themed collections, send one to a friend with a single code, or publish it to Discover for everyone to browse.',
+    body: 'Build themed collections — from the Marvel run to "films that fix a bad day" — then send one to a friend with a single code or open it to everyone in Discover.',
   },
   mini: {
     eyebrow: 'MiniPulse',
     headline: 'Short series you can actually finish',
-    body: 'MiniPulse surfaces shows you can get through in a few evenings — so you start something instead of scrolling past it.',
+    body: 'MiniPulse surfaces shows you can get through in a few evenings, so you start something instead of scrolling past it.',
   },
   social: {
     eyebrow: 'Social',
     headline: 'Find people who watch what you watch',
-    body: 'Match with viewers whose taste lines up with yours, then talk about what you are both watching in real time.',
+    body: 'Match on a fifteen-dimension taste score, then talk about it in real time — voice notes, GIFs, and the recommendation you cannot stop thinking about.',
+  },
+  duels: {
+    eyebrow: 'Duels',
+    headline: 'Two films enter, you decide',
+    body: 'Every weekend two titles go head to head from Friday evening to Sunday evening, and the winner is settled by vote. Yours counts as much as anyone else’s.',
+  },
+  dailyPick: {
+    eyebrow: 'Daily Pick',
+    headline: 'One film, one series, chosen today',
+    body: 'When nothing appeals and the scrolling has gone on too long, the daily pick is one of each — already decided, one tap away.',
+  },
+  actors: {
+    eyebrow: 'Favourite Actors',
+    headline: 'Follow the people, not just the films',
+    body: 'Follow the actors you keep coming back to and hear about their next project before it turns up in a trailer.',
+  },
+  company: {
+    eyebrow: 'Watching With',
+    headline: 'The right film depends on who is on the sofa',
+    body: 'Tell WatchPulse whether it is a partner, family, friends or just you, and the recommendations change accordingly.',
   },
 };
 
-/** Categories map to the feature a reader of that category would actually use. */
-const BY_CATEGORY: Record<string, keyof typeof CTA_VARIANTS> = {
-  'TV Shows': 'tracking',
-  'Binge Worthy': 'mini',
-  'Trends': 'upcoming',
-  'Genre Guide': 'collections',
-  'Hidden Gems': 'collections',
-  'Mood Guide': 'mood',
-  'Psychology': 'mood',
-  'Weekend Watch': 'mood',
-  'Date Night': 'mood',
-  'Family Time': 'collections',
-  'Entertainment': 'taste',
-  'Streaming': 'taste',
-  'AI & Technology': 'taste',
-  'Technology': 'taste',
+const TR: Record<VariantKey, CtaVariant> = {
+  mood: {
+    eyebrow: 'MoodPulse',
+    headline: 'Film seçme, ruh halini seç',
+    body: 'WatchPulse tek bir soru sorar: bu akşam ne hissetmek istiyorsun? Cevabını seç, sana o duyguya uyan film ve dizileri getirsin. Yorgun’dan Nostaljik’e on ruh hali.',
+  },
+  taste: {
+    eyebrow: 'Sana Özel',
+    headline: 'Zevkinizi öğrenen öneriler',
+    body: 'Sana Özel akışı; izlediklerinizden, puanladıklarınızdan ve favorilerinizden zevk profilinizi çıkarır, her hafta yenilenen önerilerle karşınıza gelir. Beğen–beğenme geri bildiriminizle daha da isabetli olur.',
+  },
+  tracking: {
+    eyebrow: 'Takip',
+    headline: 'Dizide nerede kaldığınızı bir daha unutmayın',
+    body: 'İlerlemenizi bölüm bölüm işaretleyin; yeni bölüm yayınlandığında ya da beklediğiniz film vizyona girdiğinde bildirim gelsin.',
+  },
+  upcoming: {
+    eyebrow: 'Yaklaşanlar',
+    headline: 'Ne zaman çıktığını size haber versin',
+    body: 'Beklediklerinizi takibe alın, yaklaşan yayınlar takviminde hepsini bir arada tutun; çıktığı gün bildirim gelsin.',
+  },
+  collections: {
+    eyebrow: 'Koleksiyonlar',
+    headline: 'Bu listeyi kendi koleksiyonunuza çevirin',
+    body: 'Marvel Evreni’nden “kötü günü toparlayan filmler”e temalı koleksiyonlar kurun; tek bir WP kodu ile arkadaşınıza gönderin ya da Keşfet’te herkese açın.',
+  },
+  mini: {
+    eyebrow: 'MiniPulse',
+    headline: 'Gerçekten bitirebileceğiniz kısa diziler',
+    body: 'MiniPulse birkaç akşamda bitirebileceğiniz dizileri öne çıkarır; böylece listede gezinmek yerine bir şeye başlarsınız.',
+  },
+  social: {
+    eyebrow: 'Sosyal',
+    headline: 'Sizinle aynı filmleri sevenler burada',
+    body: 'On beş boyutlu uyum puanıyla zevkiniz tutan insanlarla eşleşin, sonra gerçek zamanlı konuşun — sesli mesaj, GIF ve aklınızdan çıkmayan o öneriyle.',
+  },
+  duels: {
+    eyebrow: 'Düellolar',
+    headline: 'İki yapım kapışır, kararı siz verirsiniz',
+    body: 'Her hafta sonu Cuma akşamından Pazar akşamına iki yapım karşı karşıya gelir; kazananı oylar belirler. Sizinki de diğerleri kadar sayar.',
+  },
+  dailyPick: {
+    eyebrow: 'Bugünün Seçimi',
+    headline: 'Bugün için bir film, bir dizi',
+    body: 'Hiçbiri çekmediğinde ve listede gezinmek uzadığında, günün seçimi birer tane hazır bekliyor — karar verilmiş, tek dokunuş uzakta.',
+  },
+  actors: {
+    eyebrow: 'Favori Oyuncular',
+    headline: 'Sadece filmleri değil, oyuncuları da takip edin',
+    body: 'Dönüp dönüp izlediğiniz oyuncuları takibe alın; yeni projelerinden fragman çıkmadan haberdar olun.',
+  },
+  company: {
+    eyebrow: 'Kime Göre',
+    headline: 'Doğru film, kanepede kimin olduğuna bağlı',
+    body: 'Sevgilinizle mi, ailenizle mi, arkadaşlarınızla mı, yoksa tek başınıza mı — WatchPulse’a söyleyin, öneriler ona göre değişsin.',
+  },
+  platforms: {
+    eyebrow: 'Nerede Ne Var',
+    headline: 'Hangi platformda olduğunu aramayı bırakın',
+    body: 'WatchPulse Türkiye’deki servisleri tarar — Netflix’ten Tabii’ye, MUBI’den TOD’a on dört platform — ve tek dokunuşla sizi doğrudan izleme uygulamasına götürür.',
+  },
 };
 
-const ROTATION: Array<keyof typeof CTA_VARIANTS> = ['mood', 'taste', 'tracking', 'collections', 'social'];
+const DICTIONARIES: Record<Locale, Partial<Record<VariantKey, CtaVariant>>> = { en: EN, tr: TR };
 
 /**
- * Picks a variant for a post. Category first, since that is the strongest
- * signal about what the reader came for; otherwise the slug is hashed so the
- * choice is stable — the same article always shows the same prompt, which keeps
- * it cacheable and stops it changing under a returning reader.
+ * Turkish readers of a streaming article get the where-to-watch finder rather
+ * than the recommendation feed. It answers the exact question that article
+ * leaves them with — which service actually has it — and it is the one feature
+ * the English edition cannot honestly offer, since it covers Turkey.
+ *
+ * Without this the variant would be unreachable: every category the generator
+ * produces already maps to something below, so the rotation that includes
+ * 'platforms' only runs for categories that never occur.
  */
-export function pickCtaVariant(category: string, slug: string): CtaVariant {
-  const byCategory = BY_CATEGORY[category];
-  if (byCategory) return CTA_VARIANTS[byCategory];
+const BY_CATEGORY_TR: Record<string, VariantKey[]> = {
+  Streaming: ['platforms'],
+};
 
+/**
+ * Categories map to the features a reader of that category would actually use.
+ *
+ * A list rather than a single key, because the generator's output is not evenly
+ * spread — "Genre Guide" alone covers two of the ten story formats, so pinning
+ * it to one feature meant nearly half the archive signed off with the same
+ * paragraph. Each list holds only features that genuinely fit the category, and
+ * the slug picks between them, so the choice stays stable per article while the
+ * archive as a whole varies.
+ */
+const BY_CATEGORY: Record<string, VariantKey[]> = {
+  'TV Shows': ['tracking', 'mini', 'social'],
+  'Binge Worthy': ['mini', 'tracking'],
+  'Trends': ['upcoming', 'duels', 'taste'],
+  'Genre Guide': ['collections', 'mood', 'dailyPick', 'taste'],
+  'Hidden Gems': ['collections', 'dailyPick', 'taste'],
+  'Mood Guide': ['mood', 'dailyPick', 'company'],
+  'Psychology': ['mood', 'taste'],
+  'Weekend Watch': ['duels', 'company', 'dailyPick'],
+  'Date Night': ['company', 'mood'],
+  'Family Time': ['company', 'collections'],
+  'Entertainment': ['taste', 'actors', 'dailyPick'],
+  'Streaming': ['taste', 'collections'],
+  'AI & Technology': ['taste', 'mood'],
+  'Technology': ['taste', 'social'],
+};
+
+/** Stable per-slug hash, so an article always signs off the same way. */
+function hashSlug(slug: string): number {
   let hash = 0;
   for (let i = 0; i < slug.length; i++) hash = (hash * 31 + slug.charCodeAt(i)) >>> 0;
-  return CTA_VARIANTS[ROTATION[hash % ROTATION.length]];
+  return hash;
 }
+
+/**
+ * The rotation for articles whose category has no obvious feature. The Turkish
+ * one leads with where-to-watch: for a reader in Turkey it is the most concrete
+ * thing the app does, and it is the one claim the English edition cannot make.
+ */
+const ROTATION: Record<Locale, VariantKey[]> = {
+  en: ['mood', 'taste', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],
+  tr: ['platforms', 'mood', 'taste', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],
+};
+
+/**
+ * Picks a variant for a post. Category first, since that is the strongest signal
+ * about what the reader came for; otherwise the slug is hashed so the choice is
+ * stable — the same article always shows the same prompt, which keeps the page
+ * cacheable and stops it changing under a returning reader.
+ *
+ * The Turkish edition offsets the hash, so an article does not show the same
+ * feature in both languages. A reader who switches language gets a second angle
+ * on the app rather than the same sentence twice.
+ */
+export function pickCtaVariant(category: string, slug: string, locale: Locale = 'en'): CtaVariant {
+  const variants = DICTIONARIES[locale] || EN;
+  // Present in both editions, so an edition that has no entry for the chosen
+  // key falls back to a real prompt rather than rendering an empty sign-off.
+  const fallback = variants.taste || EN.taste;
+
+  // Offset so an article does not lead with the same feature in both editions.
+  // A reader who switches language gets a second angle on the app rather than
+  // the same sentence twice.
+  const hash = hashSlug(slug) + (locale === 'tr' ? 1 : 0);
+
+  const forCategory = (locale === 'tr' ? BY_CATEGORY_TR[category] : undefined) || BY_CATEGORY[category];
+  if (forCategory?.length) return variants[forCategory[hash % forCategory.length]] || fallback;
+
+  const rotation = ROTATION[locale] || ROTATION.en;
+  return variants[rotation[hash % rotation.length]] || fallback;
+}
+
+/** Store buttons and their surrounding words, per edition. */
+export const CTA_CHROME: Record<Locale, { getIt: string; alsoOn: (store: string) => string }> = {
+  en: { getIt: 'Get it free', alsoOn: (store) => `Also on ${store}` },
+  tr: { getIt: 'Ücretsiz indir', alsoOn: (store) => `${store}’da da var` },
+};
