@@ -15,6 +15,8 @@ export interface JournalStrings {
   intro: string;
   articles: (n: number) => string;
   pageOf: (page: number, total: number) => string;
+  /** Page number on its own, for a title that has no total to quote. */
+  pageLabel: (page: number) => string;
   updatedDaily: string;
   searchPlaceholder: string;
   searchAria: string;
@@ -77,6 +79,7 @@ const en: JournalStrings = {
     'What to watch and why — new releases, streaming guides and the films worth clearing an evening for.',
   articles: (n) => `${n} ${n === 1 ? 'article' : 'articles'}`,
   pageOf: (page, total) => `Page ${page} of ${total}`,
+  pageLabel: (page) => `Page ${page}`,
   updatedDaily: 'Updated daily',
   searchPlaceholder: 'Search articles',
   searchAria: 'Search articles',
@@ -123,6 +126,7 @@ const tr: JournalStrings = {
     'Bu akşam ne izlensin — yeni çıkanlar, platform rehberleri ve bir akşamınızı ayırmaya değer filmler.',
   articles: (n) => `${n} yazı`,
   pageOf: (page, total) => `Sayfa ${page} / ${total}`,
+  pageLabel: (page) => `Sayfa ${page}`,
   updatedDaily: 'Her gün güncelleniyor',
   searchPlaceholder: 'Yazılarda ara',
   searchAria: 'Yazılarda ara',

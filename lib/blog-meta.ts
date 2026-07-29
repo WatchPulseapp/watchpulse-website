@@ -51,7 +51,10 @@ export async function journalIndexMetadata({
 
   if (page > 1) {
     path = `${path}/page/${page}`;
-    title = `${title} — ${t.pageOf(page, page)}`.replace(/ \/ \d+/, '');
+    // The total is not known here, so the label names the page and nothing else.
+    // It previously borrowed pageOf and passed the page as the total, producing
+    // "Page 2 of 2" on page two of five.
+    title = `${title} — ${t.pageLabel(page)}`;
   }
 
   return {
@@ -69,8 +72,13 @@ export async function journalIndexMetadata({
       images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630, alt: title }],
     },
     twitter: { card: 'summary_large_image', title, description, site: '@watchpulseapp' },
-    // Deeper pages are the path a crawler takes to the articles, not pages that
-    // rank in their own right.
-    robots: page > 1 ? { index: false, follow: true } : { index: true, follow: true },
+    // Paginated pages stay indexable, against the instinct to hide them.
+    // "noindex, follow" decays into "noindex, nofollow" once Google stops
+    // crawling a page it will never index, and at twelve articles a page most
+    // of the archive is reachable only from page two onwards — so hiding them
+    // would slowly cut those articles off from the site's own internal links.
+    // Each one carries its own canonical, which is what keeps them from
+    // competing with the index.
+    robots: { index: true, follow: true },
   };
 }
