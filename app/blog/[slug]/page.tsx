@@ -15,6 +15,7 @@ import Blog from '@/lib/models/Blog';
 import { blogPostContent, type BlogPostContent } from '@/data/static-blog-content';
 import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { staticBlogPosts } from '@/data/static-blogs';
+import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
 
 async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
   try {
@@ -33,6 +34,7 @@ async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
         tags: blog.tags || [],
         coverImage: blog.coverImage,
         content: blog.content,
+        sourceRefs: blog.sourceRefs as TitleRef[] | undefined,
       };
     }
   } catch (error) {
@@ -166,6 +168,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     }));
 
   let headingIndex = 0;
+
+  // One linker per render: it tracks what it has already linked so each film,
+  // series or person is linked on its first mention and not again.
+  const linkTitles = createTitleLinker(post.sourceRefs);
 
   // Published articles first, curated ones after. Built the other way round it
   // only ever surfaced the hand-written archive, so the generated articles —
@@ -329,12 +335,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                         return (
                           <ul key={index}>
                             {(block.content as string[]).map((item, i) => (
-                              <li key={i}>{item}</li>
+                              <li key={i}>{linkTitles ? linkTitles(item) : item}</li>
                             ))}
                           </ul>
                         );
-                      default:
-                        return <p key={index}>{block.content as string}</p>;
+                      default: {
+                        const text = block.content as string;
+                        return <p key={index}>{linkTitles ? linkTitles(text) : text}</p>;
+                      }
                     }
                   })}
                 </div>

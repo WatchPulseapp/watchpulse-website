@@ -15,6 +15,7 @@ import Blog from '@/lib/models/Blog';
 import { type BlogPostContent } from '@/data/static-blog-content';
 import { strings } from '@/lib/blog-i18n';
 import { tmdbSrcSet } from '@/lib/tmdb-image';
+import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
 
 /**
  * The Turkish side of an article.
@@ -39,6 +40,9 @@ async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
         tags: blog.tags || [],
         coverImage: blog.coverImage,
         content: blog.contentTr?.length ? blog.contentTr : blog.content,
+        // The translator copies film and series names verbatim, so the same ids
+        // resolve against the Turkish body as against the English one.
+        sourceRefs: blog.sourceRefs as TitleRef[] | undefined,
       };
     }
   } catch (error) {
@@ -179,6 +183,8 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   let headingIndex = 0;
 
+  const linkTitles = createTitleLinker(post.sourceRefs, 'tr');
+
   // Further reading comes from the Turkish edition only.
   const relatedPosts = await getRelatedTurkish(slug, post.category);
 
@@ -315,12 +321,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                         return (
                           <ul key={index}>
                             {(block.content as string[]).map((item, i) => (
-                              <li key={i}>{item}</li>
+                              <li key={i}>{linkTitles ? linkTitles(item) : item}</li>
                             ))}
                           </ul>
                         );
-                      default:
-                        return <p key={index}>{block.content as string}</p>;
+                      default: {
+                        const text = block.content as string;
+                        return <p key={index}>{linkTitles ? linkTitles(text) : text}</p>;
+                      }
                     }
                   })}
                 </div>

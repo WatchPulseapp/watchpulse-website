@@ -3,15 +3,19 @@ import { notFound } from 'next/navigation';
 import PersonPage from '@/components/title/PersonPage';
 import { loadPerson, personMetadata, personSchema } from '@/lib/person-page';
 
-// A filmography changes far less often than an hour, and without caching every
-// view would cost a TMDB request and an extra round trip before first paint.
+/**
+ * The Turkish side of an actor or director page.
+ *
+ * Half the Journal is Turkish, and its articles link to these pages by name.
+ * Without this route every one of those links dropped the reader into English.
+ */
 export const revalidate = 86400;
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  return personMetadata(await loadPerson(id), id, 'en');
+  return personMetadata(await loadPerson(id), id, 'tr');
 }
 
 export default async function Page({ params }: Props) {
@@ -23,9 +27,9 @@ export default async function Page({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: personSchema(person, id, 'en') }}
+        dangerouslySetInnerHTML={{ __html: personSchema(person, id, 'tr') }}
       />
-      <PersonPage person={person} locale="en" />
+      <PersonPage person={person} locale="tr" />
     </>
   );
 }

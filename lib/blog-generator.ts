@@ -1,6 +1,6 @@
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
-import { buildStoryBrief, type StoryBrief } from '@/lib/blog-stories';
+import { buildStoryBrief, type StoryBrief, type TitleRef } from '@/lib/blog-stories';
 import { translateArticle } from '@/lib/blog-translate';
 
 /**
@@ -150,6 +150,8 @@ export interface GeneratedArticle {
     storyFormat: string | null;
     /** Titles the translator must copy verbatim rather than translate. */
     requiredTitles: string[];
+    /** The same records with TMDB ids, so the article can link to them. */
+    sourceRefs: TitleRef[];
   };
 }
 
@@ -682,6 +684,7 @@ export async function generateArticle(
             // translator needs them verbatim so it copies rather than renders
             // them — "Fall 2: Deadpoint" must not become "Sonbahar 2".
             requiredTitles: brief?.requiredTitles || [],
+            sourceRefs: brief?.sourceRefs || [],
           },
         },
       };
@@ -761,6 +764,9 @@ export async function generateAndPublish(): Promise<GenerationResult> {
       // Kept so repairMissingTranslation can redo the Turkish side later and
       // still copy these names verbatim rather than rendering them.
       sourceTitles: article.meta.requiredTitles,
+      // Both editions carry the same names verbatim, so one set of ids serves
+      // the English and the Turkish body alike.
+      sourceRefs: article.meta.sourceRefs,
     });
 
     console.log(

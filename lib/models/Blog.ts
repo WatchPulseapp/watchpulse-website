@@ -30,6 +30,13 @@ export interface IBlog extends Document {
    * titles verbatim instead of rendering "Fall 2: Deadpoint" into Turkish.
    */
   sourceTitles?: string[];
+  /**
+   * The same records with their TMDB ids, so the rendered article can link each
+   * name it mentions to the site's own page for that film, series or person.
+   * Without these the title pages sit orphaned — nothing on the site points at
+   * them and a crawler has no way in.
+   */
+  sourceRefs?: Array<{ id: number; type: 'movie' | 'tv' | 'person'; name: string }>;
   date: string;
   readTime: string;
   category: string;
@@ -80,6 +87,16 @@ const BlogSchema = new Schema<IBlog>({
   content: [BlogContentSchema],
   contentTr: [BlogContentSchema],
   sourceTitles: [{ type: String }],
+  sourceRefs: [
+    new Schema(
+      {
+        id: { type: Number, required: true },
+        type: { type: String, enum: ['movie', 'tv', 'person'], required: true },
+        name: { type: String, required: true },
+      },
+      { _id: false }
+    ),
+  ],
   date: {
     type: String,
     required: true

@@ -68,7 +68,16 @@ interface DBBlog {
   lang?: string;
   updatedAt?: Date;
   createdAt?: Date;
+  sourceRefs?: Array<{ id: number; type: 'movie' | 'tv' | 'person'; name: string }>;
 }
+
+/**
+ * Ceiling on title pages listed. Ten articles a day naming half a dozen films
+ * each grows this without limit, and a sitemap is capped at 50,000 URLs — so it
+ * is bounded here, newest first, and the count that was dropped is logged rather
+ * than silently discarded.
+ */
+const MAX_TITLE_URLS = 4000;
 
 // Rebuild every five minutes instead of once at build time.
 //
@@ -89,10 +98,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Get dynamic blogs from database with their dates
   let dynamicBlogs: Array<{ slug: string; lastModified: Date; priority: number }> = [];
   let turkishBlogs: Array<{ slug: string; lastModified: Date }> = [];
+  // Deduplicated across the archive: a popular film is named by a dozen articles
+  // and still has exactly one page.
+  const titlePaths = new Map<string, Date>();
   try {
     await connectDB();
     const dbBlogs = await Blog.find({ isPublished: true })
-      .select('slug lang updatedAt createdAt')
+      .select('slug lang updatedAt createdAt sourceRefs')
+      .sort({ createdAt: -1 })
       .lean() as DBBlog[];
 
     // Every article is published in both languages under the same slug, so each
@@ -107,6 +120,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     turkishBlogs = dbBlogs.map((blog) => ({ slug: blog.slug, lastModified: modified(blog) }));
+
+    // The films, series and people the articles are written about. These pages
+    // were rendering all along but appeared in no sitemap and were linked from
+    // nowhere, so the only ones Google knew about were the handful it had found
+    // through links shared out of the app.
+    for (const blog of dbBlogs) {
+      for (const ref of blog.sourceRefs || []) {
+        if (!ref?.id || !ref.type) continue;
+        const path = `/${ref.type}/${ref.id}`;
+        // dbBlogs is newest first, so the first article to name a title sets its
+        // date and later (older) ones do not walk it backwards.
+        if (!titlePaths.has(path)) titlePaths.set(path, modified(blog));
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch blogs for sitemap:', error);
   }
@@ -213,5 +240,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to build Turkish sitemap entries:', error);
   }
 
-  return [...corePages, ...categoryUrls, ...turkishUrls, ...allBlogUrls];
+  // Title pages, in both editions. Lower priority than the articles: they are
+  // reference pages that answer one question rather than the writing the site is
+  // trying to be known for, and they change only when availability does.
+  const titleEntries = [...titlePaths.entries()];
+  if (titleEntries.length > MAX_TITLE_URLS) {
+    console.warn(
+      `[sitemap] ${titleEntries.length} title pages available, listing the ${MAX_TITLE_URLS} most recent`
+    );
+  }
+
+  const titleUrls: MetadataRoute.Sitemap = titleEntries
+    .slice(0, MAX_TITLE_URLS)
+    .flatMap(([path, lastModified]) => [
+      {
+        url: `${baseUrl}${path}`,
+        lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      },
+      {
+        url: `${baseUrl}/tr${path}`,
+        lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      },
+    ]);
+
+  return [...corePages, ...categoryUrls, ...turkishUrls, ...allBlogUrls, ...titleUrls];
 }

@@ -41,10 +41,11 @@ export interface TmdbTitleDetails extends TmdbTitle {
   /** Subscription streaming services carrying it in the US. */
   providers: string[];
   /**
-   * Providers keyed by country. Title pages are reached from shares made in the
-   * app, whose audience is largely in Turkey, while the blog speaks to a global
-   * readership — so both are carried and each surface shows what it can honestly
-   * claim rather than presenting one region's availability as universal.
+   * Providers keyed by country. Availability is not the same in any two markets,
+   * and "where can I watch X" is the query these pages exist to answer — so the
+   * answer is given per country rather than presenting one region's catalogue as
+   * if it were universal. One /watch/providers response carries every country,
+   * so each additional market listed costs nothing.
    */
   providersByRegion: Record<string, string[]>;
   tagline: string | null;
@@ -366,6 +367,8 @@ export interface TmdbPerson {
   profilePath: string | null;
   /** Notable titles, most-voted first, with the role they played. */
   credits: Array<{
+    id: number;
+    mediaType: 'movie' | 'tv';
     name: string;
     year: string | null;
     role: string;
@@ -456,6 +459,9 @@ export async function getPersonDetails(id: number, revalidate?: number): Promise
     .map((c) => {
       const date = c.release_date || c.first_air_date || null;
       return {
+        id: c.id,
+        // Combined credits carry media_type; first_air_date is the fallback tell.
+        mediaType: (c.media_type === 'tv' || (!c.media_type && c.first_air_date) ? 'tv' : 'movie') as 'movie' | 'tv',
         name: c.title || c.name || '',
         year: date ? date.slice(0, 4) : null,
         role: c.role,
@@ -535,7 +541,7 @@ export async function getTitleDetails(
   // page cares about cost nothing extra to pull out.
   const allRegions = raw['watch/providers']?.results || {};
   const providersByRegion: Record<string, string[]> = {};
-  for (const region of ['TR', 'US', 'GB']) {
+  for (const region of ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'IN', 'TR']) {
     const names = (allRegions[region]?.flatrate || []).map((p) => p.provider_name).slice(0, 6);
     if (names.length) providersByRegion[region] = names;
   }

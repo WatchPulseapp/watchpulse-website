@@ -199,9 +199,11 @@ function hashSlug(slug: string): number {
 }
 
 /**
- * The rotation for articles whose category has no obvious feature. The Turkish
- * one leads with where-to-watch: for a reader in Turkey it is the most concrete
- * thing the app does, and it is the one claim the English edition cannot make.
+ * The rotation for articles whose category has no obvious feature. The two
+ * editions start at different points so a reader who switches language is not
+ * shown the same feature twice; the Turkish one leads with where-to-watch,
+ * which is the most concrete thing the app does for a reader who already knows
+ * the local services by name.
  */
 const ROTATION: Record<Locale, VariantKey[]> = {
   en: ['mood', 'taste', 'platforms', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],

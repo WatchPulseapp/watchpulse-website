@@ -60,6 +60,8 @@ export interface JournalStrings {
    * one archive and gives each edition its own label.
    */
   categoryLabel: (name: string) => string;
+  /** Heading over the standing description at the foot of a category page. */
+  aboutCategory: (label: string) => string;
   /** The generator writes "5 min read" whatever the language it wrote in. */
   readTime: (value: string) => string;
 }
@@ -121,6 +123,7 @@ const en: JournalStrings = {
   previousPage: 'Previous page',
   nextPage: 'Next page',
   categoryLabel: (name) => name,
+  aboutCategory: (label) => `About ${label}`,
   readTime: (value) => value,
 };
 
@@ -171,6 +174,7 @@ const tr: JournalStrings = {
   previousPage: 'Önceki sayfa',
   nextPage: 'Sonraki sayfa',
   categoryLabel: (name) => TR_CATEGORY_LABELS[name] || name,
+  aboutCategory: (label) => `${label} hakkında`,
   readTime: (value) => {
     const minutes = value.match(/\d+/);
     return minutes ? `${minutes[0]} dk okuma` : value;

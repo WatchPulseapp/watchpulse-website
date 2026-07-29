@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Clock, Star } from 'lucide-react';
 import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
 import { backdropUrl, posterUrl, type TmdbTitleDetails } from '@/lib/tmdb';
+import { localePrefix, type Locale } from '@/lib/blog-locale';
+import { titleStrings } from '@/lib/title-i18n';
 
 /**
  * A film or series page.
@@ -13,12 +15,6 @@ import { backdropUrl, posterUrl, type TmdbTitleDetails } from '@/lib/tmdb';
  * most likely searching ("where can I watch X") gets an answer.
  */
 
-const REGION_LABEL: Record<string, string> = {
-  TR: 'Turkey',
-  US: 'United States',
-  GB: 'United Kingdom',
-};
-
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -28,14 +24,23 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
+export default function TitlePage({
+  title,
+  locale = 'en',
+}: {
+  title: TmdbTitleDetails;
+  locale?: Locale;
+}) {
   const backdrop = backdropUrl(title.backdropPath);
   const poster = posterUrl(title.posterPath);
   const isFilm = title.mediaType === 'movie';
   const regions = Object.keys(title.providersByRegion);
+  const s = titleStrings(locale);
 
   return (
-    <main className="min-h-screen bg-background-dark">
+    // The root layout hard-codes lang="tr" for the marketing site, so the
+    // language is declared here for the subtree that actually knows it.
+    <main lang={locale} className="min-h-screen bg-background-dark">
       {/* Backdrop, faded into the page rather than sat on top of it. */}
       <div className="relative h-[38vh] min-h-[240px] w-full overflow-hidden sm:h-[46vh]">
         {backdrop ? (
@@ -62,7 +67,7 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
 
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-accent">
-              {isFilm ? 'Film' : 'TV series'}
+              {isFilm ? s.film : s.series}
             </p>
             <h1 className="mt-2 text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-text-primary sm:text-[2.75rem]">
               {title.name}
@@ -80,7 +85,7 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
               {title.runtime && (
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-text-secondary" />
-                  {title.runtime} min
+                  {title.runtime} {s.minutes}
                 </span>
               )}
               {title.genres.length > 0 && <span>{title.genres.join(' · ')}</span>}
@@ -98,8 +103,8 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
 
         {(title.director || title.cast.length > 0) && (
           <dl className="mt-10 grid gap-6 border-t border-white/[0.06] pt-8 sm:grid-cols-2">
-            {title.director && <Fact label={isFilm ? 'Director' : 'Created by'}>{title.director}</Fact>}
-            {title.cast.length > 0 && <Fact label="Starring">{title.cast.join(', ')}</Fact>}
+            {title.director && <Fact label={isFilm ? s.director : s.createdBy}>{title.director}</Fact>}
+            {title.cast.length > 0 && <Fact label={s.starring}>{title.cast.join(', ')}</Fact>}
           </dl>
         )}
 
@@ -107,14 +112,14 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
             same everywhere and an unlabelled list would be wrong for most readers. */}
         <section className="mt-10 border-t border-white/[0.06] pt-8">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-secondary">
-            Where to watch
+            {s.whereToWatch}
           </h2>
 
           {regions.length > 0 ? (
             <dl className="mt-4 grid gap-4 sm:grid-cols-2">
               {regions.map((region) => (
                 <div key={region}>
-                  <dt className="text-[13px] text-text-secondary">{REGION_LABEL[region] || region}</dt>
+                  <dt className="text-[13px] text-text-secondary">{s.regions[region] || region}</dt>
                   <dd className="mt-1.5 flex flex-wrap gap-2">
                     {title.providersByRegion[region].map((name) => (
                       <span
@@ -129,25 +134,18 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
               ))}
             </dl>
           ) : (
-            <p className="mt-3 text-[15px] text-text-secondary">
-              Not on a subscription service in Turkey, the US or the UK right now — it may still be
-              available to rent or buy.
-            </p>
+            <p className="mt-3 text-[15px] text-text-secondary">{s.noSubscription}</p>
           )}
 
-          <p className="mt-5 text-[13px] text-text-secondary">
-            Streaming availability changes often. WatchPulse checks it live for Turkey and links
-            straight into the app that has it.
-          </p>
+          <p className="mt-5 text-[13px] text-text-secondary">{s.availabilityNote}</p>
         </section>
 
         <aside className="mt-12 rounded-2xl border border-brand-primary/15 bg-brand-primary/[0.05] p-7 sm:p-8">
           <h2 className="text-[1.35rem] font-semibold leading-tight text-text-primary">
-            Track it, or find something like it
+            {s.titleCtaHeading}
           </h2>
           <p className="mt-2.5 max-w-lg text-[15px] leading-[1.65] text-text-secondary">
-            WatchPulse remembers where you left off, tells you when a new episode lands, and picks
-            something that fits your mood when nothing looks right.
+            {s.titleCtaBody}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a
@@ -167,18 +165,15 @@ export default function TitlePage({ title }: { title: TmdbTitleDetails }) {
               Google Play
             </a>
             <Link
-              href="/blog"
+              href={`${localePrefix(locale)}/blog`}
               className="self-center text-[14px] text-text-secondary underline-offset-4 hover:underline"
             >
-              Read the Journal
+              {s.readJournal}
             </Link>
           </div>
         </aside>
 
-        <p className="mt-10 text-[12px] text-text-secondary">
-          Film and television data provided by TMDB. This product uses the TMDB API but is not
-          endorsed or certified by TMDB.
-        </p>
+        <p className="mt-10 text-[12px] text-text-secondary">{s.tmdbNotice}</p>
       </div>
     </main>
   );

@@ -74,23 +74,41 @@ Allow: /
 User-agent: Pinterest
 Allow: /
 
-# Block AI training bots (protects content)
-User-agent: GPTBot
-Disallow: /
+# Answer engines — allowed on purpose.
+#
+# These used to be blocked as "AI training bots". That was the wrong trade for a
+# site whose whole job is acquisition: an assistant that cannot read the Journal
+# cannot cite it, and a citation is a link from a surface that now answers a
+# large share of "what should I watch" questions before anyone reaches a results
+# page. The articles are already public and already indexed by Google; refusing
+# these crawlers withheld nothing and cost the referral.
+User-agent: Google-Extended
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
 
 User-agent: ChatGPT-User
-Disallow: /
+Allow: /
 
-User-agent: CCBot
-Disallow: /
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
 
 User-agent: anthropic-ai
-Disallow: /
+Allow: /
 
 User-agent: Claude-Web
-Disallow: /
+Allow: /
 
-User-agent: Google-Extended
+User-agent: PerplexityBot
+Allow: /
+
+# Bulk scrapers with no referral to give back — these stay blocked. CCBot feeds
+# archives rather than a product anyone follows a link out of.
+User-agent: CCBot
 Disallow: /
 
 User-agent: Bytespider

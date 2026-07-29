@@ -30,6 +30,17 @@ interface JournalIndexProps {
   basePath: string;
   heading: string;
   intro: string;
+  /**
+   * A few paragraphs about what this category covers, set below the grid.
+   *
+   * Category pages are the ones aimed at a standing query — "best horror films",
+   * "what is on TV this week" — and until now they answered it with a headline,
+   * one line of intro and a wall of cards. There was nothing on the page for
+   * that query to match. Below the grid rather than above it because the reader
+   * came for the articles; the prose is for the visitor who has scrolled the
+   * list and wants to know what else is here.
+   */
+  body?: string[];
   /** The lead story treatment only makes sense on the unfiltered first page. */
   showLead?: boolean;
   locale: Locale;
@@ -61,6 +72,7 @@ export default function JournalIndex({
   basePath,
   heading,
   intro,
+  body,
   showLead = false,
   locale,
 }: JournalIndexProps) {
@@ -221,6 +233,21 @@ export default function JournalIndex({
               </span>
             )}
           </nav>
+        )}
+
+        {body && body.length > 0 && (
+          <section
+            className="mt-16 border-t pt-10"
+            style={{ borderColor: 'var(--rule)' }}
+            aria-label={heading}
+          >
+            <div className="journal-prose journal-measure">
+              <h2 className="!mt-0">{t.aboutCategory(heading)}</h2>
+              {body.map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </>

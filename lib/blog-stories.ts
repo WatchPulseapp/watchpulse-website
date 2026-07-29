@@ -30,6 +30,20 @@ import {
  * into generic "algorithmic personalization" essays with invented statistics.
  */
 
+/**
+ * A TMDB record the article is built from, kept with its id.
+ *
+ * requiredTitles carries the same names but only as strings, which is all the
+ * translator needs. Linking needs the id: the site already renders /movie/[id],
+ * /tv/[id] and /person/[id] from this same data, and without the id there is no
+ * way back from "the article mentions Sinners" to the page about Sinners.
+ */
+export interface TitleRef {
+  id: number;
+  type: 'movie' | 'tv' | 'person';
+  name: string;
+}
+
 export interface StoryBrief {
   format: string;
   /** Working topic, also used for de-duplication against past posts. */
@@ -39,10 +53,16 @@ export interface StoryBrief {
   instructions: string;
   /** Real titles the finished article must actually mention (domain guard). */
   requiredTitles: string[];
+  /** The same records, with ids, so the finished article can link to them. */
+  sourceRefs: TitleRef[];
   coverImage?: string;
   category: string;
   /** News formats age quickly; evergreen ones keep pulling traffic. */
   evergreen: boolean;
+}
+
+function refsFor(titles: TmdbTitle[]): TitleRef[] {
+  return titles.map((t) => ({ id: t.id, type: t.mediaType, name: t.name }));
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -92,6 +112,7 @@ async function upcomingReleases(): Promise<StoryBrief | null> {
     factSheet: buildFactSheet(chosen, { withDate: true }),
     instructions: `Write a preview of these upcoming releases. Give each film its own section covering what is known about it, who it will appeal to, and why it is worth putting in the calendar. Use the exact release dates from the fact sheet. These films are not out yet, so write about anticipation and what we know — never review them as if you have seen them, and never describe reactions or reviews that cannot exist yet.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'Trends',
     evergreen: false,
@@ -109,6 +130,7 @@ async function trendingNow(): Promise<StoryBrief | null> {
     factSheet: buildFactSheet(chosen),
     instructions: `Write a rundown of what is trending this week. For each title explain why it is catching on now and who will enjoy it. Group films and series sensibly rather than listing them mechanically.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'Trends',
     evergreen: false,
@@ -126,6 +148,7 @@ async function inTheaters(): Promise<StoryBrief | null> {
     factSheet: buildFactSheet(chosen, { withDate: true }),
     instructions: `Write a guide to what is currently in cinemas. Be genuinely useful about which films justify a trip out versus which can wait for streaming, and match each to the kind of viewer who will love it.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'Entertainment',
     evergreen: false,
@@ -143,6 +166,7 @@ async function tvThisWeek(): Promise<StoryBrief | null> {
     factSheet: buildFactSheet(chosen),
     instructions: `Write about the series currently airing new episodes. Cover what each show is, how far along it is, and whether a newcomer should jump in now or binge from the start.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'TV Shows',
     evergreen: false,
@@ -163,6 +187,9 @@ async function titleDeepDive(): Promise<StoryBrief | null> {
         factSheet: buildDetailSheet(details),
         instructions: `Write an in-depth piece about this single title. Cover the premise without spoiling the plot, the people who made it, what it does well, who it will and will not suit, and where to watch it. If the fact sheet lists streaming services, name them; if it says the title is not on a subscription service, say so plainly instead of guessing.`,
         requiredTitles: [details.name, ...details.cast.slice(0, 2)],
+        // Only the title itself — the cast names are in requiredTitles so the
+        // translator leaves them alone, but a name is not a page here.
+        sourceRefs: refsFor([details]),
         coverImage: backdropUrl(details.backdropPath),
         category: details.mediaType === 'tv' ? 'TV Shows' : 'Entertainment',
         evergreen: true,
@@ -184,6 +211,7 @@ async function genreRoundup(): Promise<StoryBrief | null> {
     factSheet: buildFactSheet(chosen),
     instructions: `Write a curated guide to the best of this genre. Give each film a section explaining what makes it stand out and the mood it suits. Order them so the piece builds rather than reading as a flat list.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'Genre Guide',
     evergreen: true,
@@ -222,6 +250,7 @@ async function streamingSpotlight(): Promise<StoryBrief | null> {
     factSheet,
     instructions: `Write a where-to-watch guide. For each title state plainly which service carries it, or say clearly that it is rental-only. Never guess at availability that is not in the fact sheet — that is the one thing readers come to this kind of article for.`,
     requiredTitles: chosen.map((t) => t.name),
+    sourceRefs: refsFor(chosen),
     coverImage: cover(chosen),
     category: 'Streaming',
     evergreen: false,
@@ -247,6 +276,7 @@ async function ifYouLiked(): Promise<StoryBrief | null> {
       factSheet: `THE STARTING POINT — the title the reader already loves:\n"${seed.name}" (${seed.year || 'TBA'})${seed.genres.length ? ` — ${seed.genres.join(', ')}` : ''}\n${seed.overview}\n\nRECOMMENDED NEXT WATCHES:\n\n${buildFactSheet(chosen)}`,
       instructions: `Write a "what to watch next" guide for someone who just finished the starting-point title. Open by pinning down what specifically makes that title work — its tone, its themes, the feeling it leaves. Then give each recommendation its own section explaining which of those qualities it shares and where it goes somewhere different. Be precise about the connection; "it's also good" is not a reason.`,
       requiredTitles: [seed.name, ...chosen.map((t) => t.name)],
+      sourceRefs: refsFor([seed, ...chosen]),
       coverImage: cover([seed, ...chosen]),
       category: 'Genre Guide',
       evergreen: true,
@@ -275,6 +305,7 @@ async function newTrailers(): Promise<StoryBrief | null> {
     factSheet: buildTrailerSheet(trailers),
     instructions: `Write a roundup of these newly released trailers. Give each its own section: what the trailer shows, what it tells us about the film, and who should be excited. Use the exact "published X days ago" timing and release dates from the fact sheet. These are trailers, not finished films — describe what has been revealed, never review a film you have not seen or invent footage that is not described in the synopsis.`,
     requiredTitles: trailers.map((t) => t.title.name),
+    sourceRefs: refsFor(trailers.map((t) => t.title)),
     coverImage: cover(trailers.map((t) => t.title)),
     category: 'Trends',
     evergreen: false,
@@ -299,6 +330,10 @@ async function personSpotlight(): Promise<StoryBrief | null> {
       factSheet: buildPersonSheet(person),
       instructions: `Write a guide to this ${isDirector ? "director's" : "performer's"} work for someone who knows the name but has not worked through the filmography. Give the standout titles their own sections covering what the film is and what ${person.name} brings to it. Recommend a specific starting point and say why. Use only the biography and credits in the fact sheet — no anecdotes, awards or personal details that are not listed there.`,
       requiredTitles: [person.name, ...person.credits.slice(0, 5).map((c) => c.name)],
+      sourceRefs: [
+        { id: person.id, type: 'person', name: person.name },
+        ...person.credits.map((c) => ({ id: c.id, type: c.mediaType, name: c.name })),
+      ],
       // Their best-known film's backdrop stands in for a portrait — TMDB profile
       // images are tall headshots and would crop badly in a 16:9 blog card.
       coverImage: backdropUrl(person.credits.find((c) => c.backdropPath)?.backdropPath || null),

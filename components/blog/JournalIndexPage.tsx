@@ -113,6 +113,10 @@ export default async function JournalIndexPage({
           basePath={path}
           heading={heading}
           intro={copy ? copy.intro : t.intro}
+          // Page one only: the standing description belongs on the URL that
+          // ranks, and repeating it under every page of the archive would be the
+          // same block of text on a dozen near-identical URLs.
+          body={current === 1 ? copy?.body : undefined}
           locale={locale}
           showLead={!category && current === 1}
         />
