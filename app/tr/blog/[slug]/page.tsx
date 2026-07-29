@@ -89,9 +89,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = await getBlogFromDB(slug);
 
   if (!post) {
+    // This runs before notFound() renders the boundary, and its title wins, so
+    // it has to be the Turkish one or the tab reads English on a Turkish 404.
     return {
-      title: 'Post Not Found - WatchPulse',
-      description: 'The blog post you are looking for could not be found.',
+      title: 'Bulunamadı | WatchPulse Günlük',
+      description: 'Aradığınız yazı bulunamadı.',
+      robots: { index: false, follow: true },
     };
   }
 

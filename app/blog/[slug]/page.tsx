@@ -79,8 +79,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: 'Post Not Found - WatchPulse',
-      description: 'The blog post you are looking for could not be found.',
+      title: 'Not found | WatchPulse Journal',
+      description: 'The article you are looking for could not be found.',
+      robots: { index: false, follow: true },
     };
   }
 

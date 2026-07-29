@@ -27,6 +27,8 @@ export interface JournalStrings {
   categoriesAria: string;
   emptyTitle: string;
   emptyBody: string;
+  notFoundTitle: string;
+  notFoundBody: string;
   allArticles: string;
   keepReading: string;
   contents: string;
@@ -90,6 +92,9 @@ const en: JournalStrings = {
   categoriesAria: 'Article categories',
   emptyTitle: 'Nothing here yet',
   emptyBody: 'Try another category.',
+  notFoundTitle: 'That article is not here',
+  notFoundBody:
+    'The link may be old, or the piece may have moved. Search for what you were after, or pick up one of the latest below.',
   allArticles: 'All articles',
   keepReading: 'Keep reading',
   contents: 'Contents',
@@ -137,6 +142,9 @@ const tr: JournalStrings = {
   categoriesAria: 'Yazı kategorileri',
   emptyTitle: 'Burada henüz bir şey yok',
   emptyBody: 'Başka bir kategoriye bakın.',
+  notFoundTitle: 'Aradığınız yazı burada değil',
+  notFoundBody:
+    'Bağlantı eski olabilir ya da yazı taşınmış olabilir. Aradığınızı aratın, ya da aşağıdaki son yazılardan birine göz atın.',
   allArticles: 'Tüm yazılar',
   keepReading: 'Okumaya devam',
   contents: 'İçindekiler',
