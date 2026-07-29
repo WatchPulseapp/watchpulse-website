@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Clock, Star } from 'lucide-react';
 import StoreLink from '@/components/ui/StoreLink';
 import { backdropUrl, posterUrl, type TmdbTitle, type TmdbTitleDetails } from '@/lib/tmdb';
+import { tmdbImage, tmdbSrcSet } from '@/lib/tmdb-image';
 import { localePrefix, type Locale } from '@/lib/blog-locale';
 import { titleStrings } from '@/lib/title-i18n';
 
@@ -47,8 +48,19 @@ export default function TitlePage({
       {/* Backdrop, faded into the page rather than sat on top of it. */}
       <div className="relative h-[38vh] min-h-[240px] w-full overflow-hidden sm:h-[46vh]">
         {backdrop ? (
+          // The backdrop is the largest thing on the page and therefore the one
+          // the browser measures. It was served at w1280 whatever the screen,
+          // so a phone showing it 375 pixels wide fetched a file more than
+          // three times the size it could use.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={backdrop} alt="" className="h-full w-full object-cover" />
+          <img
+            src={tmdbImage(backdrop, 'w780')}
+            srcSet={tmdbSrcSet(backdrop, 'hero')}
+            sizes="100vw"
+            alt=""
+            fetchPriority="high"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="h-full w-full bg-background-card" />
         )}
@@ -60,7 +72,9 @@ export default function TitlePage({
           {poster && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={poster}
+              src={tmdbImage(poster, 'w300')}
+              srcSet={tmdbSrcSet(poster, 'poster')}
+              sizes="(min-width: 640px) 200px, 140px"
               alt={title.name}
               width={220}
               height={330}
@@ -167,7 +181,9 @@ export default function TitlePage({
                       {poster ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={poster}
+                          src={tmdbImage(poster, 'w300')}
+                          srcSet={tmdbSrcSet(poster, 'poster')}
+                          sizes="(min-width: 1024px) 160px, (min-width: 640px) 30vw, 45vw"
                           alt=""
                           width={342}
                           height={513}

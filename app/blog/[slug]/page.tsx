@@ -16,6 +16,8 @@ import { blogPostContent, type BlogPostContent } from '@/data/static-blog-conten
 import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { staticBlogPosts } from '@/data/static-blogs';
 import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
+import TrailerStrip, { type ArticleVideo } from '@/components/blog/TrailerStrip';
+import { videoSchemas } from '@/lib/video-schema';
 import { tagSlug, isUsefulTag } from '@/lib/blog-locale';
 import { getLinkableTagSlugs } from '@/lib/blog-index';
 import { strings } from '@/lib/blog-i18n';
@@ -38,6 +40,7 @@ async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
         coverImage: blog.coverImage,
         content: blog.content,
         sourceRefs: blog.sourceRefs as TitleRef[] | undefined,
+        videos: blog.videos as ArticleVideo[] | undefined,
       };
     }
   } catch (error) {
@@ -151,6 +154,22 @@ export async function generateStaticParams() {
   return Object.keys(blogPostContent).map((slug) => ({ slug }));
 }
 
+/**
+ * Without this, a generated article was rendered once and then served from the
+ * full-route cache forever — measured, x-nextjs-cache: HIT on a page whose
+ * database row had changed minutes earlier. Articles do change after publishing:
+ * the translation repair pass rewrites the Turkish side, and backfills have
+ * added source ids and trailers to rows already live. The Turkish route has
+ * always been dynamic, so the two editions of the same article were drifting
+ * apart, with only a deploy to bring the English one back.
+ *
+ * Five minutes rather than force-dynamic: the curated static posts stay
+ * prerendered, and an article that is read while it is minutes stale costs
+ * nothing, whereas rendering every view against the database costs a query per
+ * request forever.
+ */
+export const revalidate = 300;
+
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
 
@@ -246,6 +265,12 @@ export default async function BlogPostPage({ params }: PageProps) {
     ],
   };
 
+  // Only where the strip renders: markup for a video the page does not show
+  // is the same mistake as an FAQ that is not there.
+  const videoLd = post.videos?.length
+    ? videoSchemas(post.videos, `https://watchpulseapp.com/blog/${slug}`, post.date, 'en')
+    : [];
+
   // Escape "<" so a title/excerpt/tag containing "</script>" can't break out of the JSON-LD block (stored-XSS defense).
   const jsonLd = (obj: unknown) => JSON.stringify(obj).replace(/</g, '\\u003c');
 
@@ -253,6 +278,9 @@ export default async function BlogPostPage({ params }: PageProps) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
+      {videoLd.map((v, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(v) }} />
+      ))}
       <ReadingProgress />
 
       <JournalThemeProvider>
@@ -355,6 +383,13 @@ export default async function BlogPostPage({ params }: PageProps) {
                     }
                   })}
                 </div>
+
+                {post.videos && post.videos.length > 0 && (
+
+                  <TrailerStrip videos={post.videos} />
+
+                )}
+
 
                 <BlogAppCTA category={post.category} slug={slug} locale="en" />
 

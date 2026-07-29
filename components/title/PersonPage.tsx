@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Star } from 'lucide-react';
 import StoreLink from '@/components/ui/StoreLink';
 import { profileUrl, backdropUrl, type TmdbPerson } from '@/lib/tmdb';
+import { tmdbImage, tmdbSrcSet } from '@/lib/tmdb-image';
 import { localePrefix, type Locale } from '@/lib/blog-locale';
 import { titleStrings } from '@/lib/title-i18n';
 
@@ -32,7 +33,14 @@ export default function PersonPage({
       <div className="relative h-[30vh] min-h-[200px] w-full overflow-hidden">
         {hero ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={hero} alt="" className="h-full w-full object-cover opacity-50" />
+          <img
+            src={tmdbImage(hero, 'w780')}
+            srcSet={tmdbSrcSet(hero, 'hero')}
+            sizes="100vw"
+            alt=""
+            fetchPriority="high"
+            className="h-full w-full object-cover opacity-50"
+          />
         ) : (
           <div className="h-full w-full bg-background-card" />
         )}
@@ -44,7 +52,9 @@ export default function PersonPage({
           {photo && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={photo}
+              src={profileUrl(person.profilePath, 'w185')}
+              srcSet={`${profileUrl(person.profilePath, 'w185')} 185w, ${photo} 632w`}
+              sizes="(min-width: 640px) 180px, 130px"
               alt={person.name}
               width={200}
               height={300}

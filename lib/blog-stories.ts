@@ -44,6 +44,17 @@ export interface TitleRef {
   name: string;
 }
 
+/** A trailer the article discusses, with everything needed to embed and describe it. */
+export interface ArticleVideo {
+  youtubeKey: string;
+  /** TMDB's name for the video, e.g. "Official Trailer". */
+  videoName: string;
+  /** The film or series it belongs to. */
+  titleName: string;
+  /** ISO date the trailer was published, for VideoObject's uploadDate. */
+  publishedAt: string;
+}
+
 export interface StoryBrief {
   format: string;
   /** Working topic, also used for de-duplication against past posts. */
@@ -55,6 +66,15 @@ export interface StoryBrief {
   requiredTitles: string[];
   /** The same records, with ids, so the finished article can link to them. */
   sourceRefs: TitleRef[];
+  /**
+   * Trailers the article is about, when it is about trailers.
+   *
+   * The generator already fetches these — the writer is handed the video name
+   * and how many days ago it went up — and then the finished piece describes a
+   * trailer nobody can watch. Carrying the key through means the article can
+   * show the thing it is discussing.
+   */
+  videos?: ArticleVideo[];
   coverImage?: string;
   category: string;
   /** News formats age quickly; evergreen ones keep pulling traffic. */
@@ -306,6 +326,12 @@ async function newTrailers(): Promise<StoryBrief | null> {
     instructions: `Write a roundup of these newly released trailers. Give each its own section: what the trailer shows, what it tells us about the film, and who should be excited. Use the exact "published X days ago" timing and release dates from the fact sheet. These are trailers, not finished films — describe what has been revealed, never review a film you have not seen or invent footage that is not described in the synopsis.`,
     requiredTitles: trailers.map((t) => t.title.name),
     sourceRefs: refsFor(trailers.map((t) => t.title)),
+    videos: trailers.map((t) => ({
+      youtubeKey: t.youtubeKey,
+      videoName: t.videoName,
+      titleName: t.title.name,
+      publishedAt: t.publishedAt,
+    })),
     coverImage: cover(trailers.map((t) => t.title)),
     category: 'Trends',
     evergreen: false,

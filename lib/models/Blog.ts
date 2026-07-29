@@ -37,6 +37,13 @@ export interface IBlog extends Document {
    * them and a crawler has no way in.
    */
   sourceRefs?: Array<{ id: number; type: 'movie' | 'tv' | 'person'; name: string }>;
+  /**
+   * Trailers the article discusses. Present on trailer roundups and absent
+   * everywhere else — the article renders them under the text, and declares
+   * VideoObject markup for each, which is a search surface the blog otherwise
+   * does not appear on at all.
+   */
+  videos?: Array<{ youtubeKey: string; videoName: string; titleName: string; publishedAt: string }>;
   date: string;
   readTime: string;
   category: string;
@@ -93,6 +100,17 @@ const BlogSchema = new Schema<IBlog>({
         id: { type: Number, required: true },
         type: { type: String, enum: ['movie', 'tv', 'person'], required: true },
         name: { type: String, required: true },
+      },
+      { _id: false }
+    ),
+  ],
+  videos: [
+    new Schema(
+      {
+        youtubeKey: { type: String, required: true },
+        videoName: { type: String, default: 'Official Trailer' },
+        titleName: { type: String, required: true },
+        publishedAt: { type: String },
       },
       { _id: false }
     ),

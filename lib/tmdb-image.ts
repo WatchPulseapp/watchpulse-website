@@ -31,12 +31,18 @@ export function tmdbImage(url: string | undefined, width: TmdbWidth): string | u
  * else gets the small one. `sizes` still has to be supplied by the caller,
  * since only the layout knows how wide the slot is.
  */
-export function tmdbSrcSet(url: string | undefined, scale: 'card' | 'hero' = 'card'): string | undefined {
+export function tmdbSrcSet(
+  url: string | undefined,
+  scale: 'card' | 'hero' | 'poster' = 'card'
+): string | undefined {
   if (!url || !url.startsWith(TMDB_HOST)) return undefined;
 
   // The hero spans the measure and needs the large rendition on a wide screen;
   // a card never does, so offering it one only invites the browser to pick it.
-  const widths: TmdbWidth[] = scale === 'hero' ? ['w500', 'w780', 'w1280'] : ['w300', 'w500', 'w780'];
+  // A poster is narrow at every breakpoint — 140px on a phone, 200px on a
+  // desktop — so it never has any business fetching w780.
+  const widths: TmdbWidth[] =
+    scale === 'hero' ? ['w500', 'w780', 'w1280'] : scale === 'poster' ? ['w300', 'w500'] : ['w300', 'w500', 'w780'];
 
   return widths.map((w) => `${tmdbImage(url, w)} ${w.slice(1)}w`).join(', ');
 }

@@ -1,6 +1,6 @@
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
-import { buildStoryBrief, type StoryBrief, type TitleRef } from '@/lib/blog-stories';
+import { buildStoryBrief, type StoryBrief, type TitleRef, type ArticleVideo } from '@/lib/blog-stories';
 import { translateArticle } from '@/lib/blog-translate';
 
 /**
@@ -34,8 +34,53 @@ const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 interface ModelConfig {
   id: string;
   maxTokens: number;
+  /**
+   * The model's per-minute token budget, when it is small enough to matter.
+   *
+   * Groq counts the prompt AND max_tokens against this before it does any work,
+   * so asking a 6,000 TPM model for 4,000 tokens of output on top of a
+   * 3,000-token prompt is rejected outright with HTTP 413 — not because the
+   * service is busy, but because the request could never have fit. Measured over
+   * a week of scheduled runs that was seven failures in twenty-four, every one
+   * of them on the fallback model, each costing that slot its article. Where
+   * this is set, max_tokens is derived from the prompt instead of fixed.
+   */
+  tpm?: number;
   /** Extra body params, e.g. reasoning_effort for the gpt-oss family. */
   extra?: Record<string, unknown>;
+}
+
+/**
+ * Rough token count for a prompt. Four characters per token is the usual
+ * approximation for English and it only has to be close: the margin below
+ * absorbs the error, and erring high costs a few tokens of output rather than
+ * the whole request.
+ */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * What we may ask this model to write, given what we are about to send it.
+ * Leaves 300 tokens of headroom for the response envelope and for the estimate
+ * landing on the wrong side.
+ */
+function budgetFor(model: ModelConfig, prompt: string): number {
+  if (!model.tpm) return model.maxTokens;
+
+  const promptTokens = estimateTokens(prompt);
+  const ceiling = model.tpm - promptTokens - 300;
+  // Never below 500: a request that small will fail the length gate anyway, and
+  // returning a floor keeps the caller's error the honest one ("too short")
+  // rather than a confusing zero-token request.
+  const budget = Math.min(model.maxTokens, Math.max(500, ceiling));
+
+  if (budget < model.maxTokens) {
+    console.log(
+      `[blog-generator] ${model.id}: prompt ~${promptTokens} tokens, asking for ${budget} of ${model.maxTokens} to stay under ${model.tpm} TPM`
+    );
+  }
+  return budget;
 }
 
 // Measured output lands at 1000-1900 words (~3,500 tokens), so 5,000 is ample
@@ -49,21 +94,26 @@ interface ModelConfig {
 // model produces a shorter but structurally valid article (measured: 1058 words,
 // 22 blocks, 2.6s), which is exactly what a fallback needs to do.
 const WRITER_MODELS: ModelConfig[] = [
-  { id: 'llama-3.3-70b-versatile', maxTokens: 5000 },
-  { id: 'llama-3.1-8b-instant', maxTokens: 4000 },
+  { id: 'llama-3.3-70b-versatile', maxTokens: 5000, tpm: 12000 },
+  // 6,000 TPM against a writer prompt of roughly 3,000: asking for 4,000 output
+  // put every request over the line before it was read. That is where all seven
+  // of the week's lost articles went.
+  // 3,000 rather than 4,000 even before the budget maths: this model only has
+  // to clear the 700-word floor, and 3,000 tokens is roughly 2,200 words.
+  { id: 'llama-3.1-8b-instant', maxTokens: 3000, tpm: 6000 },
 ];
 
 // Falling back to llama-3.1-8b rather than llama-3.3-70b matters: the 70b has
 // just spent most of its per-minute token budget writing the body, and stacking
 // another call on it was what pushed runs into HTTP 429.
 const HEADLINE_MODELS: ModelConfig[] = [
-  { id: 'openai/gpt-oss-120b', maxTokens: 600, extra: { reasoning_effort: 'low' } },
-  { id: 'llama-3.1-8b-instant', maxTokens: 600 },
+  { id: 'openai/gpt-oss-120b', maxTokens: 600, tpm: 8000, extra: { reasoning_effort: 'low' } },
+  { id: 'llama-3.1-8b-instant', maxTokens: 600, tpm: 6000 },
 ];
 
 const EDITOR_MODELS: ModelConfig[] = [
-  { id: 'llama-3.1-8b-instant', maxTokens: 300 },
-  { id: 'llama-3.3-70b-versatile', maxTokens: 300 },
+  { id: 'llama-3.1-8b-instant', maxTokens: 300, tpm: 6000 },
+  { id: 'llama-3.3-70b-versatile', maxTokens: 300, tpm: 12000 },
 ];
 
 export const CATEGORIES = [
@@ -152,6 +202,8 @@ export interface GeneratedArticle {
     requiredTitles: string[];
     /** The same records with TMDB ids, so the article can link to them. */
     sourceRefs: TitleRef[];
+    /** Trailers to embed, on the formats that have any. */
+    videos: ArticleVideo[];
   };
 }
 
@@ -197,7 +249,7 @@ async function callGroq(model: ModelConfig, system: string, user: string): Promi
         ],
         temperature: 0.85,
         top_p: 0.95,
-        max_tokens: model.maxTokens,
+        max_tokens: budgetFor(model, `${system}\n${user}`),
         response_format: { type: 'json_object' },
         ...model.extra,
       }),
@@ -791,6 +843,7 @@ export async function generateArticle(
             // them — "Fall 2: Deadpoint" must not become "Sonbahar 2".
             requiredTitles: brief?.requiredTitles || [],
             sourceRefs: brief?.sourceRefs || [],
+            videos: brief?.videos || [],
           },
         },
       };
@@ -873,6 +926,9 @@ export async function generateAndPublish(): Promise<GenerationResult> {
       // Both editions carry the same names verbatim, so one set of ids serves
       // the English and the Turkish body alike.
       sourceRefs: article.meta.sourceRefs,
+      // Both editions render the same embeds: a trailer is a trailer whatever
+      // language the article around it is in.
+      videos: article.meta.videos,
     });
 
     console.log(

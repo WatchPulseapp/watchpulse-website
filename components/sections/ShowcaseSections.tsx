@@ -97,7 +97,7 @@ export default function ShowcaseSections() {
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 240px, 290px"
-                      quality={88}
+                      quality={78}
                       loading="lazy"
                     />
                   </div>

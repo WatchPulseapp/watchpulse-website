@@ -66,6 +66,10 @@ export interface JournalStrings {
   tagIntro: (tag: string, count: number) => string;
   /** Label over the tag list at the foot of an article. */
   taggedWith: string;
+  /** Heading over the playable trailers on a trailer roundup. */
+  watchTrailers: string;
+  /** Accessible name for the play button. */
+  playTrailer: (title: string) => string;
   /** The generator writes "5 min read" whatever the language it wrote in. */
   readTime: (value: string) => string;
 }
@@ -131,6 +135,8 @@ const en: JournalStrings = {
   tagIntro: (tag, count) =>
     `${count} article${count === 1 ? '' : 's'} from the Journal on ${tag}.`,
   taggedWith: 'Filed under',
+  watchTrailers: 'Watch the trailers',
+  playTrailer: (title) => `Play the ${title} trailer`,
   readTime: (value) => value,
 };
 
@@ -184,6 +190,8 @@ const tr: JournalStrings = {
   aboutCategory: (label) => `${label} hakkında`,
   tagIntro: (tag, count) => `Günlük'te ${tag} üzerine ${count} yazı.`,
   taggedWith: 'Konular',
+  watchTrailers: 'Fragmanları izleyin',
+  playTrailer: (title) => `${title} fragmanını oynat`,
   readTime: (value) => {
     const minutes = value.match(/\d+/);
     return minutes ? `${minutes[0]} dk okuma` : value;

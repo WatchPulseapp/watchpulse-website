@@ -16,6 +16,8 @@ import { type BlogPostContent } from '@/data/static-blog-content';
 import { strings } from '@/lib/blog-i18n';
 import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
+import TrailerStrip, { type ArticleVideo } from '@/components/blog/TrailerStrip';
+import { videoSchemas } from '@/lib/video-schema';
 import { tagSlug, isUsefulTag } from '@/lib/blog-locale';
 import { getLinkableTagSlugs } from '@/lib/blog-index';
 
@@ -45,6 +47,7 @@ async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
         // The translator copies film and series names verbatim, so the same ids
         // resolve against the Turkish body as against the English one.
         sourceRefs: blog.sourceRefs as TitleRef[] | undefined,
+        videos: blog.videos as ArticleVideo[] | undefined,
       };
     }
   } catch (error) {
@@ -233,6 +236,12 @@ export default async function BlogPostPage({ params }: PageProps) {
     ],
   };
 
+  // Only where the strip renders: markup for a video the page does not show
+  // is the same mistake as an FAQ that is not there.
+  const videoLd = post.videos?.length
+    ? videoSchemas(post.videos, `https://watchpulseapp.com/tr/blog/${slug}`, post.date, 'tr')
+    : [];
+
   // Escape "<" so a title/excerpt/tag containing "</script>" can't break out of the JSON-LD block (stored-XSS defense).
   const jsonLd = (obj: unknown) => JSON.stringify(obj).replace(/</g, '\\u003c');
 
@@ -240,6 +249,9 @@ export default async function BlogPostPage({ params }: PageProps) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }} />
+      {videoLd.map((v, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(v) }} />
+      ))}
       <ReadingProgress />
 
       <JournalThemeProvider>
@@ -340,6 +352,13 @@ export default async function BlogPostPage({ params }: PageProps) {
                     }
                   })}
                 </div>
+
+                {post.videos && post.videos.length > 0 && (
+
+                  <TrailerStrip videos={post.videos} locale="tr" />
+
+                )}
+
 
                 <BlogAppCTA category={post.category} slug={slug} locale="tr" />
 

@@ -84,7 +84,7 @@ export default function FeatureShowcase({ id, screenshotSrc, badge, badgeIcon: B
                                 fill
                                 className="object-cover"
                                 sizes="280px"
-                                quality={90}
+                                quality={78}
                             />
                         </div>
                     </div>
