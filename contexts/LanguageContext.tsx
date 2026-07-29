@@ -143,11 +143,11 @@ const translations = {
     },
     social: {
       eyebrow: 'Sosyal',
-      title: 'AYNI FİLMLERİ SEVEN İNSANLAR BURADA',
-      desc: 'WatchPulse aynı zamanda film severlerin sosyal ağı: zevkine göre eşleş, gerçek zamanlı sohbet et, düşünceni paylaş.',
+      title: 'SENİNLE AYNI ŞEYLERİ İZLEYENLER BURADA',
+      desc: 'WatchPulse aynı zamanda bir topluluk: zevkine göre eşleş, gerçek zamanlı sohbet et, izlediğin film ve diziler üzerine konuş.',
       match: {
         title: 'Eşleşme',
-        desc: 'Uyum, ortak filmlerden tür ve yönetmen tercihine, izleme alışkanlığından zevkinin zaman içinde nasıl değiştiğine kadar 15 ayrı boyutta hesaplanır — ve kiminle neden eşleştiğin tek tek gösterilir.',
+        desc: 'Uyum; ortak film ve dizilerden tür ve yönetmen tercihine, izleme alışkanlığından zevkinin zaman içinde nasıl değiştiğine kadar 15 ayrı boyutta hesaplanır ve sana en uygun kişiler önerilir.',
       },
       chat: {
         title: 'Gerçek Zamanlı Sohbet',
@@ -230,7 +230,7 @@ const translations = {
       },
       step2: {
         title: 'Zevkini öğret',
-        desc: 'Birkaç film puanla, favori türlerini seç; profilin oturmaya başlasın.',
+        desc: 'Birkaç film ve dizi puanla, favori türlerini seç; profilin oturmaya başlasın.',
       },
       step3: {
         title: 'İzle, takip et, paylaş',
@@ -260,7 +260,7 @@ const translations = {
       q4: 'Öneriler nasıl çalışıyor?',
       a4: 'İzlediklerin, puanladıkların ve seçtiğin ruh hali zevk profilini oluşturur; yapay zeka önerilerini bu profile göre yapar. Beğen/beğenme geri bildirimlerinle zamanla daha isabetli olur.',
       q5: 'Sosyal özellikler neler?',
-      a5: 'Film zevkine göre eşleşme, gerçek zamanlı sohbet (sesli mesaj ve GIF destekli), gönderiler, anketler ve takip sistemi. Hesabını gizli yapabilir, istediğin kullanıcıyı engelleyebilirsin.',
+      a5: 'İzleme zevkine göre eşleşme, gerçek zamanlı sohbet (sesli mesaj ve GIF destekli), gönderiler, anketler ve takip sistemi. Hesabını gizli yapabilir, istediğin kullanıcıyı engelleyebilirsin.',
       q6: 'Verilerim güvende mi?',
       a6: 'Verilerin şifreli bağlantıyla taşınır ve üçüncü taraflara satılmaz. Hesabını ve tüm verilerini istediğin an uygulamadan ya da web sitesinden kalıcı olarak silebilirsin.',
     },
@@ -363,11 +363,11 @@ const translations = {
     },
     social: {
       eyebrow: 'Social',
-      title: 'PEOPLE WHO LOVE THE SAME MOVIES',
-      desc: 'WatchPulse is also a social network for film lovers: match by taste, chat in real time, share what you think.',
+      title: 'PEOPLE WHO WATCH WHAT YOU WATCH',
+      desc: 'WatchPulse is also a place to talk: match on taste, chat in real time, and argue about the films and series you are all watching.',
       match: {
         title: 'Matching',
-        desc: 'Compatibility is worked out across fifteen separate dimensions — titles you both love, genres, directors, what you actually finish, even how your taste has shifted over time — and you are shown which of them you have in common.',
+        desc: 'Compatibility is worked out across fifteen separate dimensions: the films and series you both love, genres, directors, what you actually finish, even how your taste has shifted over time. The closest people are the ones you get shown.',
       },
       chat: {
         title: 'Real-Time Chat',
@@ -448,7 +448,7 @@ const translations = {
       },
       step2: {
         title: 'Teach it your taste',
-        desc: 'Rate a few movies and pick favorite genres; your profile starts to settle.',
+        desc: 'Rate a few films and series, pick favourite genres; your profile starts to settle.',
       },
       step3: {
         title: 'Watch, track, share',
