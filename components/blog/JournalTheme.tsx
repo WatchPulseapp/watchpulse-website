@@ -31,15 +31,38 @@ var t=s==='light'||s==='dark'?s:(window.matchMedia('(prefers-color-scheme: light
 document.documentElement.setAttribute('data-journal',t);
 }catch(e){document.documentElement.setAttribute('data-journal','dark');}})();`;
 
+/** The same choice the pre-paint script makes: stored preference, else the OS. */
+function resolveTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(JOURNAL_THEME_KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
 export function JournalThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const current = document.documentElement.getAttribute('data-journal');
+    const root = document.documentElement;
+    let current = root.getAttribute('data-journal');
+
+    // Normally the pre-paint script has already resolved this. It cannot on a
+    // surface React renders entirely on the client — the not-found boundary,
+    // where the script arrives as markup rather than as HTML the browser
+    // parsed, and so never executes. Resolving it here as well costs one
+    // repaint on those surfaces and keeps the reader's theme everywhere.
+    if (current !== 'light' && current !== 'dark') {
+      current = resolveTheme();
+      root.setAttribute('data-journal', current);
+    }
+
     setTheme(current === 'light' ? 'light' : 'dark');
 
     return () => {
-      document.documentElement.removeAttribute('data-journal');
+      root.removeAttribute('data-journal');
     };
   }, []);
 
@@ -66,7 +89,18 @@ export function JournalThemeProvider({ children }: { children: React.ReactNode }
     });
   }, []);
 
-  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={{ theme, toggle }}>
+      {/* The script lives here rather than in a route layout because a layout
+          can be forgotten: the Turkish routes were added without one, so that
+          whole edition ignored the stored theme, and the not-found boundary
+          missed it even where the layout existed. Rendering it from the
+          provider means any surface that can show a theme also resolves one.
+          It runs at parse time, before the markup below it is styled. */}
+      <script dangerouslySetInnerHTML={{ __html: journalThemeScript }} />
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function ThemeToggle({ className = '' }: { className?: string }) {

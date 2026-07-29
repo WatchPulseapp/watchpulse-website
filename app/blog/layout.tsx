@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { journalThemeScript } from '@/components/blog/JournalTheme';
 
 export const metadata: Metadata = {
   title: 'WatchPulse Blog - AI Movie Recommendations, Streaming Tips & Entertainment Insights',
@@ -43,12 +42,8 @@ export default function BlogLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      {/* Resolves the reader's theme before first paint, so the correct ground
-          is painted once instead of flashing dark and then correcting. */}
-      <script dangerouslySetInnerHTML={{ __html: journalThemeScript }} />
-      {children}
-    </>
-  );
+  // The pre-paint theme script is rendered by JournalThemeProvider, so every
+  // Journal surface gets it — including the ones that have no layout of their
+  // own, which is how the Turkish edition ended up without it.
+  return <>{children}</>;
 }
