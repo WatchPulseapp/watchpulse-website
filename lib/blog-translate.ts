@@ -231,7 +231,12 @@ async function callTranslator(
 export async function translateArticle(
   article: TranslatableArticle,
   target: TargetLanguage,
-  protectedNames: string[] = []
+  protectedNames: string[] = [],
+  // Which model in the chain to start from. Groq meters tokens per model, so a
+  // second translation in the same minute — the repair pass running alongside a
+  // fresh publish — has a full budget of its own if it starts one model along
+  // instead of queueing behind the first.
+  modelOffset = 0
 ): Promise<TranslatableArticle | null> {
   if (!process.env.GROQ_API_KEY) {
     console.error('[blog-translate] GROQ_API_KEY is not set');
@@ -248,7 +253,14 @@ export async function translateArticle(
   // completion was 1.04x the prompt, so 1.4x is headroom rather than a guess.
   const wanted = Math.ceil(promptTokens * 1.4);
 
-  for (const model of TRANSLATOR_MODELS) {
+  // Rotated rather than sliced, so a caller starting at the second model still
+  // falls back to the first — it is the best of the three and by the time the
+  // chain reaches it its budget has usually recovered.
+  const chain = TRANSLATOR_MODELS.map(
+    (_, i) => TRANSLATOR_MODELS[(i + modelOffset) % TRANSLATOR_MODELS.length]
+  );
+
+  for (const model of chain) {
     // Groq meters prompt + max_tokens against the per-minute limit, so asking
     // for more than the remainder fails with 413 before generating anything.
     const ceiling = model.tpm - promptTokens - 250;

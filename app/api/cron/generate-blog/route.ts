@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { generateAndPublish, countTodaysAutoPosts } from '@/lib/blog-generator';
+import { generateAndPublish, countTodaysAutoPosts, repairMissingTranslation } from '@/lib/blog-generator';
 import connectDB from '@/lib/mongodb';
 import BlogRun from '@/lib/models/BlogRun';
 import { submitToIndexNow, urlsForNewPost, type IndexNowResult } from '@/lib/indexnow';
@@ -67,6 +67,21 @@ function isAuthorized(request: NextRequest): boolean {
   return header === `Bearer ${secret}`;
 }
 
+/**
+ * Repairs one article that published without a Turkish side. Swallows its own
+ * errors: this is a background repair, and a failure here must never turn a
+ * successful publish into a failed request.
+ */
+async function repairTurkish(): Promise<{ slug: string; ok: boolean } | null> {
+  try {
+    const result = await repairMissingTranslation();
+    return result.slug ? { slug: result.slug, ok: result.ok } : null;
+  } catch (error) {
+    console.error('[cron/generate-blog] translation repair failed:', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
 async function handle(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
@@ -83,6 +98,10 @@ async function handle(request: NextRequest) {
     const remaining = MAX_POSTS_PER_DAY - alreadyToday;
 
     if (remaining <= 0) {
+      // Nothing to publish, but the slot is still worth using: if an earlier
+      // article went out without a Turkish side, this is free capacity to fix it.
+      const repaired = await repairTurkish();
+
       await recordRun({
         ok: true,
         skipped: true,
@@ -94,6 +113,7 @@ async function handle(request: NextRequest) {
         skipped: true,
         message: `Daily limit reached (${alreadyToday}/${MAX_POSTS_PER_DAY})`,
         published: [],
+        repaired,
       });
     }
 
@@ -120,6 +140,17 @@ async function handle(request: NextRequest) {
 
     const published = results.filter((r) => r.ok);
     const failed = results.filter((r) => !r.ok);
+
+    // Runs after the publish so the fresh article gets first claim on the best
+    // translator; the repair starts one model along and has its own budget.
+    // An article that just published without a Turkish side is the newest
+    // candidate, so it gets a second attempt within seconds rather than waiting
+    // for the next scheduled run.
+    const repaired = await repairTurkish();
+
+    // A repair rewrites the Turkish title and excerpt, which the index renders,
+    // so that listing is stale even when nothing new was published.
+    if (repaired?.ok) revalidatePath('/tr/blog');
 
     let indexNow: IndexNowResult | null = null;
 
@@ -162,6 +193,7 @@ async function handle(request: NextRequest) {
           translated: r.translated,
         })),
         failed: failed.map((r) => ({ topic: r.topic, reason: r.reason })),
+        repaired,
         indexNow,
       },
       { status: published.length > 0 ? 200 : 502 }

@@ -86,5 +86,9 @@ jobs:
                       'yes' if p.get('translated') else 'NO'))
           for f_ in data.get('failed', []):
               print('- Failed: {}'.format(f_.get('reason')))
+          r = data.get('repaired')
+          if r:
+              print('- Turkish repair for {}: {}'.format(
+                  r.get('slug'), 'done' if r.get('ok') else 'FAILED'))
           "
           } >> "$GITHUB_STEP_SUMMARY"
