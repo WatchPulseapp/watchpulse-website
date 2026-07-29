@@ -1,14 +1,20 @@
 name: Auto Blog Publisher
 
-# Publishes one article per run, ten times a day.
+# Publishes one article per run, seven times a day.
 #
 # Each run produces a single article that is written in English and translated
 # into Turkish before it is saved, so one run fills both editions — there is no
 # separate Turkish schedule to keep in step.
 #
-# The hours are spread across the day rather than bunched, so the archive gains
-# a fresh piece roughly every ninety minutes of waking hours. Turkey is UTC+3:
-# 05:11 UTC is 08:11 there, and the last run lands at 23:11 local.
+# Seven rather than ten because a writer call costs the 70b about 7,500 tokens
+# and Groq's free tier meters that model daily as well as per minute. At ten the
+# budget ran out before the day did, and the late slots fell through to the
+# weaker model — measured, seven of twenty-four runs in a week published
+# nothing. Fewer slots with room for a retry beats more slots that fail.
+#
+# Spread across Turkish waking hours (UTC+3): 05:11 UTC is 08:11 there and the
+# last run lands at 22:11 local, leaving roughly two and a half hours between
+# pieces.
 #
 # The minute is deliberately not :00 — GitHub's scheduler is busiest on the hour
 # and delays runs the most there.
@@ -18,7 +24,7 @@ name: Auto Blog Publisher
 
 on:
   schedule:
-    - cron: '11 5,7,9,11,13,15,17,19,20,21 * * *'
+    - cron: '11 5,8,10,12,14,17,19 * * *'
   workflow_dispatch:
 
 # One run at a time: two overlapping runs would contend for the same Groq

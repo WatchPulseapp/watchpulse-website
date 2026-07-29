@@ -10,7 +10,17 @@ import { journalIndexMetadata } from '@/lib/blog-meta';
  * following a thread or for a crawler looking for a route deeper in. Only tags
  * the archive uses more than once get a page; see MIN_POSTS_PER_TAG.
  */
-export const dynamic = 'force-dynamic';
+
+/**
+ * Cached for five minutes rather than rendered per request.
+ *
+ * Every listing surface was force-dynamic, so each view cost a database round
+ * trip — measured, 388ms to first byte on the index. Articles publish about
+ * every two and a half hours, so a five-minute window is not a freshness
+ * trade at all, and the publisher calls revalidatePath on the indexes anyway,
+ * which puts a new article up immediately.
+ */
+export const revalidate = 300;
 
 type Props = { params: Promise<{ tag: string }> };
 

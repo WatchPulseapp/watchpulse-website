@@ -47,7 +47,19 @@ export const maxDuration = 60;
 
 // Safety valve: even if the scheduler misfires or someone replays the request,
 // we never publish more than this many auto-generated posts per UTC day.
-const MAX_POSTS_PER_DAY = Number(process.env.MAX_AUTO_POSTS_PER_DAY || 10);
+/**
+ * Seven, not ten.
+ *
+ * A writer call costs the 70b roughly 7,500 tokens and Groq's free tier meters
+ * that model by the day as well as by the minute — measured, it started
+ * refusing with "12,000 tokens left, retry-after 514s", which is the daily
+ * budget talking, not the per-minute one. Ten articles sat on the edge of that
+ * before any retry, so the day's budget ran out early and the late slots fell
+ * to the weaker model, whose drafts fail the editorial checks more often. Seven
+ * leaves room for the retries that keep quality up. Raise it with
+ * MAX_AUTO_POSTS_PER_DAY if the Groq plan changes.
+ */
+const MAX_POSTS_PER_DAY = Number(process.env.MAX_AUTO_POSTS_PER_DAY || 7);
 
 // One article per request, and this is not a tuning knob.
 //
