@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { type Locale } from '@/lib/blog-locale';
+import { strings } from '@/lib/blog-i18n';
 
 interface TOCItem {
   id: string;
@@ -16,7 +18,14 @@ interface TOCItem {
  * stay because an article's sections genuinely are a sequence — the reader uses
  * them to judge how far in a section sits.
  */
-export default function TableOfContents({ items }: { items: TOCItem[] }) {
+export default function TableOfContents({
+  items,
+  locale = 'en',
+}: {
+  items: TOCItem[];
+  locale?: Locale;
+}) {
+  const t = strings(locale);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
 
@@ -59,7 +68,7 @@ export default function TableOfContents({ items }: { items: TOCItem[] }) {
     <nav
       className="rounded-xl border px-5 py-4"
       style={{ borderColor: 'var(--rule)', background: 'var(--paper-sunken)' }}
-      aria-label="Table of contents"
+      aria-label={t.contents}
     >
       <button
         onClick={() => setOpen((v) => !v)}
@@ -67,10 +76,10 @@ export default function TableOfContents({ items }: { items: TOCItem[] }) {
         className="flex w-full items-center gap-3 text-left"
       >
         <span className="journal-eyebrow" style={{ color: 'var(--ink-soft)' }}>
-          Contents
+          {t.contents}
         </span>
         <span className="journal-meta text-[12px]" style={{ color: 'var(--ink-faint)' }}>
-          {items.length} sections
+          {t.sections(items.length)}
         </span>
         <ChevronDown
           className={`ml-auto h-4 w-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}

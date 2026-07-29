@@ -289,7 +289,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               )}
 
               <div className="journal-measure mt-12">
-                <TableOfContents items={tocItems} />
+                <TableOfContents items={tocItems} locale="tr" />
 
                 <div className="journal-prose mt-10">
                   {post.content.map((block, index) => {
@@ -341,7 +341,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 )}
 
                 <div className="mt-8 border-t pt-6" style={{ borderColor: 'var(--rule)' }}>
-                  <ShareButtons title={post.title} slug={slug} />
+                  <ShareButtons title={post.title} slug={slug} locale="tr" />
                 </div>
               </div>
 

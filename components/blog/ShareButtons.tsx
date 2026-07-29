@@ -2,10 +2,24 @@
 
 import { useState } from 'react';
 import { Check, Link2 } from 'lucide-react';
+import { localePrefix, type Locale } from '@/lib/blog-locale';
+import { strings } from '@/lib/blog-i18n';
 
-export default function ShareButtons({ title, slug }: { title: string; slug: string }) {
+export default function ShareButtons({
+  title,
+  slug,
+  locale = 'en',
+}: {
+  title: string;
+  slug: string;
+  locale?: Locale;
+}) {
   const [copied, setCopied] = useState(false);
-  const url = `https://watchpulseapp.com/blog/${slug}`;
+  const t = strings(locale);
+  // The edition the reader is in. Sharing from the Turkish article used to hand
+  // out the English URL, so whoever opened the link got a different language
+  // from the one the person sharing it had just been reading.
+  const url = `https://watchpulseapp.com${localePrefix(locale)}/blog/${slug}`;
 
   const copyLink = async () => {
     try {
@@ -23,7 +37,7 @@ export default function ShareButtons({ title, slug }: { title: string; slug: str
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <span className="journal-eyebrow mr-1" style={{ color: 'var(--ink-faint)' }}>
-        Share
+        {t.share}
       </span>
 
       <button
@@ -35,7 +49,7 @@ export default function ShareButtons({ title, slug }: { title: string; slug: str
         }}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
-        {copied ? 'Link copied' : 'Copy link'}
+        {copied ? t.linkCopied : t.copyLink}
       </button>
 
       <a
@@ -49,7 +63,7 @@ export default function ShareButtons({ title, slug }: { title: string; slug: str
         <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
           <path d="M18.9 1.9h3.4l-7.4 8.5 8.7 11.7h-6.8l-5.3-7-6.1 7H2l7.9-9.1L1.6 1.9h7l4.8 6.4 5.5-6.4Zm-1.2 18.1h1.9L7.4 3.9H5.4l12.3 16.1Z" />
         </svg>
-        Post
+        {t.post}
       </a>
     </div>
   );
