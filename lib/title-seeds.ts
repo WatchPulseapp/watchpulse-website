@@ -25,8 +25,30 @@ import {
  * catalogue growing — which is what it actually is.
  */
 
-/** How many new titles one run may claim. */
-export const DEFAULT_BATCH = Number(process.env.TITLE_SEED_BATCH || 50);
+/**
+ * How many new titles one run may claim.
+ *
+ * Raised from fifty once the ratio became obvious: the Journal publishes seven
+ * pages a day and this was adding fifty a week, so the surface that answers the
+ * highest-intent question in the subject was growing an order of magnitude
+ * slower than the one that answers the vaguest. A hundred and fifty a week is
+ * roughly two thousand pages a quarter — still a catalogue filling in rather
+ * than a site that appeared overnight.
+ */
+export const DEFAULT_BATCH = Number(process.env.TITLE_SEED_BATCH || 150);
+
+/**
+ * TMDB pages each deep source reads per run.
+ *
+ * Forty a page. At one page each the two deep sources plus the three "what is
+ * hot" queries could only ever surface about 140 candidates, most of them
+ * already held — so a batch of 150 was arithmetically unreachable and the run
+ * would have quietly under-delivered while reporting success.
+ */
+const DEEP_PAGES = 4;
+
+/** The sources that page through the ranking, as opposed to sampling the top. */
+const DEEP_SOURCES = ['popular-film', 'popular-tv'];
 
 /**
  * A title has to clear this to get a page. Both numbers are about the page
@@ -66,8 +88,8 @@ const SOURCES: Source[] = [
   { label: 'trending', load: () => getTrending(20) },
   { label: 'now-playing', load: () => getNowPlaying(20) },
   { label: 'on-the-air', load: () => getOnTheAirTV(20) },
-  { label: 'popular-film', load: (page) => getPopularMovies(40, page) },
-  { label: 'popular-tv', load: (page) => getPopularTVPaged(40, page) },
+  { label: 'popular-film', load: (page) => getPopularMovies(40 * DEEP_PAGES, page, DEEP_PAGES) },
+  { label: 'popular-tv', load: (page) => getPopularTVPaged(40 * DEEP_PAGES, page, DEEP_PAGES) },
 ];
 
 function usable(title: TmdbTitle): boolean {
@@ -84,10 +106,17 @@ export async function seedTitles(batch = DEFAULT_BATCH): Promise<SeedResult> {
   await connectDB();
   const total = await TitleSeed.countDocuments();
 
-  // Derived rather than stored: the deep sources pull 40 a page, so the count
-  // of what we already hold says how far in we have read. A stored cursor would
-  // be one more thing to drift out of step with the collection it describes.
-  const deepPage = Math.floor(total / 40) + 1;
+  // Derived rather than stored: the deep sources read 40 a page, so the number
+  // of titles they have already contributed says how far in we have read. A
+  // stored cursor would be one more thing to drift out of step with the
+  // collection it describes.
+  //
+  // Counted by source, not from the total. The "what is hot" queries add
+  // titles too, and including those advanced the cursor faster than the deep
+  // sources were actually reading — so whole pages of the popularity ranking
+  // were being skipped and would never have been seeded at all.
+  const deepHeld = await TitleSeed.countDocuments({ source: { $in: DEEP_SOURCES } });
+  const deepPage = Math.floor(deepHeld / 40) + 1;
 
   const batches = await Promise.all(
     SOURCES.map(async (source) => {

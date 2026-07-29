@@ -338,7 +338,7 @@ export function getOnTheAirTV(limit = 12): Promise<TmdbTitle[]> {
  * pages hold nothing new — so the page is a parameter here rather than fixed as
  * it is on the story formats, which only ever want what is hot right now.
  */
-export function getPopularMovies(limit = 20, page = 1): Promise<TmdbTitle[]> {
+export function getPopularMovies(limit = 20, page = 1, pages = 1): Promise<TmdbTitle[]> {
   return fetchList('/discover/movie', {
     fallbackType: 'movie',
     params: {
@@ -351,12 +351,13 @@ export function getPopularMovies(limit = 20, page = 1): Promise<TmdbTitle[]> {
     },
     limit,
     startPage: page,
+    pages,
     minVotes: 150,
   });
 }
 
 /** Popular series, paged. See getPopularMovies. */
-export function getPopularTVPaged(limit = 20, page = 1): Promise<TmdbTitle[]> {
+export function getPopularTVPaged(limit = 20, page = 1, pages = 1): Promise<TmdbTitle[]> {
   return fetchList('/discover/tv', {
     fallbackType: 'tv',
     params: {
@@ -366,6 +367,7 @@ export function getPopularTVPaged(limit = 20, page = 1): Promise<TmdbTitle[]> {
     },
     limit,
     startPage: page,
+    pages,
     minVotes: 150,
     excludeGenreIds: JUNK_TV_GENRES,
   });

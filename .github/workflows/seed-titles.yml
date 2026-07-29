@@ -8,8 +8,9 @@ name: Title Page Seeder
 #
 # Weekly, and bounded. Every id TMDB knows could be listed tomorrow, but a site
 # with little standing publishing tens of thousands of near-identical URLs
-# overnight has the shape of a doorway farm whether it means to or not. Fifty a
-# week alongside seventy articles is a catalogue growing, which is what it is.
+# overnight has the shape of a doorway farm whether it means to or not. A
+# hundred and fifty a week alongside fifty articles is a catalogue filling in,
+# which is what it is — roughly two thousand pages a quarter.
 #
 # Monday 04:23 UTC — off the hour, because GitHub's scheduler is busiest there
 # and delays runs the most, and before the day's first article at 05:11 so the
@@ -26,7 +27,7 @@ on:
       batch:
         description: 'How many titles to claim this run'
         required: false
-        default: '50'
+        default: '150'
 
 concurrency:
   group: seed-titles
@@ -42,7 +43,7 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL || 'https://watchpulseapp.com' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          BATCH: ${{ github.event.inputs.batch || '50' }}
+          BATCH: ${{ github.event.inputs.batch || '150' }}
         run: |
           set -euo pipefail
 
