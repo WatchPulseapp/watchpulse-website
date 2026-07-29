@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { localePrefix, type Locale } from '@/lib/blog-locale';
+import { strings } from '@/lib/blog-i18n';
 
 interface RelatedPost {
   slug: string;
@@ -17,22 +19,27 @@ interface RelatedPost {
 export default function RelatedPosts({
   posts,
   currentSlug,
+  locale = 'en',
 }: {
   posts: RelatedPost[];
   currentSlug: string;
+  locale?: Locale;
 }) {
   const items = posts.filter((p) => p.slug !== currentSlug).slice(0, 3);
   if (items.length === 0) return null;
 
+  const t = strings(locale);
+  const prefix = localePrefix(locale);
+
   return (
     <section className="mt-20 border-t pt-12" style={{ borderColor: 'var(--rule)' }}>
       <h2 className="journal-eyebrow" style={{ color: 'var(--ink-soft)' }}>
-        Keep reading
+        {t.keepReading}
       </h2>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((post) => (
-          <Link key={post.slug} href={`/blog/${post.slug}`} className="group block h-full">
+          <Link key={post.slug} href={`${prefix}/blog/${post.slug}`} className="group block h-full">
             <article className="journal-card flex h-full flex-col gap-3 rounded-xl p-6">
               <span className="journal-eyebrow" style={{ color: 'var(--accent)' }}>
                 {post.category}

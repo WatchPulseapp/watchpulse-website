@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { localePrefix, type Locale } from '@/lib/blog-locale';
+import { tmdbImage, tmdbSrcSet } from '@/lib/tmdb-image';
 
 export interface BlogCardProps {
   slug: string;
@@ -10,7 +12,19 @@ export interface BlogCardProps {
   coverImage?: string;
   /** The lead story: a wide, image-forward treatment carrying the gold marker. */
   featured?: boolean;
+  /**
+   * Which edition the card is sitting in. Without it every card linked to
+   * /blog/<slug>, so the Turkish index sent its readers to the English article
+   * and the Turkish URLs had no internal links pointing at them at all.
+   */
+  locale?: Locale;
 }
+
+// The grid is three columns at desktop inside a 72rem measure, one column on a
+// phone — so the slot is roughly a third of the viewport on a wide screen and
+// the whole of it on a narrow one.
+const CARD_SIZES = '(min-width: 1024px) 22rem, (min-width: 640px) 45vw, 92vw';
+const LEAD_SIZES = '(min-width: 768px) 40rem, 92vw';
 
 /** Category eyebrow. Gold marks the lead story, accent marks everything else. */
 function Eyebrow({ children, gold = false }: { children: React.ReactNode; gold?: boolean }) {
@@ -48,18 +62,24 @@ export default function BlogCard({
   readTime,
   coverImage,
   featured,
+  locale = 'en',
 }: BlogCardProps) {
+  const href = `${localePrefix(locale)}/blog/${slug}`;
+
   if (featured) {
     return (
-      <Link href={`/blog/${slug}`} className="group block">
+      <Link href={href} className="group block">
         <article className="journal-card grid overflow-hidden rounded-2xl md:grid-cols-[1.15fr_1fr]">
           <div className="relative aspect-[16/10] overflow-hidden md:aspect-auto md:min-h-[340px]">
             {coverImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={coverImage}
+                src={tmdbImage(coverImage, 'w780')}
+                srcSet={tmdbSrcSet(coverImage)}
+                sizes={LEAD_SIZES}
                 alt=""
                 loading="eager"
+                fetchPriority="high"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               />
             ) : (
@@ -94,13 +114,15 @@ export default function BlogCard({
   }
 
   return (
-    <Link href={`/blog/${slug}`} className="group block h-full">
+    <Link href={href} className="group block h-full">
       <article className="journal-card flex h-full flex-col overflow-hidden rounded-xl">
         {coverImage && (
           <div className="relative aspect-[16/9] overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={coverImage}
+              src={tmdbImage(coverImage, 'w500')}
+              srcSet={tmdbSrcSet(coverImage)}
+              sizes={CARD_SIZES}
               alt=""
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"

@@ -146,14 +146,14 @@ export default function JournalIndex({
 
         {lead && (
           <div className="mt-8">
-            <BlogCard {...lead} featured />
+            <BlogCard {...lead} featured locale={locale} />
           </div>
         )}
 
         {rest.length > 0 ? (
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {rest.map((post) => (
-              <BlogCard key={post.slug} {...post} />
+              <BlogCard key={post.slug} {...post} locale={locale} />
             ))}
           </div>
         ) : (

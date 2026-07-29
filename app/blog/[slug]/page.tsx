@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react';
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { blogPostContent, type BlogPostContent } from '@/data/static-blog-content';
+import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { staticBlogPosts } from '@/data/static-blogs';
 
 async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
@@ -38,6 +39,27 @@ async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
     console.error('Error fetching blog from DB:', error);
   }
   return null;
+}
+
+/** Same-category published articles, newest first. */
+async function getRelatedFromDB(slug: string, category: string) {
+  try {
+    await connectDB();
+    const rows = await Blog.find({ isPublished: true, category, slug: { $ne: slug } })
+      .select('slug title excerpt category readTime')
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean();
+    return (rows as Array<Record<string, any>>).map((r) => ({
+      slug: r.slug as string,
+      title: (r.title?.en || r.title?.tr || r.slug) as string,
+      excerpt: (r.excerpt?.en || r.excerpt?.tr || '') as string,
+      category: (r.category || 'General') as string,
+      readTime: (r.readTime || '') as string,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 type PageProps = {
@@ -144,16 +166,24 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   let headingIndex = 0;
 
-  const relatedPosts = Object.entries(blogPostContent)
-    .filter(([key, p]) => key !== slug && p.category === post!.category)
-    .slice(0, 3)
-    .map(([key, p]) => ({
+  // Published articles first, curated ones after. Built the other way round it
+  // only ever surfaced the hand-written archive, so the generated articles —
+  // most of the blog, and the part that grows daily — never linked to each
+  // other and had no internal links of their own beyond the index.
+  const relatedPosts = await getRelatedFromDB(slug, post.category);
+
+  for (const [key, p] of Object.entries(blogPostContent)) {
+    if (relatedPosts.length >= 3) break;
+    if (key === slug || p.category !== post.category) continue;
+    if (relatedPosts.some((r) => r.slug === key)) continue;
+    relatedPosts.push({
       slug: key,
       title: p.title,
       excerpt: p.excerpt,
       category: p.category,
       readTime: p.readTime,
-    }));
+    });
+  }
 
   if (relatedPosts.length < 3) {
     const morePosts = staticBlogPosts
@@ -262,6 +292,8 @@ export default async function BlogPostPage({ params }: PageProps) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.coverImage}
+                    srcSet={tmdbSrcSet(post.coverImage, 'hero')}
+                    sizes="(min-width: 1152px) 72rem, 100vw"
                     alt=""
                     width={1200}
                     height={630}
@@ -329,7 +361,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <RelatedPosts posts={relatedPosts} currentSlug={slug} />
+              <RelatedPosts posts={relatedPosts} currentSlug={slug} locale="en" />
             </article>
           </div>
 

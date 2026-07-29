@@ -14,6 +14,7 @@ import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { type BlogPostContent } from '@/data/static-blog-content';
 import { strings } from '@/lib/blog-i18n';
+import { tmdbSrcSet } from '@/lib/tmdb-image';
 
 /**
  * The Turkish side of an article.
@@ -275,6 +276,8 @@ export default async function BlogPostPage({ params }: PageProps) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.coverImage}
+                    srcSet={tmdbSrcSet(post.coverImage, 'hero')}
+                    sizes="(min-width: 1152px) 72rem, 100vw"
                     alt=""
                     width={1200}
                     height={630}
@@ -342,7 +345,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
               </div>
 
-              <RelatedPosts posts={relatedPosts} currentSlug={slug} />
+              <RelatedPosts posts={relatedPosts} currentSlug={slug} locale="tr" />
             </article>
           </div>
 
