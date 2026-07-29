@@ -10,16 +10,32 @@ import { NextRequest, NextResponse } from 'next/server';
  *     the language you just picked is the worst version of this feature.
  *  2. Otherwise Accept-Language decides, which is the browser's own setting
  *     rather than a guess from IP. A Turkish speaker abroad still gets Turkish.
- *  3. Crawlers are left alone. Googlebot requests without a Turkish
- *     Accept-Language, so it reaches the English edition and finds the Turkish
- *     one through hreflang — redirecting bots by language is how sites end up
- *     with only one edition indexed.
+ *  3. Crawlers are left alone, by user agent rather than by hoping they send no
+ *     Accept-Language. Redirecting bots by language is how sites end up with
+ *     only one edition indexed; each edition declares the other with hreflang,
+ *     which is the mechanism built for this.
  *
  * The redirect is 307, not 308: this is a preference, not a permanent move, and
  * /blog must stay a real indexable URL in its own right.
  */
 
 const LANG_COOKIE = 'wp-lang';
+
+/**
+ * Crawlers are never redirected by language.
+ *
+ * The rule below used to rest on Googlebot not sending Accept-Language, which
+ * is true most of the time and not something to depend on — it also crawls from
+ * other locales, and a run that happens to send `tr` would meet a 307 on every
+ * English URL it asked for. Both editions declare each other through hreflang;
+ * a crawler should reach whichever one it asked for and follow that link itself.
+ */
+const CRAWLER_AGENTS =
+  /bot|crawler|spider|crawling|googlebot|bingbot|slurp|duckduckbot|yandex|baiduspider|applebot|facebookexternalhit|twitterbot|linkedinbot|pinterest|whatsapp|telegrambot|discordbot|embedly|quora|redditbot|ia_archiver|petalbot|semrush|ahrefs|screaming|lighthouse|chrome-lighthouse|gptbot|claudebot|perplexity|oai-searchbot/i;
+
+function isCrawler(userAgent: string | null): boolean {
+  return Boolean(userAgent) && CRAWLER_AGENTS.test(userAgent as string);
+}
 
 function prefersTurkish(header: string | null): boolean {
   if (!header) return false;
@@ -31,6 +47,9 @@ function prefersTurkish(header: string | null): boolean {
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const chosen = request.cookies.get(LANG_COOKIE)?.value;
+
+  // Before anything else: a crawler gets the URL it asked for.
+  if (isCrawler(request.headers.get('user-agent'))) return NextResponse.next();
 
   const onTurkish = pathname === '/tr/blog' || pathname.startsWith('/tr/blog/');
   const onEnglish = pathname === '/blog' || pathname.startsWith('/blog/');
