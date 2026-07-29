@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Container from './Container';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { SOCIAL_LINKS, GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
+import { SOCIAL_LINKS } from '@/lib/constants';
+import { storeUrl, trackStoreClick } from '@/lib/store-links';
 import { Instagram, Mail } from 'lucide-react';
 
 interface FooterProps {
@@ -168,9 +169,10 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
               <ul className="space-y-3 text-sm">
                 <li>
                   <a
-                    href={GOOGLE_PLAY_URL}
+                    href={storeUrl('play', 'footer')}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackStoreClick('play', 'footer')}
                     className="text-text-secondary hover:text-text-primary transition-colors"
                   >
                     Google Play
@@ -178,9 +180,10 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
                 </li>
                 <li>
                   <a
-                    href={APP_STORE_URL}
+                    href={storeUrl('appstore', 'footer')}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackStoreClick('appstore', 'footer')}
                     className="text-text-secondary hover:text-text-primary transition-colors"
                   >
                     App Store

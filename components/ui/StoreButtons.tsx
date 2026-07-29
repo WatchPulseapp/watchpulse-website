@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
+import { storeUrl, trackStoreClick, type StoreSource } from '@/lib/store-links';
 import { cn } from '@/lib/utils';
 
 function GooglePlayIcon({ className }: { className?: string }) {
@@ -20,16 +20,29 @@ function AppStoreIcon({ className }: { className?: string }) {
   );
 }
 
-export default function StoreButtons({ size = 'md', className }: { size?: 'md' | 'lg'; className?: string }) {
+export default function StoreButtons({
+  size = 'md',
+  className,
+  // The hero and the closing download block are the two places these appear on
+  // the landing page, and they are very different moments — one is the first
+  // thing a visitor sees, the other is what they reach after reading. Reporting
+  // them as one number would hide which of the two actually does the work.
+  source = 'home-hero',
+}: {
+  size?: 'md' | 'lg';
+  className?: string;
+  source?: StoreSource;
+}) {
   const { t } = useLanguage();
   const large = size === 'lg';
 
   return (
     <div className={cn('flex flex-col sm:flex-row gap-4', className)}>
       <a
-        href={GOOGLE_PLAY_URL}
+        href={storeUrl('play', source)}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackStoreClick('play', source)}
         className={cn('store-button-primary group justify-center', large && 'px-8 py-4')}
       >
         <GooglePlayIcon className="transition-transform group-hover:scale-110" />
@@ -40,9 +53,10 @@ export default function StoreButtons({ size = 'md', className }: { size?: 'md' |
       </a>
 
       <a
-        href={APP_STORE_URL}
+        href={storeUrl('appstore', source)}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackStoreClick('appstore', source)}
         className={cn('store-button-secondary group justify-center', large && 'px-8 py-4')}
       >
         <AppStoreIcon className="transition-transform group-hover:scale-110" />

@@ -48,7 +48,7 @@ export default function DownloadSection() {
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.7, delay: 0.3, ease: easeOut }}
           >
-            <StoreButtons size="lg" className="justify-center" />
+            <StoreButtons size="lg" className="justify-center" source="home-download" />
           </motion.div>
         </Container>
       </div>

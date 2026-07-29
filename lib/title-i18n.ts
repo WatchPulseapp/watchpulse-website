@@ -22,6 +22,8 @@ export interface TitleStrings {
   availabilityNote: string;
   titleCtaHeading: string;
   titleCtaBody: string;
+  /** Heading over the similar-titles strip. Takes the title's own name. */
+  moreLikeThis: (name: string) => string;
   personActor: string;
   personDirector: string;
   notableWork: string;
@@ -69,6 +71,7 @@ const EN: TitleStrings = {
   titleCtaHeading: 'Track it, or find something like it',
   titleCtaBody:
     'WatchPulse remembers where you left off, tells you when a new episode lands, and picks something that fits your mood when nothing looks right.',
+  moreLikeThis: (name) => `If you liked ${name}`,
   personActor: 'Actor',
   personDirector: 'Director',
   notableWork: 'Notable work',
@@ -96,6 +99,7 @@ const TR: TitleStrings = {
   titleCtaHeading: 'Takibe al ya da benzerini bul',
   titleCtaBody:
     'WatchPulse nerede kaldığınızı hatırlar, yeni bölüm çıktığında haber verir ve hiçbiri gözünüze girmediğinde ruh halinize uyanı seçer.',
+  moreLikeThis: (name) => `${name} hoşunuza gittiyse`,
   personActor: 'Oyuncu',
   personDirector: 'Yönetmen',
   notableWork: 'Öne çıkan işleri',

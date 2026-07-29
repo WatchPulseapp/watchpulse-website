@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import TitlePage from '@/components/title/TitlePage';
-import { loadTitle, titleMetadata, titleSchema } from '@/lib/title-page';
+import { loadSimilar, loadTitle, titleMetadata, titleSchema } from '@/lib/title-page';
 
 // Cached for an hour and revalidated in the background. Without this every
 // page view is a TMDB request, which turns traffic — the thing we are trying to
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
-  const title = await loadTitle(id, 'tv');
+  const [title, similar] = await Promise.all([loadTitle(id, 'tv'), loadSimilar(id, 'tv')]);
   if (!title) notFound();
 
   return (
@@ -27,7 +27,7 @@ export default async function Page({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: titleSchema(title, `/tv/${id}`) }}
       />
-      <TitlePage title={title} />
+      <TitlePage title={title} similar={similar} />
     </>
   );
 }

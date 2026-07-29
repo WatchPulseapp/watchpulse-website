@@ -8,24 +8,31 @@ export const SOCIAL_LINKS = {
   instagram: 'https://www.instagram.com/watchpulseapp/',
 };
 
-// The 14 streaming services the app actually supports for "Nerede Ne Var" /
-// where-to-watch. Kept in sync with the backend platformRegistry.js — TMDB
+// The streaming services the app supports for "Nerede Ne Var" / where-to-watch,
+// mirroring the deep-link registry in the app (streaming_launcher.dart) — TMDB
 // providers outside this set are filtered out, so this list must not be inflated.
+// It said fourteen while the app shipped twenty.
 export const PLATFORM_NAMES = [
   'Netflix',
   'Prime Video',
   'Disney+',
   'Max',
+  'HBO',
   'Apple TV+',
   'Paramount+',
+  'Hulu',
+  'Peacock',
+  'Crunchyroll',
+  'MUBI',
+  'Google Play',
   'Exxen',
   'Tabii',
   'TOD',
-  'MUBI',
-  'Hulu',
-  'Crunchyroll',
-  'Peacock',
+  'puhutv',
   'TV+',
+  'FilmBox',
+  'D-Smart',
+  'Tivibu',
 ];
 
 // Landing showcase sections: translation key + screenshot file.

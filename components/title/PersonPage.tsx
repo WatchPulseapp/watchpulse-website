@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
-import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
+import StoreLink from '@/components/ui/StoreLink';
 import { profileUrl, backdropUrl, type TmdbPerson } from '@/lib/tmdb';
 import { localePrefix, type Locale } from '@/lib/blog-locale';
 import { titleStrings } from '@/lib/title-i18n';
@@ -112,22 +112,20 @@ export default function PersonPage({
             {s.personCtaBody}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href={APP_STORE_URL}
-              target="_blank"
-              rel="noopener"
+            <StoreLink
+              store="appstore"
+              source="person-page"
               className="rounded-full bg-brand-primary px-5 py-2.5 text-[14px] font-semibold text-background-dark transition-opacity hover:opacity-90"
             >
               App Store
-            </a>
-            <a
-              href={GOOGLE_PLAY_URL}
-              target="_blank"
-              rel="noopener"
+            </StoreLink>
+            <StoreLink
+              store="play"
+              source="person-page"
               className="rounded-full border border-white/15 px-5 py-2.5 text-[14px] font-medium text-text-primary transition-colors hover:border-brand-primary/40"
             >
               Google Play
-            </a>
+            </StoreLink>
             <Link
               href={`${prefix}/blog`}
               className="self-center text-[14px] text-text-secondary underline-offset-4 hover:underline"

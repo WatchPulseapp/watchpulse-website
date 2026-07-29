@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Clock, Star } from 'lucide-react';
-import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
-import { backdropUrl, posterUrl, type TmdbTitleDetails } from '@/lib/tmdb';
+import StoreLink from '@/components/ui/StoreLink';
+import { backdropUrl, posterUrl, type TmdbTitle, type TmdbTitleDetails } from '@/lib/tmdb';
 import { localePrefix, type Locale } from '@/lib/blog-locale';
 import { titleStrings } from '@/lib/title-i18n';
 
@@ -26,9 +26,12 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 export default function TitlePage({
   title,
+  similar = [],
   locale = 'en',
 }: {
   title: TmdbTitleDetails;
+  /** TMDB's own similar-audience recommendations. Empty is fine. */
+  similar?: TmdbTitle[];
   locale?: Locale;
 }) {
   const backdrop = backdropUrl(title.backdropPath);
@@ -140,6 +143,53 @@ export default function TitlePage({
           <p className="mt-5 text-[13px] text-text-secondary">{s.availabilityNote}</p>
         </section>
 
+        {/* Somewhere to go next.
+            Without this the page is a cul-de-sac: a visitor arriving on "where
+            can I watch X" gets their answer and leaves, and a crawler that
+            reaches one title page finds no route to any other. These are TMDB's
+            own similar-audience recommendations, so the connection is real
+            rather than a genre label doing the work. */}
+        {similar.length > 0 && (
+          <section className="mt-10 border-t border-white/[0.06] pt-8">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-secondary">
+              {s.moreLikeThis(title.name)}
+            </h2>
+
+            <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              {similar.map((item) => {
+                const poster = posterUrl(item.posterPath, 'w342');
+                return (
+                  <li key={`${item.mediaType}-${item.id}`}>
+                    <Link
+                      href={`${localePrefix(locale)}/${item.mediaType}/${item.id}`}
+                      className="group block"
+                    >
+                      {poster ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={poster}
+                          alt=""
+                          width={342}
+                          height={513}
+                          loading="lazy"
+                          className="aspect-[2/3] w-full rounded-lg border border-white/[0.08] object-cover transition-opacity group-hover:opacity-80"
+                          style={{ backgroundColor: 'var(--background-card, #16181f)' }}
+                        />
+                      ) : (
+                        <div className="aspect-[2/3] w-full rounded-lg border border-white/[0.08] bg-background-card" />
+                      )}
+                      <p className="mt-2 text-[13px] leading-snug text-text-primary transition-colors group-hover:text-brand-accent">
+                        {item.name}
+                      </p>
+                      {item.year && <p className="text-[12px] text-text-secondary">{item.year}</p>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         <aside className="mt-12 rounded-2xl border border-brand-primary/15 bg-brand-primary/[0.05] p-7 sm:p-8">
           <h2 className="text-[1.35rem] font-semibold leading-tight text-text-primary">
             {s.titleCtaHeading}
@@ -148,22 +198,20 @@ export default function TitlePage({
             {s.titleCtaBody}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              href={APP_STORE_URL}
-              target="_blank"
-              rel="noopener"
+            <StoreLink
+              store="appstore"
+              source="title-page"
               className="rounded-full bg-brand-primary px-5 py-2.5 text-[14px] font-semibold text-background-dark transition-opacity hover:opacity-90"
             >
               App Store
-            </a>
-            <a
-              href={GOOGLE_PLAY_URL}
-              target="_blank"
-              rel="noopener"
+            </StoreLink>
+            <StoreLink
+              store="play"
+              source="title-page"
               className="rounded-full border border-white/15 px-5 py-2.5 text-[14px] font-medium text-text-primary transition-colors hover:border-brand-primary/40"
             >
               Google Play
-            </a>
+            </StoreLink>
             <Link
               href={`${localePrefix(locale)}/blog`}
               className="self-center text-[14px] text-text-secondary underline-offset-4 hover:underline"

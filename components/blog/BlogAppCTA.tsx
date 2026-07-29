@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowUpRight } from 'lucide-react';
-import { GOOGLE_PLAY_URL, APP_STORE_URL } from '@/lib/constants';
+import { storeUrl, trackStoreClick, type Store } from '@/lib/store-links';
 import { pickCtaVariant, CTA_CHROME } from '@/lib/blog-cta';
 import type { Locale } from '@/lib/blog-locale';
 
@@ -45,9 +45,11 @@ export default function BlogAppCTA({
     else if (/Android/i.test(ua)) setPlatform('android');
   }, []);
 
-  const stores = {
-    ios: { href: APP_STORE_URL, label: 'App Store' },
-    android: { href: GOOGLE_PLAY_URL, label: 'Google Play' },
+  // 'journal-article' for both, so Play Console reports the Journal as one
+  // channel rather than splitting it across every article slug.
+  const stores: Record<'ios' | 'android', { store: Store; href: string; label: string }> = {
+    ios: { store: 'appstore', href: storeUrl('appstore', 'journal-article'), label: 'App Store' },
+    android: { store: 'play', href: storeUrl('play', 'journal-article'), label: 'Google Play' },
   };
 
   const primary = platform === 'android' ? stores.android : stores.ios;
@@ -75,6 +77,7 @@ export default function BlogAppCTA({
           href={primary.href}
           target="_blank"
           rel="noopener"
+          onClick={() => trackStoreClick(primary.store, 'journal-article')}
           className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[14px] font-medium transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--accent)', color: 'var(--paper)' }}
         >
@@ -88,6 +91,7 @@ export default function BlogAppCTA({
           href={secondary.href}
           target="_blank"
           rel="noopener"
+          onClick={() => trackStoreClick(secondary.store, 'journal-article')}
           className="journal-meta underline-offset-4 hover:underline"
         >
           {chrome.alsoOn(secondary.label)}

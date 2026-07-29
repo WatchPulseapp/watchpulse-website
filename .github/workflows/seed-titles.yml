@@ -1,0 +1,91 @@
+name: Title Page Seeder
+
+# Claims another batch of film and series pages for the sitemap.
+#
+# The /movie/[id] and /tv/[id] routes already render for any TMDB id, so this
+# does not create pages — it decides which ones the site puts its name to, by
+# listing them in the sitemap and submitting them to IndexNow.
+#
+# Weekly, and bounded. Every id TMDB knows could be listed tomorrow, but a site
+# with little standing publishing tens of thousands of near-identical URLs
+# overnight has the shape of a doorway farm whether it means to or not. Fifty a
+# week alongside seventy articles is a catalogue growing, which is what it is.
+#
+# Monday 04:23 UTC — off the hour, because GitHub's scheduler is busiest there
+# and delays runs the most, and before the day's first article at 05:11 so the
+# two never contend.
+#
+# Note: GitHub disables scheduled workflows in repositories with no activity for
+# 60 days. If commits go quiet, re-enable it from the Actions tab.
+
+on:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: 'How many titles to claim this run'
+        required: false
+        default: '50'
+
+concurrency:
+  group: seed-titles
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Claim title pages
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://watchpulseapp.com' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BATCH: ${{ github.event.inputs.batch || '50' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET repository secret is not set."
+            exit 1
+          fi
+
+          http_code=$(curl -sS -o response.json -w '%{http_code}' \
+            --max-time 120 \
+            --retry 2 --retry-delay 30 --retry-connrefused \
+            -X POST "$SITE_URL/api/cron/seed-titles?batch=$BATCH" \
+            -H "Authorization: Bearer $CRON_SECRET")
+
+          echo "HTTP $http_code"
+          cat response.json
+          echo
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Title seeding failed with HTTP $http_code"
+            exit 1
+          fi
+
+          {
+            echo "### Title Page Seeder"
+            echo ""
+            python3 -c "
+          import json
+          with open('response.json') as f:
+              data = json.load(f)
+          print('Claimed **{}** of {} considered — {} pages in total.'.format(
+              data.get('added'), data.get('considered'), data.get('total')))
+          by_source = data.get('bySource') or {}
+          if by_source:
+              print('')
+              for source, count in sorted(by_source.items(), key=lambda kv: -kv[1]):
+                  print('- {}: {}'.format(source, count))
+          if data.get('reason'):
+              print('')
+              print('Note: ' + data['reason'])
+          idx = data.get('indexNow')
+          if idx:
+              print('')
+              print('IndexNow: {} URL(s) submitted.'.format(idx.get('submitted', 0)))
+          "
+          } >> "$GITHUB_STEP_SUMMARY"

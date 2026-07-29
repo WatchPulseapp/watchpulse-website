@@ -226,19 +226,31 @@ interface ListOptions {
   limit: number;
   /** TMDB pages to merge. One page rarely yields enough usable titles. */
   pages?: number;
+  /**
+   * Where to start paging. The story formats always want page one — the hot
+   * titles — but the sitemap seeder has to reach further each run or it keeps
+   * rediscovering the same first hundred.
+   */
+  startPage?: number;
   minVotes?: number;
   /** Popularity floor — the only useful quality signal for unreleased films. */
   minPopularity?: number;
   excludeGenreIds?: number[];
   sortBy?: 'popularity' | 'votes';
+  /**
+   * Seconds to cache for. Must be passed by anything a page renders from:
+   * without it tmdbFetch sends cache: 'no-store', which marks the whole route
+   * dynamic and quietly defeats its `export const revalidate`.
+   */
+  revalidate?: number;
 }
 
 async function fetchList(path: string, opts: ListOptions): Promise<TmdbTitle[]> {
-  const { fallbackType, params = {}, limit, pages = 1, minVotes = 0, minPopularity = 0, excludeGenreIds, sortBy = 'popularity' } = opts;
+  const { fallbackType, params = {}, limit, pages = 1, startPage = 1, minVotes = 0, minPopularity = 0, excludeGenreIds, sortBy = 'popularity', revalidate } = opts;
 
   const raw: RawTitle[] = [];
-  for (let page = 1; page <= pages; page++) {
-    const data = await tmdbFetch<{ results?: RawTitle[] }>(path, { ...params, page: String(page) });
+  for (let page = startPage; page < startPage + pages; page++) {
+    const data = await tmdbFetch<{ results?: RawTitle[] }>(path, { ...params, page: String(page) }, revalidate);
     if (!data?.results?.length) break;
     raw.push(...data.results);
   }
@@ -319,6 +331,46 @@ export function getOnTheAirTV(limit = 12): Promise<TmdbTitle[]> {
   });
 }
 
+/**
+ * Popular films, paged.
+ *
+ * The seeder needs to reach further than page one — after a few runs the first
+ * pages hold nothing new — so the page is a parameter here rather than fixed as
+ * it is on the story formats, which only ever want what is hot right now.
+ */
+export function getPopularMovies(limit = 20, page = 1): Promise<TmdbTitle[]> {
+  return fetchList('/discover/movie', {
+    fallbackType: 'movie',
+    params: {
+      sort_by: 'popularity.desc',
+      include_adult: 'false',
+      // Enough votes that the record has a real synopsis and an audience
+      // searching for it. Below this the page would be thin through no fault
+      // of its own.
+      'vote_count.gte': '150',
+    },
+    limit,
+    startPage: page,
+    minVotes: 150,
+  });
+}
+
+/** Popular series, paged. See getPopularMovies. */
+export function getPopularTVPaged(limit = 20, page = 1): Promise<TmdbTitle[]> {
+  return fetchList('/discover/tv', {
+    fallbackType: 'tv',
+    params: {
+      sort_by: 'popularity.desc',
+      include_adult: 'false',
+      'vote_count.gte': '150',
+    },
+    limit,
+    startPage: page,
+    minVotes: 150,
+    excludeGenreIds: JUNK_TV_GENRES,
+  });
+}
+
 export function getPopularTV(limit = 12): Promise<TmdbTitle[]> {
   return fetchList('/tv/popular', {
     fallbackType: 'tv',
@@ -351,12 +403,23 @@ export function getTopRatedByGenre(genreId: number, limit = 12): Promise<TmdbTit
   });
 }
 
-/** "If you liked X" — TMDB's own similar-audience recommendations. */
-export function getRecommendations(id: number, mediaType: 'movie' | 'tv', limit = 8): Promise<TmdbTitle[]> {
+/**
+ * "If you liked X" — TMDB's own similar-audience recommendations.
+ *
+ * @param revalidate pass this when a page renders the result, or the route
+ * turns dynamic and calls TMDB on every view.
+ */
+export function getRecommendations(
+  id: number,
+  mediaType: 'movie' | 'tv',
+  limit = 8,
+  revalidate?: number
+): Promise<TmdbTitle[]> {
   return fetchList(`/${mediaType}/${id}/recommendations`, {
     fallbackType: mediaType,
     limit,
     minVotes: 200,
+    revalidate,
   });
 }
 

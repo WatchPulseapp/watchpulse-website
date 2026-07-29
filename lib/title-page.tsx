@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
-import { backdropUrl, getTitleDetails, type TmdbTitleDetails } from '@/lib/tmdb';
+import {
+  backdropUrl,
+  getRecommendations,
+  getTitleDetails,
+  type TmdbTitle,
+  type TmdbTitleDetails,
+} from '@/lib/tmdb';
 import { localePrefix, type Locale } from '@/lib/blog-locale';
 
 /**
@@ -17,6 +23,22 @@ export async function loadTitle(rawId: string, mediaType: 'movie' | 'tv'): Promi
   if (!/^\d+$/.test(rawId)) return null;
   // Cached for an hour; streaming availability moves on the order of weeks.
   return getTitleDetails(Number(rawId), mediaType, 3600);
+}
+
+/**
+ * What to watch next. Cached for a day — a recommendation set moves far slower
+ * than availability does, and this is a second upstream call on a page that
+ * already made one.
+ */
+export async function loadSimilar(rawId: string, mediaType: 'movie' | 'tv'): Promise<TmdbTitle[]> {
+  if (!/^\d+$/.test(rawId)) return [];
+  try {
+    return await getRecommendations(Number(rawId), mediaType, 6, 86400);
+  } catch {
+    // A page without a "watch next" strip is still a page; a page that 500s
+    // because a secondary call failed is not.
+    return [];
+  }
 }
 
 /**

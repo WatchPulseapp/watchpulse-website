@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 import connectDB from '@/lib/mongodb'
 import Blog from '@/lib/models/Blog'
+import TitleSeed from '@/lib/models/TitleSeed'
 import { blogPostContent } from '@/data/static-blog-content'
 import { getCategories } from '@/lib/blog-index'
 
@@ -136,6 +137,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch (error) {
     console.error('Failed to fetch blogs for sitemap:', error);
+  }
+
+  // Titles the seeder has claimed, on top of the ones the articles cite. This
+  // is the larger half: what an article happens to name is whatever the story
+  // needed, while these are chosen for the question they answer.
+  try {
+    await connectDB();
+    const seeds = (await TitleSeed.find()
+      .select('tmdbId type updatedAt createdAt')
+      .sort({ createdAt: -1 })
+      .limit(MAX_TITLE_URLS)
+      .lean()) as Array<{ tmdbId: number; type: string; updatedAt?: Date; createdAt?: Date }>;
+
+    for (const seed of seeds) {
+      const path = `/${seed.type}/${seed.tmdbId}`;
+      if (!titlePaths.has(path)) titlePaths.set(path, seed.updatedAt || seed.createdAt || new Date());
+    }
+  } catch (error) {
+    console.error('Failed to fetch title seeds for sitemap:', error);
   }
 
   // Only list static slugs that actually have rendered content — otherwise the

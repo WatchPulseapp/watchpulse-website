@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import TitlePage from '@/components/title/TitlePage';
-import { loadTitle, titleMetadata, titleSchema } from '@/lib/title-page';
+import { loadSimilar, loadTitle, titleMetadata, titleSchema } from '@/lib/title-page';
 
 /**
  * The Turkish side of a film page. Same record, same cache, Turkish frame — the
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
-  const title = await loadTitle(id, 'movie');
+  const [title, similar] = await Promise.all([loadTitle(id, 'movie'), loadSimilar(id, 'movie')]);
   if (!title) notFound();
 
   return (
@@ -28,7 +28,7 @@ export default async function Page({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: titleSchema(title, `/movie/${id}`, 'tr') }}
       />
-      <TitlePage title={title} locale="tr" />
+      <TitlePage title={title} similar={similar} locale="tr" />
     </>
   );
 }
