@@ -22,24 +22,40 @@ import { localePrefix, type Locale } from '@/lib/blog-locale';
  * Writes a cookie so the choice sticks: the middleware only guesses from
  * Accept-Language when the reader has not chosen, and must never override
  * someone who has.
+ *
+ * Deliberately a plain anchor doing a full page load, not a <Link>. A <Link>
+ * prefetches its target as soon as it is on screen — before the click, so
+ * before the cookie exists. For a reader whose browser asks for Turkish, that
+ * prefetch of /blog/<slug> comes back as the middleware's 307 to the Turkish
+ * URL, Next caches that, and the click then "navigates" straight back to the
+ * page they were already on. The switch appeared to do nothing at all.
+ *
+ * A full load also gets the document's own lang attribute right, which a client
+ * transition cannot change.
  */
 function LanguageSwitch({ locale }: { locale: Locale }) {
   const pathname = usePathname() || '/blog';
   const target = otherLocale(locale);
   const t = strings(locale);
+  const href = switchPath(pathname, target);
 
   return (
-    <Link
-      href={switchPath(pathname, target)}
+    <a
+      href={href}
       hrefLang={target}
-      onClick={() => {
+      lang={target}
+      onClick={(event) => {
+        // Let modified clicks (new tab, download) behave normally.
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        event.preventDefault();
         document.cookie = `wp-lang=${target}; path=/; max-age=31536000; samesite=lax`;
+        window.location.assign(href);
       }}
       className="rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors"
       style={{ borderColor: 'var(--rule)', color: 'var(--ink-soft)' }}
     >
       {t.switchTo}
-    </Link>
+    </a>
   );
 }
 
