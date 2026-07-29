@@ -93,12 +93,14 @@ const nextConfig = {
         ]
       },
       {
-        // Sitemap caching
+        // The sitemap is built per request and changes several times a day, so
+        // a shared cache holding it for a day — which is what s-maxage=86400
+        // said — would undo the point of building it fresh.
         source: '/sitemap.xml',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, s-maxage=86400, stale-while-revalidate=604800'
+            value: 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600'
           }
         ]
       }

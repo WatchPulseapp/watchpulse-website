@@ -80,18 +80,19 @@ interface DBBlog {
  */
 const MAX_TITLE_URLS = 4000;
 
-// Rebuild every five minutes instead of once at build time.
+// Built per request, not cached.
 //
-// Without a revalidate Next prerenders the sitemap during the build and serves
-// that snapshot forever, so every article published afterwards — ten a day —
-// stays invisible to crawlers until the next deploy.
+// `revalidate` was tried first and does not work on a metadata route here:
+// measured, the file sat unchanged at 284 URLs while the database held 261
+// seeded titles, and a rebuild with no data change took it to 696. The response
+// carried x-nextjs-cache: HIT throughout. revalidatePath does not reach it
+// either — that was measured earlier in the same way — so the full-route cache
+// had no expiry that anything could trigger, and every article and title page
+// added since the last deploy was invisible to crawlers.
 //
-// Five minutes rather than an hour because the publisher cannot shorten it on
-// demand: revalidatePath does not invalidate a metadata route in Next 14.2
-// (measured — the cached copy survived the call and only changed on a rebuild).
-// Time is therefore the only lever, and five minutes caps crawler traffic at
-// twelve queries an hour however often the file is fetched.
-export const revalidate = 300;
+// A sitemap is fetched by crawlers a handful of times a day, so rendering it
+// from the database each time costs almost nothing, and it is always right.
+export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://watchpulseapp.com'

@@ -43,12 +43,14 @@ const staticBlogs = [
   }
 ];
 
-// Rebuild every five minutes rather than once at build time. A route handler
-// with no request-dependent input is prerendered by default, which would freeze
-// the feed at whatever existed on deploy day and never show a new article.
-// revalidatePath cannot shorten this from the publisher — it does not invalidate
-// metadata routes in Next 14.2 — so the interval is the whole mechanism.
-export const revalidate = 300;
+// Built per request. A route handler with no request-dependent input is
+// prerendered by default, which would freeze the feed at whatever existed on
+// deploy day. `revalidate` was the first attempt and does not actually expire
+// here — the sitemap, configured the same way, sat unchanged for hours with
+// x-nextjs-cache: HIT while the database moved on — and revalidatePath does not
+// reach a metadata route either. A feed reader polls a few times a day, so
+// building it from the database each time is the cheap and correct answer.
+export const dynamic = 'force-dynamic';
 
 /**
  * A category like "AI & Technology" put a raw ampersand into the document,
