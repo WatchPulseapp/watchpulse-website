@@ -59,8 +59,25 @@ const nextConfig = {
         ]
       },
       {
-        // Cache static assets aggressively
-        source: '/(.*)\\.(ico|png|jpg|jpeg|gif|svg|webp|avif|woff|woff2)',
+        // Everything under /images is replaced in place, under a name that does
+        // not change — new app screenshots land on top of the old ones, the logo
+        // gets redrawn, the OG image is re-cut. `immutable` promised the exact
+        // opposite: it tells a browser never to ask again for a year, so anyone
+        // who had loaded the old screenshots kept seeing them long after they
+        // were replaced, with no way to tell them otherwise. An hour, then a
+        // revalidation against the ETag, which costs a 304 and nothing else.
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, must-revalidate'
+          }
+        ]
+      },
+      {
+        // Fonts and favicons genuinely are immutable — a new one arrives under a
+        // new name — so these keep the year.
+        source: '/(.*)\\.(ico|woff|woff2)',
         headers: [
           {
             key: 'Cache-Control',
