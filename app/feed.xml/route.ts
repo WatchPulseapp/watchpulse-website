@@ -50,6 +50,25 @@ const staticBlogs = [
 // metadata routes in Next 14.2 — so the interval is the whole mechanism.
 export const revalidate = 300;
 
+/**
+ * A category like "AI & Technology" put a raw ampersand into the document,
+ * which is not well-formed XML — Google Search Console rejected the whole feed
+ * over it and reported the type as unknown.
+ */
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/** CDATA carries any character except its own terminator, so that one is split. */
+function cdata(value: string): string {
+  return `<![CDATA[${value.replace(/]]>/g, ']]]]><![CDATA[>')}]]>`;
+}
+
 export async function GET() {
   try {
     // Fetch dynamic blogs from database
@@ -90,12 +109,12 @@ export async function GET() {
     // Generate RSS XML
     const rssItems = allBlogs.map(blog => `
     <item>
-      <title><![CDATA[${blog.title}]]></title>
+      <title>${cdata(blog.title)}</title>
       <link>${baseUrl}/blog/${blog.slug}</link>
       <guid isPermaLink="true">${baseUrl}/blog/${blog.slug}</guid>
-      <description><![CDATA[${blog.excerpt}]]></description>
+      <description>${cdata(blog.excerpt)}</description>
       <pubDate>${new Date(blog.date).toUTCString()}</pubDate>
-      <category>${blog.category}</category>
+      <category>${escapeXml(blog.category)}</category>
     </item>`).join('');
 
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
