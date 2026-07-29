@@ -362,9 +362,9 @@ TONE: ${angle.tone}
 ${grounding}
 
 STRUCTURE — follow this exactly, it is not a suggestion:
-- 1 opening "paragraph" block of 100-140 words that hooks the reader.
+- 1 opening "paragraph" block of 100-140 words. Open on the specific — a title, a decision, a situation. NOT on the genre in the abstract. "Romance films have a way of capturing our hearts" is exactly the sentence not to write.
 - Then EXACTLY 8 sections. Each section = 1 "heading" block followed by 2 "paragraph" blocks of 100-140 words EACH.
-- Insert 2 "list" blocks (4-5 items each) and 1 "quote" block at natural points between sections.
+- Insert 2 "list" blocks (4-5 items each) and 1 "quote" block at natural points between sections. Every list item must be a full clause that says something — a bare row of film titles is a FAILED response.
 - The "content" array must therefore contain AT LEAST 28 blocks.
 - A response with fewer than 28 blocks, or with paragraphs shorter than 100 words, is a FAILED response.
 
@@ -372,8 +372,16 @@ CONTENT RULES:
 1. Always give a title's release year the first time you name it, e.g. "Inception (2010)".
 2. Give concrete, actionable advice the reader can use tonight.
 3. Headings must be specific and useful on their own, not generic filler — a heading naming an actual title beats "Why This Matters".
-4. Mention WatchPulse's mood-based recommendations naturally 2-3 times, never as a hard sell.
-5. The final section ends with a short call-to-action mentioning the WatchPulse app.
+
+DO NOT MENTION WATCHPULSE, OR ANY APP, ANYWHERE IN THE ARTICLE. Not once. The page already carries an app prompt after the text; a plug inside the writing makes the whole piece read as an advertisement and readers stop trusting it. No "an app can help you find more like this", no closing pitch, no product name.
+
+WRITE LIKE A CRITIC, NOT A LISTING. These are the failure modes that make an article worthless — each is an automatic FAILED response:
+- Every section built to the same shape. If section two reads "X is a Y. What makes X stand out is Z. If you're in the mood for W, X is an excellent choice", section three must not. Vary what each section is FOR: one compares two titles, one warns who will bounce off it, one picks out a single scene, one places the film against its era.
+- Empty praise. "A must-see", "a timeless classic", "stunning cinematography", "a masterpiece", "captivating", "a rollercoaster of emotions" say nothing about any particular film. If you cannot point to what the film DOES, cut the sentence.
+- Padding the reader already knows: "there are so many films out there", "it can be hard to choose", "we've got you covered", "whether you're in the mood for X or Y".
+- Claiming a quality the VERIFIED DATA does not support. You have the synopsis, the cast, the runtime, the rating and the release date. Write from those. You have not seen the film.
+
+Be willing to say a film is slow, or long, or not for everyone. A guide that recommends everything equally is worth nothing to the person reading it at 9pm trying to choose.
 
 AVOID these existing article slugs — pick a genuinely different angle:
 ${existingSlugs.slice(0, 25).join(', ') || '(none yet)'}
@@ -456,6 +464,101 @@ const DOMAIN_TERMS = [
   'film', 'movie', 'series', 'show', 'season', 'episode', 'cinema', 'streaming',
   'director', 'cast', 'genre', 'watch', 'netflix', 'screen',
 ];
+
+/**
+ * Phrases that mean the writer padded instead of saying anything.
+ *
+ * Every one of these was pulled out of a published article. They are cheap to
+ * produce and they are precisely what makes a piece read as machine-written:
+ * praise that would fit any film, and throat-clearing before the writing starts.
+ * Counted rather than banned outright, because "must-see" once in eight sections
+ * is a turn of phrase and five times is a template.
+ */
+const FILLER_PHRASES = [
+  'a must-see',
+  'a must-watch',
+  'must-see for fans',
+  'must-watch for fans',
+  "it's clear that",
+  'gripping storyline',
+  'complex characters and',
+  'timeless classic',
+  'stunning cinematography',
+  'lush cinematography',
+  'a masterpiece',
+  'rollercoaster of emotions',
+  'edge of their seats',
+  'edge of your seat',
+  'we’ve got you covered',
+  "we've got you covered",
+  'with so many great',
+  'there are so many',
+  'it can be hard to choose',
+  'is an excellent choice',
+  'what makes it stand out',
+  'a great choice for',
+  'great choice for viewers',
+  'perfect for viewers who',
+  'the perfect choice',
+  "if you're in the mood for",
+  'if you are in the mood for',
+  'something for everyone',
+  'worth keeping an eye on',
+  'promises to be',
+  'will likely be excited',
+];
+
+/** Distinct filler phrases tolerated across a whole article. */
+const MAX_FILLER = 4;
+
+/**
+ * How often one phrase may repeat before the article is a template rather than
+ * a piece of writing. Distinct-phrase counting misses the real failure: eight
+ * sections that each end "if you're in the mood for X, Y is a great choice"
+ * register as one phrase and read as a form letter.
+ */
+const MAX_PHRASE_REPEATS = 2;
+
+function countOccurrences(haystack: string, needle: string): number {
+  let count = 0;
+  let index = haystack.indexOf(needle);
+  while (index !== -1) {
+    count++;
+    index = haystack.indexOf(needle, index + needle.length);
+  }
+  return count;
+}
+
+/**
+ * The article must not sell the app.
+ *
+ * The prompt used to ask for two or three natural mentions and got one in every
+ * section — eight plugs in a fifteen-hundred-word piece, each in the same shape
+ * ("WatchPulse's recommendations can help you find more like this"). A reader
+ * who meets that stops reading the article as writing. The page already carries
+ * a prompt after the text, which is the honest place for it.
+ */
+const BRAND_TERMS = ['watchpulse', 'watch pulse', 'moodpulse', 'minipulse'];
+
+function checkEditorial(content: BlogContentBlock[]): string | null {
+  const text = articleText(content);
+
+  const brand = BRAND_TERMS.filter((term) => text.includes(term));
+  if (brand.length > 0) return `article sells the app in its own body (${brand.join(', ')})`;
+
+  const counts = FILLER_PHRASES.map((phrase) => ({ phrase, n: countOccurrences(text, phrase) })).filter(
+    (c) => c.n > 0
+  );
+
+  const repeated = counts.find((c) => c.n > MAX_PHRASE_REPEATS);
+  if (repeated) return `"${repeated.phrase}" used ${repeated.n} times — the sections are a template`;
+
+  if (counts.length > MAX_FILLER) {
+    return `${counts.length} filler phrases (max ${MAX_FILLER}): ${counts.slice(0, 5).map((c) => c.phrase).join(', ')}`;
+  }
+
+  return null;
+}
 
 function checkDomain(content: BlogContentBlock[]): string | null {
   const text = articleText(content);
@@ -630,6 +733,9 @@ export async function generateArticle(
         problem =
           validateWriterOutput(parsed) ||
           (parsed ? checkGrounding(parsed.content, brief) : null) ||
+          // Runs with or without a brief: the app plug and the empty praise are
+          // the model's habits, not the fact sheet's.
+          (parsed ? checkEditorial(parsed.content) : null) ||
           (parsed && !brief ? checkDomain(parsed.content) : null);
 
         if (!problem) break;

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getCategories, localePrefix, type Locale } from '@/lib/blog-index';
+import { getCategories, getTags, localePrefix, type Locale } from '@/lib/blog-index';
 import { categoryCopy } from '@/lib/blog-category-copy';
 import { strings } from '@/lib/blog-i18n';
 
@@ -28,10 +28,12 @@ export async function journalIndexMetadata({
   locale,
   page = 1,
   categorySlug,
+  tagSlug,
 }: {
   locale: Locale;
   page?: number;
   categorySlug?: string;
+  tagSlug?: string;
 }): Promise<Metadata> {
   const t = strings(locale);
   const prefix = localePrefix(locale);
@@ -47,6 +49,20 @@ export async function journalIndexMetadata({
     path = `${prefix}/blog/category/${found.slug}`;
     title = copy.title;
     description = copy.description;
+  }
+
+  if (tagSlug) {
+    const found = (await getTags()).find((x) => x.slug === tagSlug);
+    if (!found) return { title: 'Not Found | WatchPulse', robots: { index: false, follow: false } };
+    path = `${prefix}/blog/tag/${found.slug}`;
+    // Categories get hand-written titles because there are seven of them. Tags
+    // are invented per article and there is no writing them all in advance, so
+    // the name carries the title and the standfirst carries the count.
+    title =
+      locale === 'tr'
+        ? `${found.name} — WatchPulse Günlük yazıları`
+        : `${found.name} — Articles from the WatchPulse Journal`;
+    description = t.tagIntro(found.name, found.count);
   }
 
   if (page > 1) {

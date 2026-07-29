@@ -16,6 +16,9 @@ import { blogPostContent, type BlogPostContent } from '@/data/static-blog-conten
 import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { staticBlogPosts } from '@/data/static-blogs';
 import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
+import { tagSlug, isUsefulTag } from '@/lib/blog-locale';
+import { getLinkableTagSlugs } from '@/lib/blog-index';
+import { strings } from '@/lib/blog-i18n';
 
 async function getBlogFromDB(slug: string): Promise<BlogPostContent | null> {
   try {
@@ -172,6 +175,12 @@ export default async function BlogPostPage({ params }: PageProps) {
   // One linker per render: it tracks what it has already linked so each film,
   // series or person is linked on its first mention and not again.
   const linkTitles = createTitleLinker(post.sourceRefs);
+
+  const linkableTags = await getLinkableTagSlugs();
+  const shownTags = post.tags.filter(isUsefulTag).map((tag) => {
+    const slug = tagSlug(tag);
+    return { tag, slug, linkable: linkableTags.has(slug) };
+  });
 
   // Published articles first, curated ones after. Built the other way round it
   // only ever surfaced the hand-written archive, so the generated articles —
@@ -351,17 +360,35 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 {/* Spacing alone separates the tags — the CTA above already draws
                     a rule, and a third one here would stack up. */}
-                {post.tags.length > 0 && (
-                  <div className="mt-10 flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="journal-meta rounded-full border px-3 py-1.5 text-[12px]"
-                        style={{ borderColor: 'var(--rule)' }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                {/* Links, not labels. These were spans: eight per article,
+                    going nowhere, giving a reader following a thread and a
+                    crawler looking for a route nothing to act on. */}
+                {shownTags.length > 0 && (
+                  <div className="mt-10 flex flex-wrap items-center gap-2">
+                    <span className="journal-meta mr-1">{strings('en').taggedWith}</span>
+                    {/* A tag only becomes a link when it has a page. Tags the
+                        archive uses once fall below the floor in getTags, and
+                        linking them anyway sent readers and crawlers to 404s. */}
+                    {shownTags.map(({ tag, slug, linkable }) =>
+                      linkable ? (
+                        <Link
+                          key={tag}
+                          href={`/blog/tag/${slug}`}
+                          className="journal-meta rounded-full border px-3 py-1.5 text-[12px] transition-colors hover:border-current"
+                          style={{ borderColor: 'var(--rule)' }}
+                        >
+                          {tag}
+                        </Link>
+                      ) : (
+                        <span
+                          key={tag}
+                          className="journal-meta rounded-full border px-3 py-1.5 text-[12px]"
+                          style={{ borderColor: 'var(--rule)' }}
+                        >
+                          {tag}
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
 

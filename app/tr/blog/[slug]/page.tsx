@@ -16,6 +16,8 @@ import { type BlogPostContent } from '@/data/static-blog-content';
 import { strings } from '@/lib/blog-i18n';
 import { tmdbSrcSet } from '@/lib/tmdb-image';
 import { createTitleLinker, type TitleRef } from '@/lib/blog-links';
+import { tagSlug, isUsefulTag } from '@/lib/blog-locale';
+import { getLinkableTagSlugs } from '@/lib/blog-index';
 
 /**
  * The Turkish side of an article.
@@ -185,6 +187,12 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   const linkTitles = createTitleLinker(post.sourceRefs, 'tr');
 
+  const linkableTags = await getLinkableTagSlugs();
+  const shownTags = post.tags.filter(isUsefulTag).map((tag) => {
+    const slug = tagSlug(tag);
+    return { tag, slug, linkable: linkableTags.has(slug) };
+  });
+
   // Further reading comes from the Turkish edition only.
   const relatedPosts = await getRelatedTurkish(slug, post.category);
 
@@ -337,17 +345,32 @@ export default async function BlogPostPage({ params }: PageProps) {
 
                 {/* Spacing alone separates the tags — the CTA above already draws
                     a rule, and a third one here would stack up. */}
-                {post.tags.length > 0 && (
-                  <div className="mt-10 flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="journal-meta rounded-full border px-3 py-1.5 text-[12px]"
-                        style={{ borderColor: 'var(--rule)' }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                {/* The tags themselves are stored once, in English, because
+                    they are a query key rather than prose — so both editions
+                    show the same words and each links into its own edition. */}
+                {shownTags.length > 0 && (
+                  <div className="mt-10 flex flex-wrap items-center gap-2">
+                    <span className="journal-meta mr-1">{t.taggedWith}</span>
+                    {shownTags.map(({ tag, slug, linkable }) =>
+                      linkable ? (
+                        <Link
+                          key={tag}
+                          href={`/tr/blog/tag/${slug}`}
+                          className="journal-meta rounded-full border px-3 py-1.5 text-[12px] transition-colors hover:border-current"
+                          style={{ borderColor: 'var(--rule)' }}
+                        >
+                          {tag}
+                        </Link>
+                      ) : (
+                        <span
+                          key={tag}
+                          className="journal-meta rounded-full border px-3 py-1.5 text-[12px]"
+                          style={{ borderColor: 'var(--rule)' }}
+                        >
+                          {tag}
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
 

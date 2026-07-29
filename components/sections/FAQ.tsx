@@ -13,8 +13,27 @@ export default function FAQ() {
   const { t } = useLanguage();
   const [open, setOpen] = useState<number | null>(1);
 
+  // Built from the same strings the section renders, so the markup and the page
+  // cannot drift apart — and so it exists only where the questions do. It used
+  // to be a hard-coded Turkish copy in the site-wide schema component, which
+  // meant every URL on the site claimed an FAQ it did not show, and the English
+  // edition claimed one in the wrong language.
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: QUESTIONS.map((q) => ({
+      '@type': 'Question',
+      name: t(`faq.q${q}`),
+      acceptedAnswer: { '@type': 'Answer', text: t(`faq.a${q}`) },
+    })),
+  };
+
   return (
     <section id="faq" className="relative py-20 md:py-28 scroll-mt-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, '\\u003c') }}
+      />
       <Container className="max-w-3xl">
         <motion.div
           className="text-center mb-12"

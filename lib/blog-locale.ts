@@ -41,3 +41,33 @@ export function categorySlug(category: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+/**
+ * Tags become URL segments the same way categories do.
+ *
+ * Separate function despite the identical body, because the two are not the
+ * same kind of thing: categories are a closed list the generator picks from,
+ * tags are free text it invents per article. If tag slugs ever need their own
+ * handling — transliterating "Bilim Kurgu" say — this is where it goes without
+ * disturbing every category URL on the site.
+ */
+export function tagSlug(tag: string): string {
+  return categorySlug(tag);
+}
+
+/**
+ * Tags the archive should not build a page for.
+ *
+ * The writer tags its own articles and reaches for the brand, which produced a
+ * /blog/tag/watchpulse listing the whole blog under the name of the thing
+ * publishing it. Nobody searches that, and it is a page about us on a blog whose
+ * point is to be about films. The same goes for a tag that is simply the word
+ * "blog".
+ */
+const BRAND_TAG_SLUGS = new Set(['watchpulse', 'watch-pulse', 'watchpulse-app', 'blog', 'app', 'apps']);
+
+/** Whether a tag earns a page and a link. Shared so the two never disagree. */
+export function isUsefulTag(tag: string): boolean {
+  const slug = tagSlug(tag);
+  return slug.length > 1 && !BRAND_TAG_SLUGS.has(slug);
+}

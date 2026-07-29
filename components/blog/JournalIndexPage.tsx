@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { JournalMasthead, JournalFooter } from '@/components/blog/JournalChrome';
 import { JournalThemeProvider } from '@/components/blog/JournalTheme';
 import JournalIndex from '@/components/blog/JournalIndex';
-import { getPostsPage, getCategories, localePrefix, POSTS_PER_PAGE, type Locale } from '@/lib/blog-index';
+import { getPostsPage, getCategories, getTags, localePrefix, POSTS_PER_PAGE, type Locale } from '@/lib/blog-index';
 import { strings } from '@/lib/blog-i18n';
 import { categoryCopy } from '@/lib/blog-category-copy';
 
@@ -17,10 +17,12 @@ export default async function JournalIndexPage({
   locale,
   page = 1,
   categorySlug,
+  tagSlug,
 }: {
   locale: Locale;
   page?: number;
   categorySlug?: string;
+  tagSlug?: string;
 }) {
   const t = strings(locale);
   const prefix = localePrefix(locale);
@@ -29,11 +31,18 @@ export default async function JournalIndexPage({
   const category = categorySlug ? categories.find((c) => c.slug === categorySlug) || null : null;
   if (categorySlug && !category) notFound();
 
+  // Tags are resolved from the archive rather than trusted from the URL, so a
+  // tag that has fallen below the threshold — or never existed — 404s instead
+  // of rendering an empty page that a crawler would index as real.
+  const tag = tagSlug ? (await getTags()).find((x) => x.slug === tagSlug) || null : null;
+  if (tagSlug && !tag) notFound();
+
   const { items, page: current, totalPages, total } = await getPostsPage(
     page,
     undefined,
     category?.name,
-    locale
+    locale,
+    tag?.name
   );
 
   // A page past the end is a URL that never existed.
@@ -42,8 +51,12 @@ export default async function JournalIndexPage({
   const copy = category ? categoryCopy(category.name, locale) : null;
 
   const siteUrl = 'https://watchpulseapp.com';
-  const heading = category ? category.label : t.heading;
-  const path = category ? `${prefix}/blog/category/${category.slug}` : `${prefix}/blog`;
+  const heading = tag ? tag.name : category ? category.label : t.heading;
+  const path = tag
+    ? `${prefix}/blog/tag/${tag.slug}`
+    : category
+      ? `${prefix}/blog/category/${category.slug}`
+      : `${prefix}/blog`;
   const url = `${siteUrl}${path}${current > 1 ? `/page/${current}` : ''}`;
 
   // Tells a crawler what this page is — a list of articles, in order, with the
@@ -54,7 +67,7 @@ export default async function JournalIndexPage({
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: heading,
-    description: copy ? copy.description : t.intro,
+    description: tag ? t.tagIntro(tag.name, tag.count) : copy ? copy.description : t.intro,
     url,
     inLanguage: locale === 'tr' ? 'tr-TR' : 'en-US',
     isPartOf: {
@@ -83,8 +96,15 @@ export default async function JournalIndexPage({
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: t.home, item: siteUrl },
       { '@type': 'ListItem', position: 2, name: t.journal, item: `${siteUrl}${prefix}/blog` },
-      ...(category
-        ? [{ '@type': 'ListItem', position: 3, name: category.label, item: `${siteUrl}${path}` }]
+      ...(category || tag
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: tag ? tag.name : category!.label,
+              item: `${siteUrl}${path}`,
+            },
+          ]
         : []),
     ],
   };
@@ -112,13 +132,13 @@ export default async function JournalIndexPage({
           total={total}
           basePath={path}
           heading={heading}
-          intro={copy ? copy.intro : t.intro}
+          intro={tag ? t.tagIntro(tag.name, tag.count) : copy ? copy.intro : t.intro}
           // Page one only: the standing description belongs on the URL that
           // ranks, and repeating it under every page of the archive would be the
           // same block of text on a dozen near-identical URLs.
           body={current === 1 ? copy?.body : undefined}
           locale={locale}
-          showLead={!category && current === 1}
+          showLead={!category && !tag && current === 1}
         />
         <JournalFooter locale={locale} />
       </div>

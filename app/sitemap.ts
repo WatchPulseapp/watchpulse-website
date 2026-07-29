@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb'
 import Blog from '@/lib/models/Blog'
 import TitleSeed from '@/lib/models/TitleSeed'
 import { blogPostContent } from '@/data/static-blog-content'
-import { getCategories } from '@/lib/blog-index'
+import { getCategories, getTags } from '@/lib/blog-index'
 
 // Static blog post slugs with their creation dates for accurate lastModified
 const staticBlogPosts: Array<{ slug: string; date: string; priority: number }> = [
@@ -231,6 +231,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to build category sitemap entries:', error);
   }
 
+  // Tag pages, both editions. Only tags the archive uses more than once have a
+  // page at all — getTags applies that floor — so nothing here is a URL holding
+  // a single card.
+  let tagUrls: MetadataRoute.Sitemap = [];
+  try {
+    tagUrls = (await getTags()).flatMap((t) => [
+      {
+        url: `${baseUrl}/blog/tag/${t.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.5,
+      },
+      {
+        url: `${baseUrl}/tr/blog/tag/${t.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.5,
+      },
+    ]);
+  } catch (error) {
+    console.error('Failed to build tag sitemap entries:', error);
+  }
+
   // The Turkish edition. Its articles are not translations of the English ones,
   // so they are listed as URLs in their own right rather than as alternates.
   let turkishUrls: MetadataRoute.Sitemap = [];
@@ -287,5 +310,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     ]);
 
-  return [...corePages, ...categoryUrls, ...turkishUrls, ...allBlogUrls, ...titleUrls];
+  return [...corePages, ...categoryUrls, ...tagUrls, ...turkishUrls, ...allBlogUrls, ...titleUrls];
 }

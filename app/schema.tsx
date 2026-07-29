@@ -2,6 +2,19 @@ const SITE_URL = 'https://watchpulseapp.com';
 const APP_STORE_URL = 'https://apps.apple.com/app/id6759836378';
 const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=com.watchpulse.app';
 
+/**
+ * Site-level structured data, rendered from the root layout.
+ *
+ * Everything here describes the site or the app as an entity, which is true on
+ * whatever URL a crawler happens to be looking at. The FAQPage that used to sit
+ * in this list did not: it was emitted on all two hundred and fifty URLs,
+ * including the privacy policy and every film page, while the six questions it
+ * described exist only on the landing page. Google asks that FAQ markup match
+ * content visible on the page claiming it, and the penalty for getting that
+ * wrong falls on the whole domain. It now lives in the FAQ section component,
+ * built from the same strings that section renders, so the two cannot drift and
+ * it can only appear where the questions do.
+ */
 export default function Schema() {
   const organizationSchema = {
     '@context': 'https://schema.org',
@@ -62,62 +75,6 @@ export default function Schema() {
     inLanguage: ['tr-TR', 'en-US'],
   };
 
-  // Mirrors the on-page FAQ (Turkish-first landing content)
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'WatchPulse ücretsiz mi?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Evet. İndirmek ve kullanmak tamamen ücretsiz: takip, öneriler, sosyal özellikler, 3 koleksiyon ve 2 tema ücretsiz sürümde. Premium; sınırsız koleksiyon, 20 ek tema, dizi takip ekranı ve reklamsız deneyim ekler.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Hangi cihazlarda çalışıyor?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: "Android telefonlarda (Google Play) ve iPhone'da (App Store) çalışır. Uygulama Türkçe ve İngilizce'dir.",
-        },
-      },
-      {
-        '@type': 'Question',
-        name: "Türkiye'deki platformları destekliyor mu?",
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: "Evet. Uygulama bulunduğunuz ülkeyi algılar ve o ülkenin kataloğunu yükler. Türkiye'de Netflix, Prime Video, Disney+ gibi küresel servislerin yanında Exxen, Tabii, TOD, puhutv, MUBI gibi yerel platformlar dahil 20 servisi tarar.",
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Öneriler nasıl çalışıyor?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'İzlediklerin, puanladıkların ve seçtiğin ruh hali zevk profilini oluşturur; yapay zeka önerilerini bu profile göre yapar. Beğen/beğenme geri bildirimlerinle zamanla daha isabetli olur.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Sosyal özellikler neler?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Film zevkine göre eşleşme, gerçek zamanlı sohbet (sesli mesaj ve GIF destekli), gönderiler, anketler ve takip sistemi. Hesabını gizli yapabilir, istediğin kullanıcıyı engelleyebilirsin.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Verilerim güvende mi?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Verilerin şifreli bağlantıyla taşınır ve üçüncü taraflara satılmaz. Hesabını ve tüm verilerini istediğin an uygulamadan ya da web sitesinden kalıcı olarak silebilirsin.',
-        },
-      },
-    ],
-  };
-
   const blogSchema = {
     '@context': 'https://schema.org',
     '@type': 'Blog',
@@ -135,7 +92,7 @@ export default function Schema() {
     },
   };
 
-  const schemas = [organizationSchema, websiteSchema, mobileAppSchema, faqSchema, blogSchema];
+  const schemas = [organizationSchema, websiteSchema, mobileAppSchema, blogSchema];
 
   return (
     <>

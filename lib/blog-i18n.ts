@@ -62,6 +62,10 @@ export interface JournalStrings {
   categoryLabel: (name: string) => string;
   /** Heading over the standing description at the foot of a category page. */
   aboutCategory: (label: string) => string;
+  /** Standfirst on a tag page, where there is no hand-written copy to use. */
+  tagIntro: (tag: string, count: number) => string;
+  /** Label over the tag list at the foot of an article. */
+  taggedWith: string;
   /** The generator writes "5 min read" whatever the language it wrote in. */
   readTime: (value: string) => string;
 }
@@ -124,6 +128,9 @@ const en: JournalStrings = {
   nextPage: 'Next page',
   categoryLabel: (name) => name,
   aboutCategory: (label) => `About ${label}`,
+  tagIntro: (tag, count) =>
+    `${count} article${count === 1 ? '' : 's'} from the Journal on ${tag}.`,
+  taggedWith: 'Filed under',
   readTime: (value) => value,
 };
 
@@ -175,6 +182,8 @@ const tr: JournalStrings = {
   nextPage: 'Sonraki sayfa',
   categoryLabel: (name) => TR_CATEGORY_LABELS[name] || name,
   aboutCategory: (label) => `${label} hakkında`,
+  tagIntro: (tag, count) => `Günlük'te ${tag} üzerine ${count} yazı.`,
+  taggedWith: 'Konular',
   readTime: (value) => {
     const minutes = value.match(/\d+/);
     return minutes ? `${minutes[0]} dk okuma` : value;

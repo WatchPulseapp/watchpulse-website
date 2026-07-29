@@ -1,10 +1,10 @@
 import connectDB from '@/lib/mongodb';
 import Blog from '@/lib/models/Blog';
 import { staticBlogPosts } from '@/data/static-blogs';
-import { localePrefix, categorySlug, type Locale } from '@/lib/blog-locale';
+import { localePrefix, categorySlug, tagSlug, isUsefulTag, type Locale } from '@/lib/blog-locale';
 import { strings } from '@/lib/blog-i18n';
 
-export { localePrefix, categorySlug };
+export { localePrefix, categorySlug, tagSlug, isUsefulTag };
 export type { Locale };
 
 /**
@@ -74,13 +74,18 @@ export async function getPostsPage(
   page: number,
   perPage = POSTS_PER_PAGE,
   category?: string,
-  locale: Locale = 'en'
+  locale: Locale = 'en',
+  tag?: string
 ): Promise<{ items: BlogListItem[]; page: number; totalPages: number; total: number }> {
   const query: Record<string, unknown> = { isPublished: true };
   if (category) query.category = category;
+  // Mongo matches a scalar against an array field by membership, so this is the
+  // whole of "articles carrying this tag".
+  if (tag) query.tags = tag;
 
   const base = staticFor(locale);
-  const staticMatching = category ? base.filter((p) => p.category === category) : base;
+  let staticMatching = category ? base.filter((p) => p.category === category) : base;
+  if (tag) staticMatching = staticMatching.filter((p) => (p.tags || []).includes(tag));
 
   let dbCount = 0;
   try {
@@ -172,6 +177,75 @@ export async function getCategories(locale: Locale = 'en'): Promise<CategoryInfo
   return [...counts.entries()]
     .map(([name, count]) => ({ name, label: t.categoryLabel(name), slug: categorySlug(name), count }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, locale));
+}
+
+export interface TagInfo {
+  /** The tag exactly as it is stored, which is what the query needs. */
+  name: string;
+  slug: string;
+  count: number;
+}
+
+/**
+ * Tags worth a page of their own.
+ *
+ * Tags are free text the writer invents per article, so most appear once and a
+ * page for each would be a few hundred URLs holding one card apiece — the
+ * definition of thin. Two articles is the floor: below that the tag is a label,
+ * not a subject, and the article is already reachable from its category.
+ *
+ * Slug collisions ("Sci-Fi" and "Sci Fi") resolve to whichever spelling the
+ * archive uses more, so the page keeps the heading a reader would expect.
+ */
+export const MIN_POSTS_PER_TAG = 2;
+
+export async function getTags(): Promise<TagInfo[]> {
+  const bySlug = new Map<string, { name: string; count: number }>();
+
+  try {
+    await connectDB();
+    const grouped = await Blog.aggregate([
+      { $match: { isPublished: true } },
+      { $unwind: '$tags' },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    for (const g of grouped as Array<{ _id: string; count: number }>) {
+      const name = (g._id || '').trim();
+      if (!name || !isUsefulTag(name)) continue;
+      const slug = tagSlug(name);
+
+      const existing = bySlug.get(slug);
+      if (existing) {
+        existing.count += g.count;
+        // The aggregation is sorted by count, so the first spelling to claim a
+        // slug is already the most common one.
+      } else {
+        bySlug.set(slug, { name, count: g.count });
+      }
+    }
+  } catch (error) {
+    console.error('Tag aggregation failed:', error);
+  }
+
+  return [...bySlug.entries()]
+    .filter(([, t]) => t.count >= MIN_POSTS_PER_TAG)
+    .map(([slug, t]) => ({ name: t.name, slug, count: t.count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+/**
+ * The slugs that actually have a tag page.
+ *
+ * An article carries tags the archive uses once, and those fall below the floor
+ * in getTags — so linking every tag on an article produced links to pages that
+ * 404. The renderer asks for this set and links only what is in it, leaving the
+ * rest as plain labels. Two calls to the same aggregation per article render is
+ * cheaper than shipping broken links for a crawler to follow.
+ */
+export async function getLinkableTagSlugs(): Promise<Set<string>> {
+  return new Set((await getTags()).map((t) => t.slug));
 }
 
 /** Full archive. Only for surfaces that genuinely need every post, like the sitemap. */
