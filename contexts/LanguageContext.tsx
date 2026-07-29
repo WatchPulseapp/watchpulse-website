@@ -147,19 +147,19 @@ const translations = {
       desc: 'WatchPulse aynı zamanda film severlerin sosyal ağı: zevkine göre eşleş, gerçek zamanlı sohbet et, düşünceni paylaş.',
       match: {
         title: 'Eşleşme',
-        desc: '15 boyutlu uyum puanıyla film zevki sana benzeyen insanlarla tanış.',
+        desc: 'Uyum, ortak filmlerden tür ve yönetmen tercihine, izleme alışkanlığından zevkinin zaman içinde nasıl değiştiğine kadar 15 ayrı boyutta hesaplanır — ve kiminle neden eşleştiğin tek tek gösterilir.',
       },
       chat: {
         title: 'Gerçek Zamanlı Sohbet',
-        desc: 'Anlık mesajlaşma; sesli mesaj, GIF ve film önerisi paylaşımıyla.',
+        desc: 'Eşleştikten sonra anlık mesajlaşma: metin, görsel, GIF ve sesli mesaj.',
       },
       posts: {
         title: 'Gönderiler & Anketler',
-        desc: 'Tartışma, inceleme, anket… 7 gönderi türü, spoiler etiketi korumasıyla.',
+        desc: 'Her gönderi bir yapıma bağlıdır. Beş tür var: tartışma, inceleme, öneri, soru ve süreli anket. Spoiler etiketlediğin içerik, karşı taraf dokunana kadar kapalı kalır.',
       },
       follow: {
         title: 'Takip Sistemi',
-        desc: 'Takip et, istekleri onayla; gizli hesap ve engelleme kontrolü sende.',
+        desc: 'Takip et, istekleri onayla; hesabını gizliye alabilir, istediğini engelleyebilirsin.',
       },
       chatDemo: {
         name: 'Elif',
@@ -340,19 +340,19 @@ const translations = {
       desc: 'WatchPulse is also a social network for film lovers: match by taste, chat in real time, share what you think.',
       match: {
         title: 'Matching',
-        desc: 'Meet people whose taste matches yours, scored across 15 dimensions.',
+        desc: 'Compatibility is worked out across fifteen separate dimensions — titles you both love, genres, directors, what you actually finish, even how your taste has shifted over time — and you are shown which of them you have in common.',
       },
       chat: {
         title: 'Real-Time Chat',
-        desc: 'Instant messaging with voice messages, GIFs and movie shares.',
+        desc: 'Once you match, messaging in real time: text, images, GIFs and voice notes.',
       },
       posts: {
         title: 'Posts & Polls',
-        desc: 'Discussions, reviews, polls… 7 post types, protected by spoiler tags.',
+        desc: 'Every post is attached to a title. Five kinds: discussion, review, recommendation, question and a poll that runs for a set time. Anything you tag as a spoiler stays covered until the reader taps it.',
       },
       follow: {
         title: 'Follow System',
-        desc: 'Follow, approve requests; private accounts and blocking are in your control.',
+        desc: 'Follow, approve requests, go private, block anyone. All of it is yours to set.',
       },
       chatDemo: {
         name: 'Elif',

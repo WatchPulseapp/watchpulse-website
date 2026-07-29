@@ -16,6 +16,9 @@ interface HeaderProps {
 
 const NAV_LINKS = [
   { key: 'nav.features', href: '/#features' },
+  // The string and the section existed; the link between them did not, so the
+  // social band was unreachable from the nav.
+  { key: 'nav.social', href: '/#social' },
   { key: 'nav.howItWorks', href: '/#how-it-works' },
   { key: 'nav.faq', href: '/#faq' },
   { key: 'nav.blog', href: '/blog' },
