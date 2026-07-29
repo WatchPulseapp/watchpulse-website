@@ -8,11 +8,9 @@ import type { Locale } from '@/lib/blog-locale';
  * the app. Nothing is invented: a reader who installs on the strength of a
  * promise the app does not keep is worse than a reader who never installs.
  *
- * The Turkish set is not a translation of the English one. It carries one extra
- * variant — the where-to-watch finder — because that feature scans the services
- * available in Turkey, so it is the strongest hook for a Turkish reader and a
- * misleading one for everybody else. The English set leaves it out for exactly
- * the same reason.
+ * The Turkish set is not a translation of the English one — each is written for
+ * its own reader, and the slug picks a different feature on each side so someone
+ * switching language meets a second angle rather than the same sentence twice.
  */
 
 export interface CtaVariant {
@@ -36,9 +34,7 @@ type VariantKey =
   | 'company'
   | 'platforms';
 
-// 'platforms' is absent by type, not by discipline: the English edition has no
-// entry for it, so no rotation or category mapping can ever reach it.
-const EN: Record<Exclude<VariantKey, 'platforms'>, CtaVariant> = {
+const EN: Record<VariantKey, CtaVariant> = {
   mood: {
     eyebrow: 'MoodPulse',
     headline: 'Pick a feeling, not a title',
@@ -93,6 +89,11 @@ const EN: Record<Exclude<VariantKey, 'platforms'>, CtaVariant> = {
     eyebrow: 'Watching With',
     headline: 'The right film depends on who is on the sofa',
     body: 'Tell WatchPulse whether it is a partner, family, friends or just you, and the recommendations change accordingly.',
+  },
+  platforms: {
+    eyebrow: 'Where to Watch',
+    headline: 'Stop hunting for which service has it',
+    body: 'WatchPulse works out where you are and checks the services that actually stream there, then opens the title straight in the right app.',
   },
 };
 
@@ -155,25 +156,11 @@ const TR: Record<VariantKey, CtaVariant> = {
   platforms: {
     eyebrow: 'Nerede Ne Var',
     headline: 'Hangi platformda olduğunu aramayı bırakın',
-    body: 'WatchPulse Türkiye’deki servisleri tarar — Netflix’ten Tabii’ye, MUBI’den TOD’a on dört platform — ve tek dokunuşla sizi doğrudan izleme uygulamasına götürür.',
+    body: 'WatchPulse bulunduğunuz ülkeyi tespit eder, orada gerçekten yayında olan servisleri tarar ve yapımı tek dokunuşla doğrudan ilgili uygulamada açar.',
   },
 };
 
 const DICTIONARIES: Record<Locale, Partial<Record<VariantKey, CtaVariant>>> = { en: EN, tr: TR };
-
-/**
- * Turkish readers of a streaming article get the where-to-watch finder rather
- * than the recommendation feed. It answers the exact question that article
- * leaves them with — which service actually has it — and it is the one feature
- * the English edition cannot honestly offer, since it covers Turkey.
- *
- * Without this the variant would be unreachable: every category the generator
- * produces already maps to something below, so the rotation that includes
- * 'platforms' only runs for categories that never occur.
- */
-const BY_CATEGORY_TR: Record<string, VariantKey[]> = {
-  Streaming: ['platforms'],
-};
 
 /**
  * Categories map to the features a reader of that category would actually use.
@@ -197,7 +184,9 @@ const BY_CATEGORY: Record<string, VariantKey[]> = {
   'Date Night': ['company', 'mood'],
   'Family Time': ['company', 'collections'],
   'Entertainment': ['taste', 'actors', 'dailyPick'],
-  'Streaming': ['taste', 'collections'],
+  // A streaming article leaves the reader holding one question — which service
+  // actually has this where I live — and the finder is the answer to it.
+  'Streaming': ['platforms', 'taste', 'collections'],
   'AI & Technology': ['taste', 'mood'],
   'Technology': ['taste', 'social'],
 };
@@ -215,7 +204,7 @@ function hashSlug(slug: string): number {
  * thing the app does, and it is the one claim the English edition cannot make.
  */
 const ROTATION: Record<Locale, VariantKey[]> = {
-  en: ['mood', 'taste', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],
+  en: ['mood', 'taste', 'platforms', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],
   tr: ['platforms', 'mood', 'taste', 'tracking', 'collections', 'social', 'dailyPick', 'duels'],
 };
 
@@ -240,7 +229,7 @@ export function pickCtaVariant(category: string, slug: string, locale: Locale = 
   // the same sentence twice.
   const hash = hashSlug(slug) + (locale === 'tr' ? 1 : 0);
 
-  const forCategory = (locale === 'tr' ? BY_CATEGORY_TR[category] : undefined) || BY_CATEGORY[category];
+  const forCategory = BY_CATEGORY[category];
   if (forCategory?.length) return variants[forCategory[hash % forCategory.length]] || fallback;
 
   const rotation = ROTATION[locale] || ROTATION.en;
