@@ -36,13 +36,22 @@ export const PLATFORM_NAMES = [
 ];
 
 // Landing showcase sections: translation key + screenshot file.
-// Screenshot filenames don't always match their content — verified visually:
-//   tracking.jpg  = "Sana Özel" AI feed, personalized.jpg = "Nerede Ne Var" hub,
-//   duel.jpg      = "Takip" (upcoming episodes) screen.
+//
+// The file names describe what is in the picture. They used not to — the "Sana
+// Özel" screen was in tracking.jpg, the where-to-watch hub was in
+// personalized.jpg and the tracking screen was in duel.jpg — which meant
+// replacing one screenshot required checking every file to find out which was
+// which. Each name is verified against the image it points at.
+//
+// Both language folders carry the same six names, because the path is built as
+// /images/screenshots/{language}/{file}: a name that exists in one and not the
+// other is a broken image in that edition.
 export const SHOWCASES = [
   { key: 'mood', screenshot: 'moodpulse.jpg', reversed: false },
-  { key: 'ai', screenshot: 'tracking.jpg', reversed: true },
-  { key: 'platforms', screenshot: 'personalized.jpg', reversed: false },
-  { key: 'tracking', screenshot: 'duel.jpg', reversed: true },
+  { key: 'ai', screenshot: 'for-you.jpg', reversed: true },
+  { key: 'platforms', screenshot: 'where-to-watch.jpg', reversed: false },
+  { key: 'tracking', screenshot: 'episode-tracking.jpg', reversed: true },
   { key: 'collections', screenshot: 'collections.jpg', reversed: false },
 ] as const;
+
+// The hero's phone shows home.jpg from the same folders (see HeroSection).
