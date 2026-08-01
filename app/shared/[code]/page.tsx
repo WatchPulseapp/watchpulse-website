@@ -156,18 +156,30 @@ export default function SharedCollectionPage() {
                             </button>
                         ) : (
                             <>
+                                {/* Accounts live in the app; the site has no
+                                    login page. This button used to point at
+                                    /login, which is a 404 — served to exactly
+                                    the audience this page exists for, someone
+                                    opening a friend's link for the first time.
+                                    The action that actually works is offered
+                                    instead, and the collection below stays
+                                    readable without any of it. */}
                                 <div className="flex flex-col sm:flex-row gap-3">
-                                    <Link href={`/login?redirect=/shared/${code}`} className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 bg-gradient-primary">
-                                        {language === 'tr' ? 'Giriş Yap ve İçe Aktar' : 'Login & Import'}
-                                    </Link>
+                                    <StoreLink store="play" source="shared-collection" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 bg-gradient-primary">
+                                        <Download className="w-4 h-4" />
+                                        Google Play
+                                    </StoreLink>
+                                    <StoreLink store="appstore" source="shared-collection" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 bg-white/10 border border-white/20">
+                                        <Download className="w-4 h-4" />
+                                        App Store
+                                    </StoreLink>
                                 </div>
                                 <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-text-muted text-xs">
                                     <Smartphone className="w-4 h-4 text-brand-primary shrink-0" />
                                     <span>
-                                        {language === 'tr' ? 'Daha iyi deneyim için ' : 'For a better experience, '}
-                                        <StoreLink store="play" source="shared-collection" className="text-brand-primary hover:underline">
-                                            {language === 'tr' ? 'uygulamayı indir' : 'download the app'}
-                                        </StoreLink>
+                                        {language === 'tr'
+                                            ? 'Koleksiyonu kendi kütüphanene eklemek için uygulamada aç.'
+                                            : 'Open it in the app to add this collection to your own library.'}
                                     </span>
                                 </div>
                             </>

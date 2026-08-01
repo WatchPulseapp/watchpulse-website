@@ -1,6 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // The shared-collection page is the one place that hands a remote URL to
+    // next/image, and without a matching pattern the optimizer refuses it:
+    // /_next/image?url=https%3A%2F%2Fimage.tmdb.org%2F... answered 400 with
+    // '"url" parameter is not allowed', so every poster on a shared link was a
+    // broken tile. The check is dev-only in the client loader, which is why it
+    // was invisible until someone opened a real shared link.
+    //
+    // Narrow on purpose: this host, this path prefix. `domains` would allow any
+    // path on the host, and anything wider would make the optimizer a general
+    // image proxy for the internet.
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        pathname: '/t/p/**',
+      },
+    ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
