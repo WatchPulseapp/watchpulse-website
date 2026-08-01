@@ -26,8 +26,8 @@ export default function DownloadSection() {
             className="font-display text-5xl sm:text-6xl md:text-7xl text-gradient-pulse mb-5"
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.8, ease: easeOut }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.55, ease: easeOut }}
           >
             {t('download.title')}
           </motion.h2>
@@ -36,8 +36,8 @@ export default function DownloadSection() {
             className="text-lg md:text-xl text-text-secondary max-w-xl mx-auto mb-10"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: easeOut }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: easeOut }}
           >
             {t('download.subtitle')}
           </motion.p>
@@ -45,8 +45,8 @@ export default function DownloadSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: easeOut }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: easeOut }}
           >
             <StoreButtons size="lg" className="justify-center" source="home-download" />
           </motion.div>

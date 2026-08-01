@@ -25,8 +25,8 @@ export default function FeatureGrid() {
           className="text-center mb-14"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: easeOut }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: easeOut }}
         >
           <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-text-primary mb-3">{t('grid.title')}</h2>
           <p className="text-text-secondary text-lg">{t('grid.subtitle')}</p>
@@ -39,8 +39,8 @@ export default function FeatureGrid() {
               className="glass-card p-6 transition-colors duration-300 hover:border-brand-primary/30"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: easeOut }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.45, delay: (i % 3) * 0.05, ease: easeOut }}
             >
               <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-brand-primary/15">
                 <Icon className="w-5 h-5 text-brand-accent" aria-hidden="true" />

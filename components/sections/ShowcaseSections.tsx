@@ -45,8 +45,8 @@ export default function ShowcaseSections() {
                 className="flex-1 max-w-xl text-center lg:text-left"
                 initial={{ opacity: 0, x: item.reversed ? 40 : -40 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.35 }}
-                transition={{ duration: 0.8, ease: easeOut }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.55, ease: easeOut }}
               >
                 <p className="eyebrow mb-3 justify-center lg:justify-start">{t(`showcase.${item.key}.eyebrow`)}</p>
                 <h2 className="font-display text-4xl sm:text-5xl md:text-6xl leading-[0.95] text-text-primary mb-5">
@@ -86,8 +86,8 @@ export default function ShowcaseSections() {
                 className="flex-1 flex justify-center"
                 initial={{ opacity: 0, y: 48 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.9, ease: easeOut }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.6, ease: easeOut }}
               >
                 <div className="phone-mockup w-[240px] sm:w-[270px] md:w-[290px]">
                   <div className="phone-screen relative">
@@ -97,7 +97,7 @@ export default function ShowcaseSections() {
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 240px, 290px"
-                      quality={78}
+                      quality={85}
                       loading="lazy"
                     />
                   </div>

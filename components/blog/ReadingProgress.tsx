@@ -44,9 +44,12 @@ export default function ReadingProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
     >
+      {/* Scaled, not resized. Animating width lays the bar out again on every
+          frame of every scroll; a transform is handed to the compositor and
+          never touches layout. Same hairline, none of the main-thread work. */}
       <div
-        className="h-full origin-left transition-[width] duration-75 ease-out"
-        style={{ width: `${progress}%`, backgroundColor: 'var(--accent)' }}
+        className="h-full w-full origin-left transition-transform duration-75 ease-out"
+        style={{ transform: `scaleX(${progress / 100})`, backgroundColor: 'var(--accent)' }}
       />
     </div>
   );

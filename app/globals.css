@@ -26,9 +26,28 @@
 }
 
 @layer components {
-  /* Glass morphism card */
+  /* Glass morphism card.
+     The blur is a desktop luxury. A backdrop-filter is re-computed every frame
+     the element moves, and the landing page carries eleven of these — five
+     feature cards and six FAQ rows — all of which scroll. On a phone that is
+     eleven backdrop snapshots per frame for an effect nobody can see: the
+     ground behind them is #0B0D12, so at 60% the card reads as flat anyway.
+     Below lg the card is simply more opaque and costs nothing.
+
+     Written out rather than @applied: a responsive variant inside @apply adds
+     the blur but loses the background-color override, which left the desktop
+     card at the phone's opacity. */
   .glass-card {
-    @apply bg-background-card/60 backdrop-blur-xl border border-white/5 rounded-2xl;
+    @apply border border-white/5 rounded-2xl;
+    background-color: rgb(26 31 42 / 0.8);
+  }
+
+  @media (min-width: 1024px) {
+    .glass-card {
+      background-color: rgb(26 31 42 / 0.6);
+      -webkit-backdrop-filter: blur(24px);
+      backdrop-filter: blur(24px);
+    }
   }
 
   /* Premium gradient border */
@@ -87,7 +106,7 @@
 
   /* App-style mood chip (pill with emoji, straight from the app UI) */
   .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-background-card/80 px-4 py-2 text-sm font-medium text-text-primary backdrop-blur-md;
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-background-card/80 px-4 py-2 text-sm font-medium text-text-primary lg:backdrop-blur-md;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
   }
   .chip-gold {
@@ -117,6 +136,10 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Negative, so a staggered entrance is already finished rather than held on
+       its opening frame — with animation-fill-mode: both, a delay that survives
+       here would keep the hero invisible for its own stagger. */
+    animation-delay: -1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
@@ -140,12 +163,36 @@
   background: #A8B5DC;
 }
 
-img {
-  content-visibility: auto;
+/* Images stay in the page: no drag out, no long-press save sheet on iOS, and no
+   blue selection halo when a thumb swipes across a card. ImageGuard covers what
+   this cannot — the desktop right-click, and Firefox, which has no user-drag.
+
+   No content-visibility here. It was set on every image, including the hero
+   screenshot, which is the largest contentful paint on a phone — handing the
+   one image the score is measured on to a render-skipping heuristic. Every
+   image below the fold already carries loading="lazy", which does the same job
+   earlier and without the hitch when a skipped image is finally rendered. */
+img,
+picture {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Nothing may scroll the page sideways.
+   Section entrances slide in from x: ±40 and the background glows are 400-500px
+   circles, so on a 320-390px phone there is always something a little outside
+   the page box. `clip` rather than `hidden`: hidden on the root makes the
+   viewport a scroll container, which breaks position: sticky and the smooth
+   anchor scrolling; clip just refuses to scroll. */
+html,
+body {
+  overflow-x: clip;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -370,6 +417,22 @@ a:hover .journal-meta {
   letter-spacing: -0.018em;
   color: var(--ink-strong);
   text-wrap: balance;
+}
+
+/* The masthead is stuck to the top of a long article, so its backdrop-filter
+   would be recomputed for the whole length of every read. Below lg the paper is
+   opaque instead — at 96% the text passing underneath is not visible through it,
+   which is all the blur was hiding. */
+.journal-masthead {
+  background-color: color-mix(in srgb, var(--paper) 96%, transparent);
+}
+
+@media (min-width: 1024px) {
+  .journal-masthead {
+    background-color: color-mix(in srgb, var(--paper) 82%, transparent);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+  }
 }
 
 .journal-card {

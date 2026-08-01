@@ -20,6 +20,12 @@ const newsreader = Newsreader({
   // explicitly. Without it the swap from Georgia shifts the text noticeably.
   fallback: ["Georgia", "Times New Roman", "serif"],
   adjustFontFallback: false,
+  // Declared at the root so every Journal surface can reach it, but only the
+  // Journal actually sets text in it. Preloading is per-page and this variable
+  // lives on <body>, so the landing page was pulling four Newsreader files —
+  // roman and italic, latin and latin-ext — that nothing on it renders. Without
+  // the preload the browser fetches them when a blog page first asks.
+  preload: false,
 });
 
 const bebasNeue = Bebas_Neue({
@@ -128,6 +134,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import ImageGuard from "@/components/ui/ImageGuard";
 import VercelAnalytics from "@/components/analytics/VercelAnalytics";
 import Schema from './schema';
 import GoogleAnalytics from './GoogleAnalytics';
@@ -140,10 +147,16 @@ export default function RootLayout({
   return (
     <html lang="tr" className="scroll-smooth">
       <head>
+        {/* The social band's poster row is the first third-party fetch on the
+            page and it now sits directly under the fold, so the TLS handshake
+            is opened while the hero is still painting rather than after. */}
+        <link rel="preconnect" href="https://image.tmdb.org" />
+        <link rel="dns-prefetch" href="https://image.tmdb.org" />
         <Schema />
       </head>
       <body className={`${inter.variable} ${bebasNeue.variable} ${newsreader.variable} font-sans antialiased`}>
         <GoogleAnalytics />
+        <ImageGuard />
         <LanguageProvider>
           {children}
         </LanguageProvider>

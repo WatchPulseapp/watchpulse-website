@@ -113,22 +113,22 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
               </h3>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/#features" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/#features" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.features')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#how-it-works" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/#how-it-works" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.howItWorks')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#faq" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/#faq" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.faqLink')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/blog" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.blog')}
                   </Link>
                 </li>
@@ -142,22 +142,22 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
               </h3>
               <ul className="space-y-3 text-sm mb-8">
                 <li>
-                  <Link href="/privacy" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/privacy" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.privacy')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/terms" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.terms')}
                   </Link>
                 </li>
                 <li>
-                  <Link href="/delete-account" className="text-text-secondary hover:text-text-primary transition-colors">
+                  <Link href="/delete-account" className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.deleteAccount')}
                   </Link>
                 </li>
                 <li>
-                  <a href={`mailto:${SOCIAL_LINKS.email}`} className="text-text-secondary hover:text-text-primary transition-colors">
+                  <a href={`mailto:${SOCIAL_LINKS.email}`} className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors">
                     {t('footer.contact')}
                   </a>
                 </li>
@@ -173,7 +173,7 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => trackStoreClick('play', 'footer')}
-                    className="text-text-secondary hover:text-text-primary transition-colors"
+                    className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors"
                   >
                     Google Play
                   </a>
@@ -184,7 +184,7 @@ export default function Footer({ forceEnglish = false }: FooterProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => trackStoreClick('appstore', 'footer')}
-                    className="text-text-secondary hover:text-text-primary transition-colors"
+                    className="inline-block py-1 text-text-secondary hover:text-text-primary transition-colors"
                   >
                     App Store
                   </a>

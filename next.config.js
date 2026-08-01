@@ -34,7 +34,7 @@ const nextConfig = {
   // Faster development
   reactStrictMode: true,
 
-  // SEO & Performance Headers
+  // SEO, performance and security headers
   async headers() {
     return [
       {
@@ -53,8 +53,80 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin'
           },
           {
+            // Everything the site does not use is turned off, not just the
+            // three that were listed. A feature nobody calls costs nothing to
+            // deny and closes the door on anything injected later.
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), midi=(), serial=(), bluetooth=(), display-capture=(), browsing-topics=()'
+          },
+          {
+            // No one frames this site. Both headers, because frame-ancestors is
+            // the one modern browsers honour and X-Frame-Options is what an old
+            // one understands — clickjacking a "Delete account" or a store link
+            // needs nothing more than an invisible iframe.
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            // A tab opened from here cannot reach back through window.opener.
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin'
+          },
+          // Strict-Transport-Security is deliberately NOT here. nginx already
+          // sends it with includeSubDomains and preload, which is the stronger
+          // form, and it belongs at the edge: it should hold for the two paths
+          // nginx serves without asking this app (app-ads.txt and the ACME
+          // challenge) and for the 502 page shown when this app is down. Two
+          // HSTS headers would also mean the browser silently takes the first
+          // and discards the other, which is how a weaker one wins by accident.
+          {
+            /**
+             * Content policy.
+             *
+             * 'unsafe-inline' is in script-src because it has to be: the site
+             * is statically generated, Next's bootstrap and the JSON-LD blocks
+             * are inline, and a nonce cannot be minted for a page that was
+             * rendered at build time. What the policy does buy is the part that
+             * actually stops an injected payload from being useful — script,
+             * frame and connect are pinned to a named list of hosts, so an
+             * injection cannot pull code from an attacker's domain, post the
+             * page's data anywhere, or reframe the site.
+             *
+             * The list is what the site genuinely talks to: TMDB for artwork,
+             * YouTube for trailer stills and the no-cookie embed, Google and
+             * Vercel for analytics, and watchpulse.info, which is the app's own
+             * API on its own host.
+             *
+             * This replaces the policy the nginx vhost used to send. Two CSP
+             * headers are not "the stricter one wins" — a browser enforces both
+             * and a request has to satisfy each, so the pair silently became an
+             * intersection nobody had written down or could reason about. The
+             * hosts nginx allowed and this does not were all dead entries:
+             * Google Fonts, which next/font self-hosts, and youtube.com, which
+             * only the no-cookie domain is ever embedded from.
+             *
+             * 'unsafe-eval', which the nginx policy carried, is gone. Nothing in
+             * a production Next build calls eval, and it was the one directive
+             * that made the rest of the script policy negotiable.
+             */
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "base-uri 'self'",
+              "object-src 'none'",
+              "frame-ancestors 'none'",
+              "form-action 'self'",
+              "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://image.tmdb.org https://i.ytimg.com https://www.googletagmanager.com https://*.google-analytics.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://watchpulse.info https://image.tmdb.org https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+              "frame-src https://www.youtube-nocookie.com",
+              "media-src 'self'",
+              "manifest-src 'self'",
+              "worker-src 'self' blob:",
+              'upgrade-insecure-requests',
+            ].join('; ')
           }
         ]
       },

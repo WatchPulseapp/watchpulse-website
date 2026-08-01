@@ -10,6 +10,59 @@ const MAX_DAILY_REQUESTS = parseInt(process.env.MAX_REQUESTS_PER_IP_PER_DAY || '
 // Rate limiting storage (in-memory for simplicity)
 const rateLimits = new Map<string, { count: number; lastRequest: Date; dailyCount: number; lastDailyReset: string }>();
 
+/**
+ * A ceiling on the table itself.
+ *
+ * The limiter keys on the caller's address, so the table grows by one entry per
+ * distinct address and nothing ever removed one. That is a slow leak on a real
+ * audience and an immediate one under a flood — a script sending a different
+ * address each time added a row per request, for as long as the process lived.
+ * Stale rows go first; if they are all fresh, the oldest go.
+ */
+const MAX_TRACKED_IPS = 10_000;
+
+function evictIfCrowded(now: Date): void {
+  if (rateLimits.size < MAX_TRACKED_IPS) return;
+
+  const dayAgo = now.getTime() - 24 * 60 * 60 * 1000;
+  for (const [ip, entry] of rateLimits) {
+    if (entry.lastRequest.getTime() < dayAgo) rateLimits.delete(ip);
+  }
+
+  // Still full: drop the least recently seen quarter. Map iterates in insertion
+  // order, which is close enough to age here and costs no bookkeeping.
+  if (rateLimits.size >= MAX_TRACKED_IPS) {
+    let toDrop = Math.ceil(MAX_TRACKED_IPS / 4);
+    for (const ip of rateLimits.keys()) {
+      if (toDrop-- <= 0) break;
+      rateLimits.delete(ip);
+    }
+  }
+}
+
+/**
+ * The caller's address as the proxy saw it, not as the caller claims it.
+ *
+ * X-Forwarded-For is a list the client starts and each proxy appends to, so its
+ * FIRST entry is whatever the caller typed — reading that made every limit here
+ * optional: a fresh address per request meant a fresh allowance per request.
+ * nginx sets X-Real-IP from the socket it accepted, so that is authoritative;
+ * failing that, the LAST entry of the forwarded list is the one our own proxy
+ * wrote, and the only one in it that no client could forge.
+ */
+function callerAddress(request: NextRequest): string {
+  const realIp = request.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const hops = forwarded.split(',').map((h) => h.trim()).filter(Boolean);
+    if (hops.length) return hops[hops.length - 1];
+  }
+
+  return 'unknown';
+}
+
 // Enhanced email validation
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -52,6 +105,7 @@ function checkRateLimit(ip: string): { allowed: boolean; reason?: string } {
   let entry = rateLimits.get(ip);
 
   if (!entry) {
+    evictIfCrowded(now);
     entry = {
       count: 1,
       lastRequest: now,
@@ -110,11 +164,11 @@ export async function GET(request: NextRequest) {
     // Verify admin authentication
     if (!(await verifyAdmin(request))) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Unauthorized. Admin access required.',
-          hint: 'Include Authorization header with Bearer token or X-API-Key header'
-        },
+        // No hint. It used to name an X-API-Key header that this route stopped
+        // accepting when the static admin key was removed, so it was advertising
+        // a way in that does not exist — and telling an unauthenticated caller
+        // how the door works is not the reply an unauthenticated caller earns.
+        { success: false, message: 'Unauthorized. Admin access required.' },
         { status: 401 }
       );
     }
@@ -152,12 +206,7 @@ export async function GET(request: NextRequest) {
 // POST - Add email to waitlist (PUBLIC with rate limiting)
 export async function POST(request: NextRequest) {
   try {
-    // Get IP address
-    const ip = (
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown'
-    ).split(',')[0].trim();
+    const ip = callerAddress(request);
 
     // Check rate limit
     const rateLimit = checkRateLimit(ip);

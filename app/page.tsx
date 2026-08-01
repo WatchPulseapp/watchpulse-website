@@ -15,10 +15,10 @@ export default function Home() {
     <main className="min-h-screen bg-background-deep">
       <Header />
       <HeroSection />
-      <ShowcaseSections />
-      {/* After the five solo features, the turn to "and there are other people
-          here". Its own banded background separates the two halves. */}
+      {/* Straight off the fold: "there are other people here". Its own banded
+          background lifts it off the hero before the solo features begin. */}
       <SocialBand />
+      <ShowcaseSections />
       <FeatureGrid />
       <HowItWorks />
       <FAQ />

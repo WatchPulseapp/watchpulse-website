@@ -15,10 +15,11 @@ interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { key: 'nav.features', href: '/#features' },
   // The string and the section existed; the link between them did not, so the
-  // social band was unreachable from the nav.
+  // social band was unreachable from the nav. It leads, because on the page it
+  // now sits directly under the hero.
   { key: 'nav.social', href: '/#social' },
+  { key: 'nav.features', href: '/#features' },
   { key: 'nav.howItWorks', href: '/#how-it-works' },
   { key: 'nav.faq', href: '/#faq' },
   { key: 'nav.blog', href: '/blog' },
@@ -42,7 +43,7 @@ export default function Header({ hideLanguageSwitcher = false, forceEnglish = fa
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -59,7 +60,11 @@ export default function Header({ hideLanguageSwitcher = false, forceEnglish = fa
         className={cn(
           'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
           scrolled
-            ? 'bg-background-deep/90 backdrop-blur-2xl border-b border-white/5 shadow-lg shadow-black/20'
+            ? // The bar sits over moving content for the whole visit, so on a
+              // phone it is opaque instead of blurred — a backdrop-filter here
+              // is the one that is re-computed on literally every scroll frame.
+              // At 95% there is nothing legible behind it to blur anyway.
+              'bg-background-deep/95 lg:bg-background-deep/90 lg:backdrop-blur-2xl border-b border-white/5 shadow-lg shadow-black/20'
             : 'bg-transparent'
         )}
         initial={{ y: -80 }}
@@ -137,7 +142,9 @@ export default function Header({ hideLanguageSwitcher = false, forceEnglish = fa
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="fixed inset-0 z-40 lg:hidden bg-background-deep/95 backdrop-blur-xl pt-24 px-6"
+            // Phones only, and the ground is already 95% opaque: the blur was
+            // being computed over the full viewport to soften five percent.
+            className="fixed inset-0 z-40 lg:hidden bg-background-deep/[0.97] pt-24 px-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

@@ -80,10 +80,30 @@ interface ApiOptions extends RequestInit {
     noAuth?: boolean;
 }
 
+/**
+ * Refuses an endpoint that could be steered somewhere it was not meant to go.
+ *
+ * Most callers build their path from ids the API itself handed back, but a few
+ * take a segment straight out of the address bar — /shared/[code] and
+ * /post/[id] — and every request here carries the reader's bearer token. A code
+ * of "..%2F..%2Fauth%2Fme" arrives decoded as "../../auth/me", and the browser
+ * resolves the path before sending: the token would go to whichever endpoint the
+ * link author chose, on a POST as readily as a GET. Callers encode their
+ * segments; this is the check that holds if one ever forgets.
+ */
+function assertSafeEndpoint(endpoint: string): void {
+    const looksAbsolute = /^[a-z][a-z0-9+.-]*:/i.test(endpoint) || endpoint.startsWith('//');
+    const traverses = endpoint.split(/[?#]/)[0].split('/').includes('..');
+    if (!endpoint.startsWith('/') || looksAbsolute || traverses) {
+        throw new ApiError(`Refusing to call an unsafe endpoint: ${endpoint}`, 400);
+    }
+}
+
 export async function apiFetch<T = unknown>(
     endpoint: string,
     options: ApiOptions = {}
 ): Promise<T> {
+    assertSafeEndpoint(endpoint);
     const { noAuth, headers: customHeaders, ...fetchOptions } = options;
 
     const headers: Record<string, string> = {
@@ -703,11 +723,14 @@ export async function apiShareCollection(id: string): Promise<{ success: boolean
 }
 
 export async function apiGetSharedCollection(shareCode: string, withAuth = false): Promise<{ success: boolean; collection: CollectionDetail }> {
-    const token = getAccessToken(); return apiFetch(`/api/user-collections/shared/${shareCode}`, { noAuth: !token });
+    // Encoded: this one comes out of the URL bar, not out of an earlier response.
+    const token = getAccessToken();
+    return apiFetch(`/api/user-collections/shared/${encodeURIComponent(shareCode)}`, { noAuth: !token });
 }
 
 export async function apiImportCollection(shareCode: string): Promise<{ success: boolean }> {
-    return apiFetch(`/api/user-collections/import/${shareCode}`, { method: 'POST' });
+    // Same as above, and this one is a POST, so it must not be steerable.
+    return apiFetch(`/api/user-collections/import/${encodeURIComponent(shareCode)}`, { method: 'POST' });
 }
 
 // ─── Discover API ──────────────────────────────────────────────────────────

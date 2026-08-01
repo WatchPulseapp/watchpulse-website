@@ -65,11 +65,8 @@ export function JournalMasthead({ locale = 'en' }: { locale?: Locale }) {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b backdrop-blur-xl"
-      style={{
-        borderColor: 'var(--rule)',
-        backgroundColor: 'color-mix(in srgb, var(--paper) 82%, transparent)',
-      }}
+      className="journal-masthead sticky top-0 z-40 border-b"
+      style={{ borderColor: 'var(--rule)' }}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 sm:px-6 md:px-8">
         <Link href={base} className="group flex items-baseline gap-2.5">

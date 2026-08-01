@@ -1,17 +1,27 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
 import Image from 'next/image';
 import Container from '../layout/Container';
 import StoreButtons from '../ui/StoreButtons';
 import PulseLine from '../ui/PulseLine';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const easeOut = [0.22, 1, 0.36, 1] as const;
-
+/**
+ * The fold, and nothing in it waits for JavaScript.
+ *
+ * This used to be five framer-motion elements, which meant the server sent the
+ * headline as style="opacity:0" and the first paint of the site was an empty
+ * screen — held there until 166 kB of JavaScript had downloaded, parsed and
+ * hydrated. On a mid-range phone on mobile data that is seconds of blank page,
+ * and the largest contentful paint cannot be recorded before it ends. The same
+ * staircase now runs as CSS keyframes, so it starts with the stylesheet.
+ *
+ * Timings are also roughly half what they were: the old sequence did not settle
+ * until 1.3s, with the store buttons — the thing the page exists for — still
+ * fading in. It settles by ~0.75s now.
+ */
 export default function HeroSection() {
   const { t, language } = useLanguage();
-  const reduceMotion = useReducedMotion();
 
   return (
     <section className="relative overflow-hidden pt-28 pb-0 md:pt-36">
@@ -25,70 +35,53 @@ export default function HeroSection() {
       <Container className="relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-8">
           {/* Left: copy */}
-          <motion.div
-            className="flex-1 text-center lg:text-left max-w-2xl"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: easeOut }}
-          >
+          <div className="flex-1 text-center lg:text-left max-w-2xl">
             {/* Launch badge */}
-            <motion.span
-              className="inline-flex items-center gap-2 rounded-full border border-brand-primary/30 bg-brand-primary/10 px-4 py-1.5 text-xs font-semibold text-brand-accent mb-6"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.6, ease: easeOut }}
+            <span
+              className="animate-rise inline-flex items-center gap-2 rounded-full border border-brand-primary/30 bg-brand-primary/10 px-4 py-1.5 text-xs font-semibold text-brand-accent mb-6"
+              style={{ animationDelay: '60ms' }}
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-60" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold" />
               </span>
               {t('hero.badge')}
-            </motion.span>
+            </span>
 
             {/* Headline: the question everyone asks, set like a movie poster */}
-            <motion.h1
-              className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-[7.5rem] leading-[0.95] mb-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.8, ease: easeOut }}
+            <h1
+              className="animate-rise font-display text-6xl sm:text-7xl md:text-8xl lg:text-[7.5rem] leading-[0.95] mb-6"
+              style={{ animationDelay: '120ms' }}
             >
               <span className="block text-text-primary">{t('hero.title1')}</span>
               <span className="block text-gradient-pulse">{t('hero.title2')}</span>
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              className="text-lg md:text-xl text-text-secondary leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45, duration: 0.7, ease: easeOut }}
+            <p
+              className="animate-rise text-lg md:text-xl text-text-secondary leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0"
+              style={{ animationDelay: '200ms' }}
             >
               {t('hero.subtitle')}
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.7, ease: easeOut }}
-            >
+            <div className="animate-rise" style={{ animationDelay: '280ms' }}>
               <StoreButtons className="justify-center lg:justify-start" />
               <p className="mt-4 text-sm text-text-muted">{t('hero.trust')}</p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Right: phone + floating mood chips */}
           <div className="flex-1 flex items-center justify-center lg:justify-end pb-8">
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: easeOut }}
-            >
+            <div className="animate-rise-far relative" style={{ animationDelay: '100ms' }}>
               <div className="absolute -inset-10 bg-brand-primary/20 rounded-full blur-3xl animate-glow-pulse" aria-hidden="true" />
 
-              <motion.div
-                animate={reduceMotion ? undefined : { y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              >
+              {/* The float is CSS too. It never stops, and driving a forever-loop
+                  through JavaScript keeps a callback on the main thread for the
+                  entire visit — competing with scrolling — where a keyframed
+                  transform is handed to the compositor once and costs nothing
+                  after that. The reduced-motion rule in globals.css flattens
+                  every animation on this page, this one included. */}
+              <div className="animate-float-slow">
                 <div className="phone-mockup w-[240px] sm:w-[270px] md:w-[290px]">
                   <div className="phone-screen relative">
                     <Image
@@ -97,20 +90,20 @@ export default function HeroSection() {
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 240px, 290px"
-                      quality={78}
+                      quality={85}
                       priority
                     />
                   </div>
                 </div>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           </div>
         </div>
       </Container>
 
       {/* Signature: the pulse line draws across the fold */}
       <div className="relative z-10 -mt-2">
-        <PulseLine delay={1.1} />
+        <PulseLine delay={0.6} />
       </div>
     </section>
   );

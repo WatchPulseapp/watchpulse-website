@@ -17,8 +17,8 @@ export default function HowItWorks() {
           className="text-center mb-16"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: easeOut }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5, ease: easeOut }}
         >
           <p className="eyebrow mb-3 justify-center">{t('how.eyebrow')}</p>
           <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-text-primary">{t('how.title')}</h2>
@@ -37,8 +37,8 @@ export default function HowItWorks() {
               className="relative text-center"
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.7, delay: i * 0.15, ease: easeOut }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: easeOut }}
             >
               <span className="relative z-10 mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-primary/30 bg-background-card font-display text-3xl text-brand-accent shadow-glow">
                 {i + 1}

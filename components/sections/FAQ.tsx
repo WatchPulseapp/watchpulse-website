@@ -39,8 +39,8 @@ export default function FAQ() {
           className="text-center mb-12"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: easeOut }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: easeOut }}
         >
           <p className="eyebrow mb-3 justify-center">{t('faq.eyebrow')}</p>
           <h2 className="font-display text-4xl sm:text-5xl md:text-6xl text-text-primary">{t('faq.title')}</h2>
@@ -55,8 +55,8 @@ export default function FAQ() {
                 className="glass-card overflow-hidden"
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.5, delay: q * 0.04, ease: easeOut }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.4, delay: q * 0.03, ease: easeOut }}
               >
                 <button
                   type="button"
@@ -78,7 +78,7 @@ export default function FAQ() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: easeOut }}
+                      transition={{ duration: 0.25, ease: easeOut }}
                     >
                       <p className="px-6 pb-5 text-text-secondary leading-relaxed">{t(`faq.a${q}`)}</p>
                     </motion.div>

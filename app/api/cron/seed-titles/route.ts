@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { seedTitles, DEFAULT_BATCH } from '@/lib/title-seeds';
 import { submitToIndexNow } from '@/lib/indexnow';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 /**
  * Claims another batch of film and series pages for the sitemap.
@@ -17,11 +18,7 @@ import { submitToIndexNow } from '@/lib/indexnow';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return (request.headers.get('authorization') || '') === `Bearer ${secret}`;
-}
+const isAuthorized = isCronAuthorized;
 
 /** Bounded so a mistyped query parameter cannot turn one run into a flood. */
 const MAX_BATCH = 200;

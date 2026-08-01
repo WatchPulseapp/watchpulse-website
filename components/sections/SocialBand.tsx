@@ -161,6 +161,11 @@ export default function SocialBand() {
   const shellClass =
     'rounded-3xl border border-[#F0F2F5]/[0.06] bg-background-card p-5 shadow-card h-full';
 
+  // Below the three-column breakpoint each mock-up would take the whole
+  // measure — a chat bubble 700px wide on a tablet, posters blown up to 135px.
+  // These are phone screens, so they are held to a phone's width and centred.
+  const columnClass = 'mx-auto w-full max-w-sm lg:max-w-none';
+
   return (
     <section
       id="social"
@@ -177,8 +182,8 @@ export default function SocialBand() {
           className="max-w-2xl"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: easeOut }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.55, ease: easeOut }}
         >
           <p className="eyebrow mb-3">{t('social.eyebrow')}</p>
           <h2 className="font-display text-4xl sm:text-5xl md:text-6xl leading-[0.95] text-text-primary mb-5">
@@ -191,10 +196,11 @@ export default function SocialBand() {
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
           {/* ---- Match suggestion ---- */}
           <motion.div
+            className={columnClass}
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.7, ease: easeOut }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: easeOut }}
           >
             <MockLabel>{t('socialDemo.matchLabel')}</MockLabel>
             <div className={`${shellClass} flex flex-col items-center text-center`}>
@@ -215,7 +221,11 @@ export default function SocialBand() {
                     initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
                     whileInView={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - 0.92) }}
                     viewport={{ once: true }}
-                    transition={reduceMotion ? { duration: 0 } : { duration: 0.9, ease: easeOut }}
+                    transition={
+                      // 900ms, because that is what matching_tab.dart sweeps
+                      // in. This one is a reproduction, not page furniture.
+                      reduceMotion ? { duration: 0 } : { duration: 0.9, ease: easeOut }
+                    }
                   />
                 </svg>
                 <span className="absolute inset-[9px] grid place-items-center rounded-full bg-gradient-hero text-2xl font-bold text-white">
@@ -276,10 +286,11 @@ export default function SocialBand() {
 
           {/* ---- Post ---- */}
           <motion.div
+            className={columnClass}
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.7, ease: easeOut, delay: 0.08 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: easeOut, delay: 0.05 }}
           >
             <MockLabel>{t('socialDemo.postLabel')}</MockLabel>
             <div className={shellClass}>
@@ -358,7 +369,7 @@ export default function SocialBand() {
                         initial={{ width: 0 }}
                         whileInView={{ width: `${pct}%` }}
                         viewport={{ once: true }}
-                        transition={reduceMotion ? { duration: 0 } : { duration: 0.8, ease: easeOut, delay: 0.2 }}
+                        transition={reduceMotion ? { duration: 0 } : { duration: 0.6, ease: easeOut, delay: 0.15 }}
                         aria-hidden="true"
                       />
                       <span className="relative flex justify-between text-[13px] text-text-primary/85">
@@ -375,10 +386,11 @@ export default function SocialBand() {
 
           {/* ---- Chat ---- */}
           <motion.div
+            className={columnClass}
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.7, ease: easeOut, delay: 0.16 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: easeOut, delay: 0.1 }}
           >
             <MockLabel>{t('socialDemo.chatLabel')}</MockLabel>
             <div className={`${shellClass} flex flex-col`}>
@@ -460,8 +472,8 @@ export default function SocialBand() {
               className="flex gap-4"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.6, ease: easeOut, delay: i * 0.06 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.45, ease: easeOut, delay: i * 0.04 }}
             >
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-primary/10 text-brand-light">
                 <Icon path={path} className="h-5 w-5" />

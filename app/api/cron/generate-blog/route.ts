@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import BlogRun from '@/lib/models/BlogRun';
 import { submitToIndexNow, urlsForNewPost, type IndexNowResult } from '@/lib/indexnow';
 import { categorySlug } from '@/lib/blog-index';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 /**
  * Persists the outcome of an attempt. Deliberately swallows its own errors:
@@ -69,15 +70,9 @@ const MAX_POSTS_PER_DAY = Number(process.env.MAX_AUTO_POSTS_PER_DAY || 7);
 // Backfilling means triggering the workflow repeatedly, not raising this number.
 const MAX_COUNT_PER_REQUEST = 1;
 
-function isAuthorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-
-  // GitHub Actions sends this header explicitly. Header only — never a query
-  // param, which would leak the secret into the nginx access log.
-  const header = request.headers.get('authorization') || '';
-  return header === `Bearer ${secret}`;
-}
+// GitHub Actions sends the secret as an Authorization header; see lib/cron-auth
+// for why it is header-only and compared the way it is.
+const isAuthorized = isCronAuthorized;
 
 /**
  * Repairs one article that published without a Turkish side. Swallows its own
