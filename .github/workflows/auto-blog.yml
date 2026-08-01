@@ -67,6 +67,31 @@ jobs:
           cat response.json
           echo
 
+          # Running out of Groq's daily budget is not a broken pipeline.
+          #
+          # The free tier meters tokens per day as well as per minute, so the
+          # last slots of a busy day can find nothing left — the route answers
+          # 502 with "rate limited (HTTP 429, 2 tokens left)" and the retries
+          # above meet the same wall. That used to end as "All jobs have failed",
+          # which reads like an outage and trains you to ignore the mail. It is
+          # reported as a skipped slot instead, and only when EVERY failure in
+          # the response is a rate limit: an editorial rejection, an empty draft
+          # or a crash still fails the run and still sends the mail.
+          if [ "$http_code" = "502" ] && grep -qiE '"reason":"[^"]*(rate limit|rate_limit|429)' response.json; then
+            echo "::notice::Groq is out of tokens for now — this slot published nothing."
+            {
+              echo "### Auto Blog Publisher"
+              echo ""
+              echo "Skipped — the writer was rate limited, so this slot published nothing."
+              echo "The next scheduled run picks up where this one stopped."
+              echo ""
+              echo '```'
+              cat response.json
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           if [ "$http_code" != "200" ]; then
             echo "::error::Blog generation failed with HTTP $http_code"
             exit 1
