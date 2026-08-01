@@ -1,16 +1,19 @@
 {
-  "name": "WatchPulse - AI Movie Recommendations",
+  "name": "WatchPulse - Film & Dizi Takip ve AI Öneri",
   "short_name": "WatchPulse",
-  "description": "AI-powered movie and TV show recommendations based on your mood. Discover what to watch next!",
+  "description": "Film & dizi takibi, ruh haline göre AI önerileri, platform bulucu ve film zevkine göre sosyal eşleşme.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1117",
-  "theme_color": "#7C8DB0",
+  "background_color": "#0D0F14",
+  "theme_color": "#0D0F14",
   "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "en",
+  "lang": "tr",
   "dir": "ltr",
-  "categories": ["entertainment", "lifestyle"],
+  "categories": [
+    "entertainment",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "/logo.png",

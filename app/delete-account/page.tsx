@@ -121,10 +121,10 @@ export default function DeleteAccountPage() {
                     <span className="text-white font-medium">Send an email to:</span>
                   </div>
                   <a
-                    href="mailto:support@watchpulseapp.com?subject=Account%20Deletion%20Request"
+                    href="mailto:watchpulseapp@gmail.com?subject=Account%20Deletion%20Request"
                     className="text-brand-accent hover:text-brand-gold transition-colors text-lg"
                   >
-                    support@watchpulseapp.com
+                    watchpulseapp@gmail.com
                   </a>
                   <p className="text-text-muted text-sm mt-3">
                     Please include &quot;Account Deletion Request&quot; in the subject line and provide the email address associated with your account.
@@ -179,7 +179,7 @@ export default function DeleteAccountPage() {
                 Having trouble or need assistance?
               </p>
               <a
-                href="mailto:support@watchpulseapp.com"
+                href="mailto:watchpulseapp@gmail.com"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary/20 hover:bg-brand-primary/30 text-brand-primary rounded-lg transition-colors"
               >
                 <Mail className="w-5 h-5" />

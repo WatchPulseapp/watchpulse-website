@@ -19,10 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const lastUpdated = 'December 27, 2024';
+  const lastUpdated = 'July 23, 2026';
 
   return (
-    <main className="min-h-screen bg-background-dark">
+    // lang="en": sayfa içeriği İngilizce, kök layout tr — ekran okuyucu/crawler için doğru dil
+    <main lang="en" className="min-h-screen bg-background-dark">
       <Header hideLanguageSwitcher forceEnglish />
 
       <div className="pt-24 pb-16">
@@ -126,6 +127,36 @@ export default function PrivacyPage() {
                       <span className="text-brand-primary mt-1">•</span>
                       Device information (device type, operating system)
                     </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Crash and diagnostic data (via Firebase Crashlytics and Sentry) to fix bugs
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-background-card rounded-xl border border-brand-primary/20 p-6">
+                  <h3 className="text-lg font-semibold text-brand-primary mb-3">Social &amp; Communication Data</h3>
+                  <ul className="space-y-2 text-text-secondary">
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Content you share publicly in the app: posts, comments, poll votes and reposts
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Messages you send in chat, including voice messages (stored so we can deliver them to your conversation partners)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Images you upload (profile picture, banner, post images)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Your taste profile and match interactions when you use social matching (your public profile and taste compatibility may be shown to other users)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-brand-primary mt-1">•</span>
+                      Purchase and subscription status (managed by Google Play / the App Store; we never see your full payment details)
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -144,6 +175,11 @@ export default function PrivacyPage() {
                     'Provide personalized movie and TV show recommendations based on your mood',
                     'Maintain and improve our AI-powered recommendation engine',
                     'Sync your watchlist across devices',
+                    'Deliver your posts, comments and chat messages to the people you share them with',
+                    'Match you with users who have a similar taste in movies and shows — only if you opt in to social matching',
+                    'Automatically scan uploaded images for content that violates our policies (e.g. nudity) to keep the community safe',
+                    'Send push notifications you have enabled (likes, comments, messages, match requests) — you can turn these off in Settings',
+                    'Show ads in the free tier (with consent where required) and process premium subscriptions',
                     'Send important service updates and notifications',
                     'Analyze usage patterns to improve app performance',
                     'Respond to your inquiries and provide customer support'
@@ -180,7 +216,19 @@ export default function PrivacyPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-brand-primary mt-1">•</span>
-                    <span><strong className="text-white">TMDB API:</strong> We use The Movie Database (TMDB) API for movie/TV data. Your viewing preferences may be used to fetch relevant content.</span>
+                    <span><strong className="text-white">TMDB API:</strong> We use The Movie Database (TMDB) API for movie/TV data. Your viewing preferences may be used to fetch relevant content. Streaming availability data is powered by JustWatch.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-primary mt-1">•</span>
+                    <span><strong className="text-white">Media storage:</strong> Images and voice messages you upload are stored on Cloudinary, our media hosting provider.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-primary mt-1">•</span>
+                    <span><strong className="text-white">Advertising:</strong> Google AdMob serves ads in the free tier. Where required (e.g. EEA/UK), ads are only personalized with your consent, which you can change anytime in the app settings.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-brand-primary mt-1">•</span>
+                    <span><strong className="text-white">Purchases:</strong> Subscriptions are processed by Google Play and the App Store (with RevenueCat on iOS for subscription management). We never receive your full payment details.</span>
                   </li>
                 </ul>
               </div>
@@ -198,7 +246,7 @@ export default function PrivacyPage() {
                   { title: 'Access', desc: 'Request a copy of your personal data' },
                   { title: 'Correction', desc: 'Update or correct your information' },
                   { title: 'Deletion', desc: 'Request deletion of your account and data' },
-                  { title: 'Portability', desc: 'Export your data in a portable format' },
+                  { title: 'Portability', desc: 'Export your data as JSON in the app: Settings → Download My Data' },
                   { title: 'Opt-out', desc: 'Unsubscribe from marketing communications' },
                   { title: 'Withdraw Consent', desc: 'Revoke previously given consent' }
                 ].map((right, index) => (
@@ -276,8 +324,8 @@ export default function PrivacyPage() {
                   WatchPulse is not intended for children under 13 years of age. We do not knowingly collect
                   personal information from children under 13. If you are a parent or guardian and believe
                   your child has provided us with personal information, please contact us immediately at{' '}
-                  <a href="mailto:support@watchpulseapp.com" className="text-brand-accent hover:text-brand-gold">
-                    support@watchpulseapp.com
+                  <a href="mailto:watchpulseapp@gmail.com" className="text-brand-accent hover:text-brand-gold">
+                    watchpulseapp@gmail.com
                   </a>
                   , and we will promptly delete such information.
                 </p>
@@ -308,11 +356,11 @@ export default function PrivacyPage() {
                   If you have any questions about this Privacy Policy, please contact us:
                 </p>
                 <a
-                  href="mailto:support@watchpulseapp.com"
+                  href="mailto:watchpulseapp@gmail.com"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary/20 hover:bg-brand-primary/30 text-brand-primary rounded-lg transition-colors"
                 >
                   <Mail className="w-5 h-5" />
-                  support@watchpulseapp.com
+                  watchpulseapp@gmail.com
                 </a>
               </div>
             </section>
